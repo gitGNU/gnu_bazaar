@@ -1,4 +1,4 @@
-# $Id: cache.py,v 1.12 2004/02/02 17:59:28 wrobell Exp $
+# $Id: cache.py,v 1.13 2004/03/29 17:17:03 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -206,16 +206,12 @@ class Full(Cache, dict):
     """
     Abstract, basic cache class for loading all objects and association data.
 
-    @ivar empty: Is returned by L{__getitem__} method when referenced object or
-    association data are not found in cache.
-
     @see: L{getEmpty} L{bazaar.cache.FullObject} L{bazaar.cache.FullAssociation}
     """
     def __init__(self, param):
         Cache.__init__(self, param)
         dict.__init__(self)
         self.dicttype = dict
-        self.empty = self.getEmpty()
 
 
     def __getitem__(self, param):
@@ -234,7 +230,7 @@ class Full(Cache, dict):
         if param in self:
             return dict.__getitem__(self, param)
         else:
-            return self.empty
+            return self.getEmpty()
 
 
     def getEmpty(self):
