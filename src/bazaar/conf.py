@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.22 2003/09/29 16:09:54 wrobell Exp $
+# $Id: conf.py,v 1.23 2003/09/30 14:04:48 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -127,7 +127,7 @@ class Persistence(type):
     @ivar columns: List of application class attribute descriptions.
     """
 
-    def __new__(self, name, bases = (bazaar.core.PersistentObject, ), data = None, relation = None):
+    def __new__(self, name, bases = (bazaar.core.PersistentObject, ), data = None, relation = None, sequencer = None):
         """
         Create application class.
 
@@ -138,10 +138,15 @@ class Persistence(type):
 
         if relation is None:
             relation = name
-            if __debug__: log.debug('setting relation name to class name')
 
         if 'relation' not in data:
             data['relation'] = relation
+
+        if sequencer is None:
+            sequencer = '%s_seq' % data['relation']
+
+        if 'sequencer' not in data:
+            data['sequencer'] = sequencer
 
         if 'columns' not in data:
             data['columns'] = {}

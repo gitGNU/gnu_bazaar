@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.17 2003/09/28 15:56:21 wrobell Exp $
+# $Id: motor.py,v 1.18 2003/09/30 14:04:49 wrobell Exp $
 """
 Data convertor and database access objects.
 """
@@ -57,7 +57,12 @@ class Convertor:
         if __debug__: log.debug('update object query: "%s"' % self.queries[self.update])
 
         self.queries[self.delete] = 'delete from "%s" where __key__ = %%s' % self.cls.relation
+
         if __debug__: log.debug('delete object query: "%s"' % self.queries[self.delete])
+
+        self.queries[self.motor.getKey] = 'select nextval(\'%s\')' % self.cls.sequencer
+
+        if __debug__: log.debug('get primary key value query: "%s"' % self.queries[self.motor.getKey])
 
         self.asc_cols = {}
         for col in self.mtm_ascs:
@@ -159,7 +164,7 @@ class Convertor:
         @param obj: Object to add.
         """
         data = self.getData(obj)
-        key = self.motor.getKey(self.cls.relation + '_seq') # fixme
+        key = self.motor.getKey(self.queries[self.motor.getKey])
         data['__key__'] = key
         self.motor.add(self.queries[self.add], data)
         obj.__key__ = key
@@ -320,8 +325,9 @@ class Motor:
         self.db_conn.rollback()
 
 
-    # fixme
-    def getKey(self, seq):
+    def getKey(self, query):
+        """
+        """
         dbc = self.db_conn.cursor()
-        dbc.execute('select nextval(%s)', (seq, ))
+        dbc.execute(query)
         return dbc.fetchone()[0]
