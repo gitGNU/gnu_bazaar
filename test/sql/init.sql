@@ -1,4 +1,4 @@
--- $Id: init.sql,v 1.6 2003/09/24 18:18:44 wrobell Exp $
+-- $Id: init.sql,v 1.7 2003/09/29 18:36:53 wrobell Exp $
 
 create sequence order_seq;
 create table "order" (
@@ -50,33 +50,20 @@ create table employee_orders (
     foreign key ("order") references "order"(__key__)
 );
 
+create table boss (
+    __key__     integer,
+    dep_key     integer,
+    primary key (__key__)
+--  see below
+--    foreign key (dep_key) references department(__key__) initially deferred
+);
 
--- association keys testing
 
--- -- create schema keys;
--- -- 
--- -- create table bsingle (
--- --     __key__      serial,
--- --     b integer,
--- --     primary key(b)
--- -- );
--- -- 
--- -- create table bmulti (
--- --     __key__      serial,
--- --     b1 integer,
--- --     b2 integer,
--- --     b3 integer,
--- --     primary key(b1, b2, b3)
--- -- );
--- -- 
--- -- create table a (
--- --     __key__      serial,
--- --     a integer,
--- --     bs_fkey integer,
--- --     bm1 integer,
--- --     bm2 integer,
--- --     bm3 integer,
--- --     primary key (a),
--- --     foreign key (bs_fkey) references bsingle(b),
--- --     foreign key (bm1, bm2, bm3) references bmulti(b1, b2, b3)
--- -- );
+create table department (
+    __key__     integer,
+    boss_key    integer,
+    primary key (__key__),
+    foreign key (boss_key) references boss(__key__) initially deferred
+);
+
+alter table boss add foreign key (dep_key) references department(__key__) initially deferred;

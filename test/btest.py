@@ -1,4 +1,4 @@
-# $Id: btest.py,v 1.10 2003/09/29 16:51:35 wrobell Exp $
+# $Id: btest.py,v 1.11 2003/09/29 18:36:53 wrobell Exp $
 
 import unittest
 
@@ -17,7 +17,7 @@ class BazaarTestCase(unittest.TestCase):
         """
         Create Bazaar layer object.
         """
-        self.cls_list = (app.Order, app.Employee, app.Article, app.OrderItem)
+        self.cls_list = (app.Order, app.Employee, app.Article, app.OrderItem, app.Boss, app.Department)
         self.bazaar = bazaar.core.Bazaar(self.cls_list, app.db_module)
 
 
@@ -67,6 +67,16 @@ class DBBazaarTestCase(BazaarTestCase):
                 'cols'    : ('name', 'surname', 'phone'),
                 'test'    : self.checkEmployee
             },
+            app.Boss: {
+                'relation': 'boss',
+                'cols'    : ('dep_key',),
+                'test'    : self.checkBoss
+            },
+            app.Department: {
+                'relation': 'department',
+                'cols'    : ('boss_key',),
+                'test'    : self.checkDepartment
+            }
         }
 
         dbc = self.bazaar.motor.db_conn.cursor()
@@ -119,6 +129,22 @@ class DBBazaarTestCase(BazaarTestCase):
         """
         oi = self.bazaar.brokers[app.OrderItem].cache[key]
         return oi.order_fkey == row[0] and oi.pos == row[1] and oi.quantity == row[2]
+
+
+    def checkBoss(self, key, row):
+        """
+        Boss class data integrity test function.
+        """
+        boss = self.bazaar.brokers[app.Boss].cache[key]
+        return boss.dep_key == row[0]
+
+
+    def checkDepartment(self, key, row):
+        """
+        Department class data integrity test function.
+        """
+        dep = self.bazaar.brokers[app.Department].cache[key]
+        return dep.boss_key == row[0]
 
 
     def getCache(self, cls):

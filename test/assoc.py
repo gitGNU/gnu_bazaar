@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.12 2003/09/29 16:57:54 wrobell Exp $
+# $Id: assoc.py,v 1.13 2003/09/29 18:36:53 wrobell Exp $
 
 import app
 import btest
@@ -12,28 +12,43 @@ class OneToOneAssociationTestCase(btest.DBBazaarTestCase):
 
     def testLoading(self):
         """Test one-to-one association loading"""
+        for boss in self.bazaar.getObjects(app.Boss):
+            self.assertEqual(boss.dep_key, boss.department.__key__, 'one-to-one association data mismatch')
+            self.assertEqual(boss.department, \
+                self.getCache(app.Department)[boss.dep_key], \
+                'one-to-one association data mismatch')
 
-        self.bazaar.getObjects(app.OrderItem)
-        dbc = self.bazaar.motor.db_conn.cursor()
-        dbc.execute('select __key__, "order_fkey", pos, article_fkey from order_item')
-        row = dbc.fetchone()
-        while row:
-            order_item = self.bazaar.brokers[app.OrderItem].cache[row[0]]
-
-            # check the value of foreign key
-            self.assertEqual(order_item.article_fkey, row[3], \
-                'article foreign key mismatch "%s" != "%s"' % (order_item.article_fkey, row[3]))
-
-            # check the value of associated object's primary key
-            self.assertEqual(order_item.article.__key__, row[3], \
-                'article primary key mismatch "%s" != "%s"' % (order_item.article.__key__, row[3]))
-
-            row = dbc.fetchone()
+        for dep in self.bazaar.getObjects(app.Department):
+            self.assertEqual(dep.boss_key, dep.boss.__key__, 'one-to-one association data mismatch')
+            self.assertEqual(dep.boss, \
+                self.getCache(app.Boss)[dep.boss_key], \
+                'one-to-one association data mismatch')
 
 
     def testUpdating(self):
         """Test one-to-one association updating"""
-        pass
+        self.bazaar.getObjects(app.Boss)
+        self.bazaar.getObjects(app.Department)
+        b1 = self.getCache(app.Boss)[1000]
+        b2 = self.getCache(app.Boss)[1001]
+        d1 = self.getCache(app.Department)[1000]
+        d2 = self.getCache(app.Department)[1001]
+        self.assertEqual(b1.department, d1, 'one-to-one associations data mismatch')
+        self.assertEqual(d1.boss, b1, 'one-to-one associations data mismatch')
+        self.assertEqual(b2.department, d2, 'one-to-one associations data mismatch')
+        self.assertEqual(d2.boss, b2, 'one-to-one associations data mismatch')
+
+        b1.department = d2
+        self.assertEqual(b1.department, d2, 'one-to-one associations data mismatch')
+        self.assertEqual(d2.boss, b1, 'one-to-one associations data mismatch')
+
+        d1.boss = b2
+        self.assertEqual(b2.department, d1, 'one-to-one associations data mismatch')
+        self.assertEqual(d1.boss, b2, 'one-to-one associations data mismatch')
+
+        d1.boss = None
+        self.assertEqual(d1.boss, None, 'one-to-one associations data mismatch')
+        self.assertEqual(b2.department, None, 'one-to-one associations data mismatch')
 
 
 

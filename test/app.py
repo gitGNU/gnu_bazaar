@@ -1,4 +1,4 @@
-# $Id: app.py,v 1.8 2003/09/29 16:50:56 wrobell Exp $
+# $Id: app.py,v 1.9 2003/09/29 18:36:52 wrobell Exp $
 
 """
 Sample test application for Bazaar layer testing purposes.
@@ -61,3 +61,9 @@ Employee.addColumn('name')
 Employee.addColumn('surname')
 Employee.addColumn('phone')
 Employee.addColumn('orders', 'employee', Order, 'employee_orders', 'order')
+
+Department = bazaar.conf.Persistence('Department', relation = 'department')
+Boss = bazaar.conf.Persistence('Boss', relation = 'boss')
+
+Boss.addColumn('department', 'dep_key', Department, vattr = 'boss')
+Department.addColumn('boss', 'boss_key', Boss, vattr = 'department')
