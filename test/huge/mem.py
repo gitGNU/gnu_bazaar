@@ -22,13 +22,13 @@ bzr = bazaar.core.Bazaar((Order, OrderItem, Article, Employee), \
 
 art = Article({'name': 'apple', 'price': 2.22})
 bzr.add(art)
-ord = Order({'no': 1, 'finished': False})
-bzr.add(ord)
 
-items = ord.items
 for j in range(0, amount, 5000):
-    max = j + 5000
-    for i in range(j, max):
+    ord = Order({'no': j, 'finished': False})
+    bzr.add(ord)
+    items = ord.items
+    oi_count = j + 5000
+    for i in range(j, oi_count):
         oi = OrderItem()
         oi.article = art
         oi.quantity = 10
@@ -47,4 +47,4 @@ for j in range(0, amount, 5000):
                 print 'failed with value "%s"' % value
                 sys.exit(ex)
             break
-    print '%5d %d' % (max, value)
+    print '%5d %d' % (oi_count, value)
