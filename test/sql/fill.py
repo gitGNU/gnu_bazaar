@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# $Id: fill.py,v 1.3 2003/08/07 17:56:54 wrobell Exp $
+# $Id: fill.py,v 1.4 2003/09/03 22:52:31 wrobell Exp $
 
 import sys
 import random
@@ -51,7 +51,7 @@ def gen_order_items(order, amount):
     for i in xrange(1, random.randint(2, amount)):
         yield Row('order_item', {
                 'order': order,
-                'article': 'art %02d' % random.randint(1, AMOUNT_ARTICLE-1),
+                'article_fkey': 'art %02d' % random.randint(1, AMOUNT_ARTICLE-1),
                 'pos': i,
                 'quantity': random.uniform(1, 10)
         })
