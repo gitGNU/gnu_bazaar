@@ -1,4 +1,4 @@
-# $Id: btest.py,v 1.7 2003/09/24 17:13:27 wrobell Exp $
+# $Id: btest.py,v 1.8 2003/09/24 18:19:10 wrobell Exp $
 
 import unittest
 
@@ -119,3 +119,7 @@ class DBBazaarTestCase(BazaarTestCase):
         """
         oi = self.bazaar.brokers[app.OrderItem].cache[key]
         return oi.order_fkey == row[0] and oi.pos == row[1] and oi.quantity == row[2]
+
+
+    def getCache(self, cls):
+        return self.bazaar.brokers[cls].cache
