@@ -1,7 +1,6 @@
-# $Id: init.py,v 1.3 2003/08/27 13:28:26 wrobell Exp $
+# $Id: init.py,v 1.4 2003/08/27 15:22:38 wrobell Exp $
 
 import unittest
-import logging
 
 import bazaar.core
 import bazaar.motor
@@ -13,18 +12,14 @@ import app
 Test layer initialization.
 """
 
-log = logging.getLogger('bazaar.test.connection')
-
 class InitTestCase(unittest.TestCase):
     """
     Test layer initialization.
     """
 
     def testBazaarInit(self):
-        """
-        Test layer initialization.
-        """
-        log.info('begin test of Bazaar layer initialization')
+        """Test layer initialization"""
+
 
         cls_list = (app.Order, app.Employee, app.Article, app.OrderItem)
 
@@ -40,14 +35,10 @@ class InitTestCase(unittest.TestCase):
         # there should be no connection, now
         self.assert_(not b.motor.db_conn, 'there should be no db connection')
 
-        log.info('finished test of Bazaar layer initialization')
-
 
     def testConnection(self):
-        """
-        Test layer initialization and database connection.
-        """
-        log.info('begin test of Bazaar layer initialization with connection')
+        """Test layer initialization and database connection"""
+
 
         cls_list = (app.Order, app.Employee, app.Article, app.OrderItem)
 
@@ -57,5 +48,3 @@ class InitTestCase(unittest.TestCase):
         
         # simple query
         b.motor.dbc.execute('begin; rollback')
-
-        log.info('finished test of Bazaar layer initialization with connection')

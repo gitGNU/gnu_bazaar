@@ -1,7 +1,6 @@
-# $Id: main.py,v 1.5 2003/08/27 13:28:26 wrobell Exp $
+# $Id: main.py,v 1.6 2003/08/27 15:22:38 wrobell Exp $
 
 import unittest
-import logging
 import logging.config
 
 """
@@ -12,8 +11,6 @@ Bazaar module test suites runner.
 """
 
 logging.config.fileConfig('log.ini')
-log = logging.getLogger('bazaar.test')
-
 
 if __name__ == '__main__':
     import sys
@@ -39,9 +36,6 @@ examples:
     import app
     app.db_module = __import__(sys.argv[1])
     app.dsn = sys.argv[2]
-
-    log.info('Python DB API module: %s' % app.db_module)
-    log.info('data source name: %s' % app.dsn)
 
     del sys.argv[1:3]
 

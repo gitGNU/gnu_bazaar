@@ -1,14 +1,11 @@
-# $Id: core.py,v 1.6 2003/08/27 13:28:26 wrobell Exp $
+# $Id: core.py,v 1.7 2003/08/27 15:22:38 wrobell Exp $
 
 import unittest
-import logging
 
 import bazaar.core
 
 import app
 import btest
-
-log = logging.getLogger('bazaar.test.core')
 
 """
 Test object loading and reloading from database.
@@ -79,25 +76,16 @@ class ObjectLoadTestCase(btest.DBBazaarTestCase):
 
 
     def testObjectLoading(self):
-        """
-        Test loaded application objects data integrity.
-        """
-
-        log.info('begin test of loading application objects data integrity')
+        """Test loaded application objects data integrity"""
 
         # check test application objects
         for p in self.params:
             self.checkObjects(len(self.bazaar.getObjects(p['cls'])), \
                 p['cols'], p['relation'], p['test'])
 
-        log.info('finished test of loading application objects data integrity')
-
 
     def testObjectReload(self):
-        """
-        Test application objects reloading.
-        """
-        log.info('begin test of application objects reloading')
+        """Test application objects reloading"""
 
         # load objects
         for cls in self.cls_list:
@@ -119,14 +107,9 @@ class ObjectLoadTestCase(btest.DBBazaarTestCase):
             self.checkObjects(len(self.bazaar.brokers[p['cls']].cache), \
                 p['cols'], p['relation'], p['test'])
 
-        log.info('finished test of application objects reloading')
-
 
     def testObjectReloadNow(self):
-        """
-        Test application objects reloading.
-        """
-        log.info('begin test of application objects immediate reloading')
+        """Test application objects immediate reloading"""
 
         # load objects
         for cls in self.cls_list:
@@ -149,8 +132,6 @@ class ObjectLoadTestCase(btest.DBBazaarTestCase):
         for p in self.params:
             self.checkObjects(len(self.bazaar.brokers[p['cls']].cache), \
                 p['cols'], p['relation'], p['test'])
-
-        log.info('finished test of application objects immediate reloading')
 
 
 
@@ -192,10 +173,7 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
 
 
     def testObjectAdding(self):
-        """
-        Test adding objects into database.
-        """
-        log.info('begin test of application objects adding')
+        """Test adding objects into database"""
 
         dbc = self.bazaar.motor.dbc
 
@@ -250,14 +228,9 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
             'cache object mismatch')
         self.checkEmployeeObject('name', 'surname', emp)
 
-        log.info('finished test of application objects adding')
-
 
     def testObjectUpdating(self):
-        """
-        Test updating objects in database.
-        """
-        log.info('begin test of application objects updating')
+        """Test updating objects in database"""
 
         order = self.bazaar.getObjects(app.Order)[0]
         order.finished = True
@@ -291,14 +264,9 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
         self.assert_(('n1001', 's1001') not in self.bazaar.brokers[app.Employee].cache, \
             'employee object found in cache <- error, its key has changed')
 
-        log.info('finished test of application objects updating')
-
 
     def testObjectDeleting(self):
-        """
-        Test updating objects in database.
-        """
-        log.info('begin test of application objects deleting')
+        """Test updating objects in database"""
 
 #        order_item = self.bazaar.getObjects(app.OrderItem)[0]
 #        self.bazaar.delete(order_item)
@@ -321,17 +289,14 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
         self.assert_(emp.key not in self.bazaar.brokers[app.Employee].cache, \
             'employee object found in cache <- error, it is deleted')
 
-        log.info('finished test of application objects deleting')
-
 
 class TransactionsTestCase(btest.DBBazaarTestCase):
     """
     Test database transaction commiting and rollbacking.
     """
     def testCommit(self):
-        """
-        Test database transaction commit.
-        """
+        """Test database transaction commit"""
+
         self.bazaar.getObjects(app.Employee)
         emp = self.bazaar.brokers[app.Employee].cache[('n1001', 's1001')]
         self.bazaar.delete(emp)
@@ -349,9 +314,8 @@ class TransactionsTestCase(btest.DBBazaarTestCase):
 
 
     def testRollback(self):
-        """
-        Test database transaction rollback.
-        """
+        """Test database transaction rollback"""
+
         self.bazaar.getObjects(app.Employee)
         emp = self.bazaar.brokers[app.Employee].cache[('n1001', 's1001')]
         self.bazaar.delete(emp)

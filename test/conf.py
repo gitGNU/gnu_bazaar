@@ -1,7 +1,6 @@
-# $Id: conf.py,v 1.5 2003/08/27 13:28:26 wrobell Exp $
+# $Id: conf.py,v 1.6 2003/08/27 15:22:38 wrobell Exp $
 
 import unittest
-import logging
 
 import bazaar.conf
 
@@ -9,19 +8,13 @@ import bazaar.conf
 Test mapping application classes to database relations.
 """
 
-log = logging.getLogger('bazaar.test.conf')
-
 class ConfTestCase(unittest.TestCase):
     """
     Test class defining.
     """
 
     def testClassDef(self):
-        """
-        Test application class to database relation mapping.
-        """
-
-        log.info('begin testing class defining')
+        """Test application class to database relation mapping"""
 
         relation = 'person'
         Person = bazaar.conf.Persitence('Person', relation = 'person')
@@ -36,15 +29,9 @@ class ConfTestCase(unittest.TestCase):
         self.assertEqual(relation, Address.relation,
             'class relation mismatch: %s != %s ' % (relation, Address.relation))
 
-        log.info('finished testing class defining')
-
 
     def testColumnDef(self):
-        """
-        Test database relation columns defining.
-        """
-
-        log.info('begin testing db relation columns defining')
+        """Test database relation columns defining"""
 
         cols = ('name', 'surname', 'birthdate')
 
@@ -54,7 +41,6 @@ class ConfTestCase(unittest.TestCase):
             Person.addColumn('name')
         except ValueError, exc:
             self.assertEqual(str(exc), 'column "name" is already defined in class "Person"')
-            log.info('adding the column twice failed <- it is ok!')
         else:
             self.fail('adding the column twice should fail')
 
@@ -64,14 +50,9 @@ class ConfTestCase(unittest.TestCase):
         for col in cols:
             self.assert_(col in Person.columns, 'column "%s" not found' % col)
 
-        log.info('finished testing db relation columns defining')
-
 
     def testKeyDef(self):
-        """
-        Test database relation key defining.
-        """
-        log.info('begin testing db relation key defining')
+        """Test database relation key defining"""
 
         Person = bazaar.conf.Persitence('Person', relation = 'person')
         Person.addColumn('name')
@@ -95,7 +76,6 @@ class ConfTestCase(unittest.TestCase):
             Person.setKey(('foo', 'bar'))
         except ValueError, exc:
             self.assertEqual(str(exc), 'key\'s column "foo" not found on list of relation columns')
-            log.info('setting key with non-existing columns failed <- it is ok!')
         else:
             self.fail('setting key with non-existing columns should fail')
 
@@ -103,13 +83,5 @@ class ConfTestCase(unittest.TestCase):
             Person.setKey(())
         except ValueError, exc:
             self.assertEqual(str(exc), 'list of key\'s columns should not be empty')
-            log.info('setting empty key failed <- it is ok!')
         else:
             self.fail('setting empty key should fail')
-
-        log.info('finished testing db relation key defining')
-
-
-
-if __name__ == '__main__':
-    unittest.main()
