@@ -1,4 +1,4 @@
-# $Id: init.py,v 1.4 2003/08/27 15:22:38 wrobell Exp $
+# $Id: init.py,v 1.5 2003/09/22 00:43:43 wrobell Exp $
 
 import unittest
 
@@ -44,7 +44,7 @@ class InitTestCase(unittest.TestCase):
 
         # init bazaar layer with connection
         b = bazaar.core.Bazaar(cls_list, app.db_module, app.dsn)
-        self.assert_(b.motor.db_conn and b.motor.dbc, 'db connection is missing')
+        self.assert_(b.motor.db_conn, 'db connection is missing')
         
         # simple query
-        b.motor.dbc.execute('begin; rollback')
+        b.motor.db_conn.cursor().execute('begin; rollback')
