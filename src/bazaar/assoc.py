@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.35 2003/10/02 16:42:23 wrobell Exp $
+# $Id: assoc.py,v 1.36 2003/10/02 17:15:19 wrobell Exp $
 """
 Association classes.
 """
@@ -481,8 +481,10 @@ class BiDirOneToOne(OneToOne):
         @param value: Referenced object.
         """
         assert obj is not None and value is not None
+
         if (obj, value) in self.ref_buf:
             del self.ref_buf[(obj, value)]
+            # obj is in ref_buf so getattr(obj, self.col.col) is None
         else:
             self.saveForeignKey(obj, None)
 
