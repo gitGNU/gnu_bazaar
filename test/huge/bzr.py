@@ -1,4 +1,4 @@
-# $Id: bzr.py,v 1.1 2003/11/26 20:48:39 wrobell Exp $
+# $Id: bzr.py,v 1.2 2003/11/27 15:20:06 wrobell Exp $
 import optparse
 import sys
 import time
@@ -36,13 +36,12 @@ if options.commit:
 else:
     finish = bzr.rollback
 
-art = Article({'name': 'apple', 'price': 2.22})
-bzr.add(art)
-ord = Order({'no': 1, 'finished': False})
-bzr.add(ord)
-
 def go(opers):
     if 'add' in opers:
+        art = Article({'name': 'apple', 'price': 2.22})
+        bzr.add(art)
+        ord = Order({'no': 1, 'finished': False})
+        bzr.add(ord)
         # add
         ts = time.time()
         pos = 0

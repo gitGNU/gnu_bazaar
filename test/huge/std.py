@@ -1,4 +1,4 @@
-# $Id: std.py,v 1.1 2003/11/26 20:48:39 wrobell Exp $
+# $Id: std.py,v 1.2 2003/11/27 15:20:06 wrobell Exp $
 
 import optparse
 import sys
@@ -7,6 +7,8 @@ import time
 opt_parser = optparse.OptionParser('%prog [options] module dsn')
 opt_parser.add_option('-a', dest = 'amount', type = 'int', default = 10**4, \
             help = 'amount of objects per class')
+opt_parser.add_option('-o', dest = 'opers', default = 'add, load, update, delete', \
+            help = 'operation to run')
 (options, args) = opt_parser.parse_args()
 
 if len(sys.argv) < 3:
@@ -38,59 +40,66 @@ query = {
 
 
 dbc = mod.connect(dsn)
-dbc.cursor().execute("insert into article (__key__, name, price) values (1, 'apple', 2.2)")
-dbc.cursor().execute("insert into \"order\" (__key__, no, finished) values (1, 1, false)")
+
+
+opers = [op.strip() for op in options.opers.split(',')]
 
 # add
-ts = time.time()
-obj_list = []
-pos = 0
-for i in range(options.amount):
-    obj = OrderItem()
-    obj.order_fkey = 1
-    pos += 1
-    obj.pos = pos
-    obj.article_fkey = 1
-    obj.quantity = 10
+if 'add' in opers:
+    dbc.cursor().execute("insert into article (__key__, name, price) values (1, 'apple', 2.2)")
+    dbc.cursor().execute("insert into \"order\" (__key__, no, finished) values (1, 1, false)")
+    ts = time.time()
+    obj_list = []
+    pos = 0
+    for i in range(options.amount):
+        obj = OrderItem()
+        obj.order_fkey = 1
+        pos += 1
+        obj.pos = pos
+        obj.article_fkey = 1
+        obj.quantity = 10
 
-    # set primary key value
-    c = dbc.cursor()
-    c.execute('select nextval(\'order_item_seq\')')
-    obj.__key__ = c.fetchone()[0]
+        # set primary key value
+        c = dbc.cursor()
+        c.execute('select nextval(\'order_item_seq\')')
+        obj.__key__ = c.fetchone()[0]
 
-    # add data into database
-    c.execute(query['add'], obj.__dict__)
-    obj_list.append(obj)
+        # add data into database
+        c.execute(query['add'], obj.__dict__)
+        obj_list.append(obj)
 
-te = time.time()
-print 'add: %0.2f' % (te - ts)
+        te = time.time()
+        print 'add: %0.2f' % (te - ts)
 
 
 # load
-ts = time.time()
+if 'load' in opers:
+    ts = time.time()
 
-obj_list = []
-c = dbc.cursor()
-c.execute(query['load'])
-row = c.fetchone() 
-while row:
-    obj = OrderItem(*row)
-    obj_list.append(obj)
+    obj_list = []
+    c = dbc.cursor()
+    c.execute(query['load'])
     row = c.fetchone() 
-te = time.time()
-print 'load: %0.2f' % (te - ts)
+    while row:
+        obj = OrderItem(*row)
+        obj_list.append(obj)
+        row = c.fetchone() 
+    te = time.time()
+    print 'load: %0.2f' % (te - ts)
 
 # update
-ts = time.time()
-for obj in obj_list:
-    dbc.cursor().execute(query['update'], (obj.pos, obj.__key__))
-te = time.time()
-print 'update: %0.2f' % (te - ts)
+if 'update' in opers:
+    ts = time.time()
+    for obj in obj_list:
+        dbc.cursor().execute(query['update'], (obj.pos, obj.__key__))
+    te = time.time()
+    print 'update: %0.2f' % (te - ts)
 
 # del
-ts = time.time()
-for obj in obj_list:
-    dbc.cursor().execute(query['del'], (obj.__key__, ))
-del obj_list
-te = time.time()
-print 'del: %0.2f' % (te - ts)
+if 'delete' in opers:
+    ts = time.time()
+    for obj in obj_list:
+        dbc.cursor().execute(query['del'], (obj.__key__, ))
+    del obj_list
+    te = time.time()
+    print 'del: %0.2f' % (te - ts)

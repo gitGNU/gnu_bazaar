@@ -30,6 +30,9 @@ analyze(bzr_file, bzr_data)
 
 print '%8s %12s %12s %12s' % ('', 'std', 'bzr', ('%'))
 for key in keys:
-    bzr_avg = average(bzr_data[key])
-    std_avg = average(std_data[key])
-    print '%7s: %12.2f %12.2f %12.2f' % (key, std_avg, bzr_avg, bzr_avg/std_avg)
+    try:
+        bzr_avg = average(bzr_data[key])
+        std_avg = average(std_data[key])
+    except: pass
+    else:
+        print '%7s: %12.2f %12.2f %12.2f' % (key, std_avg, bzr_avg, bzr_avg/std_avg)

@@ -26,23 +26,25 @@ ord = Order({'no': 1, 'finished': False})
 bzr.add(ord)
 
 items = ord.items
-for i in range(amount):
-    oi = OrderItem()
-    oi.article = art
-    oi.quantity = 10
-    oi.pos = i
-    items.append(oi)
-    bzr.add(oi)
+for j in range(0, amount, 1000):
+    max = j + 1000
+    for i in range(j, max):
+        oi = OrderItem()
+        oi.article = art
+        oi.quantity = 10
+        oi.pos = i
+        items.append(oi)
+        bzr.add(oi)
 
-# get memory amount: linux specific
-f = open('/proc/%d/status' % os.getpid())
-for l in f.readlines():
-    header, value = l.split(':')
-    if header == 'VmSize':
-        try:
-            value = int(re.search('[0-9]+', value).group(0))
-        except AttributeError, ex:
-            print 'failed with value "%s"' % value
-            sys.exit(ex)
-        break
-print '%5d %d' % (amount, value)
+    # get memory amount: linux specific
+    f = open('/proc/%d/status' % os.getpid())
+    for l in f.readlines():
+        header, value = l.split(':')
+        if header == 'VmSize':
+            try:
+                value = int(re.search('[0-9]+', value).group(0))
+            except AttributeError, ex:
+                print 'failed with value "%s"' % value
+                sys.exit(ex)
+            break
+    print '%5d %d' % (max, value)
