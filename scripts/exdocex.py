@@ -1,6 +1,10 @@
 #!/usr/bin/python
 
-# $Id: exdocex.py,v 1.2 2003/10/09 16:47:31 wrobell Exp $
+# $Id: exdocex.py,v 1.3 2003/10/09 16:51:10 wrobell Exp $
+
+# usage:
+#   exdocex.py < module.py | python -
+#
 
 import sys
 import re
