@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.6 2003/09/25 18:17:14 wrobell Exp $
+# $Id: assoc.py,v 1.7 2003/09/25 21:08:09 wrobell Exp $
 
 import app
 import btest
@@ -185,21 +185,21 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
         emp.orders.remove(ord1)
         emp.orders.remove(ord2)
 
-        self.assert_(ord not in emp.orders, \
+        self.assert_(ord in emp.orders, \
+            'appended referenced object not found in association')
+        self.assert_(ord1 not in emp.orders, \
             'removed referenced object found in association')
-        self.assert_(ord1 in emp.orders, \
-            'appended referenced object not found in association')
-        self.assert_(ord2 in emp.orders, \
-            'appended referenced object not found in association')
+        self.assert_(ord2 not  in emp.orders, \
+            'removed referenced object found in association')
 
         emp.orders.update()
 
-        self.assert_(ord not in emp.orders, \
+        self.assert_(ord in emp.orders, \
+            'appended referenced object not found in association')
+        self.assert_(ord1 not in emp.orders, \
             'removed referenced object found in association')
-        self.assert_(ord1 in emp.orders, \
-            'appended referenced object not found in association')
-        self.assert_(ord2 in emp.orders, \
-            'appended referenced object not found in association')
+        self.assert_(ord2 not  in emp.orders, \
+            'removed referenced object found in association')
 
         self.checkAsc()
 
