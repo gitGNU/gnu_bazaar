@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.37 2004/12/20 07:39:52 wrobell Exp $
+# $Id: core.py,v 1.38 2005/02/16 15:01:46 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -472,6 +472,16 @@ class Bazaar:
         """
         self.motor.closeDBConn()
         if __debug__: log.debug('database connection is closed')
+
+
+    def get(self, cls, key):
+        """
+        Get object with key.
+
+        @param cls: Application class.
+        @param key: Object key.
+        """
+        return self.brokers[cls].get(key)
 
 
     def getObjects(self, cls):
