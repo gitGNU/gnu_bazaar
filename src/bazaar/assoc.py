@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.9 2003/09/22 00:26:41 wrobell Exp $
+# $Id: assoc.py,v 1.10 2003/09/22 22:58:16 wrobell Exp $
 """
 Association classes.
 """
@@ -320,7 +320,7 @@ class ListAssociation(AssociationReferenceProxy):
         if obj:
 
             if self.reload:
-                self.loadAssociations()
+                self.load()
 
             if obj not in self.obj_lists:
                 self.obj_lists[obj] = ObjectList(obj, self)
@@ -364,15 +364,24 @@ class ListAssociation(AssociationReferenceProxy):
         return self.obj_lists[obj]
 
 
-    def reloadAssociations(self):
+    def reload(self, now):
         """
-        Reload association.
+        Request reloading association relational data.
+
+        Association data are removed from memory. If C{now} is set to true, then
+        relationship data are loaded from database immediately.
+
+        @param now: Reload relationship data immediately.
         """
-        self.obj_lists.clear()
         self.reload = True
+        self.obj_lists.clear()
+        self.appended.clear()
+        self.removed.clear()
+        if now:
+            self.load()
 
 
-    def loadAssociations(self):
+    def load(self):
         """
         Load association data from database.
         """
