@@ -1,4 +1,4 @@
-# $Id: __init__.py,v 1.10 2004/01/22 23:21:40 wrobell Exp $
+# $Id: __init__.py,v 1.11 2004/01/22 23:25:59 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -57,7 +57,7 @@ Requirements:
     - RDBMS (tested with U{PostgreSQL 7.4<http://www.postgresql.org>})
 
 This is free software distributed under U{GNU Lesser General Public
-License<http://www.fsf.org/licenses/lgpl.html>}. Download it from
+License<http://www.gnu.org/licenses/lgpl.html>}. Download it from
 U{project's page<http://savannah.nongnu.org/projects/bazaar/>}
 on U{Savannah<http://savannah.nongnu.org>}.
 
