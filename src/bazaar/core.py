@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.15 2003/09/27 00:18:50 wrobell Exp $
+# $Id: core.py,v 1.16 2003/09/28 15:56:21 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -196,9 +196,6 @@ class Bazaar:
 
         @see: L{bazaar.core.Bazaar.connectDB}
         """
-        if len(cls_list) < 1:
-            raise ValueError('list of application classes should not be empty')
-
         self.motor = bazaar.motor.Motor(db_module)
         self.brokers = {}
 
@@ -207,6 +204,7 @@ class Bazaar:
             for col in c.columns.values():
                 col.association = None
 
+        # create association objects
         for c in cls_list:
             for col in c.columns.values():
                 if col.vcls is None: continue
@@ -228,12 +226,15 @@ class Bazaar:
                     col.association = asc_cls(col)
                     setattr(cls, col.attr, col.association)
 
+                # bi-directional association
                 if col.is_bidir:
                     if col.vattr not in col.vcls.columns:
-                        assert False # fixme: MappingError
+                        raise ColumnMappingError('column of referenced class is not defined', \
+                            c, col)
 
                     vcol = col.vcls.columns[col.vattr]
-
+                    
+                    # specialized classes for bi-directional associations
                     if issubclass(asc_cls, bazaar.assoc.OneToOne):
                         asc_cls = bazaar.assoc.BiDirOneToOne
                         if vcol.is_one_to_one:
@@ -248,6 +249,7 @@ class Bazaar:
 
                     assert issubclass(asc_vcls, bazaar.assoc.AssociationReferenceProxy)
 
+                    # create association classes
                     setAssociation(c, col, asc_cls)
                     setAssociation(col.vcls, vcol, asc_vcls)
                     col.association.association = vcol.association
@@ -262,6 +264,8 @@ class Bazaar:
                     if __debug__: log.info('bi-directional association %s.%s <-> %s.%s' \
                                 % (c, col.attr, col.vcls, col.vattr))
                 else:
+                    # uni-directional associations
+                    # create association classes
                     setAssociation(c, col, asc_cls)
                     col.association.association = None
 

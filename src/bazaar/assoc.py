@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.27 2003/09/26 10:47:55 wrobell Exp $
+# $Id: assoc.py,v 1.28 2003/09/28 15:56:21 wrobell Exp $
 """
 Association classes.
 """
@@ -8,8 +8,9 @@ import itertools
 
 import logging
 
-log = logging.getLogger('bazaar.assoc')
+import bazaar.exc
 
+log = logging.getLogger('bazaar.assoc')
 
 
 def juggle(obj, value, app, rem):
@@ -202,7 +203,13 @@ class ObjectIterator(object):
 
         @param value: Referenced object.
         """
-        assert value is not None  # fixme: AssociationError
+        if value is None:
+            raise bazaar.exc.AssociationError('referenced object cannot be null', \
+                self.association, self.obj, value)
+
+        if not isinstance(value, self.association.col.vcls):
+            raise bazaar.exc.AssociationError('referenced object\'s class mismatch', obj, value)
+
         self.association.append(self.obj, value)
 
 
@@ -221,7 +228,13 @@ class ObjectIterator(object):
 
         @param value: Referenced object.
         """
-        assert value is not None  # fixme: AssociationError
+        if value is None:
+            raise bazaar.exc.AssociationError('referenced object cannot be null', \
+                self.association, self.obj, value)
+
+        if not isinstance(value, self.association.col.vcls):
+            raise bazaar.exc.AssociationError('referenced object\'s class mismatch', obj, value)
+
         self.association.remove(self.obj, value)
 
 
@@ -392,8 +405,11 @@ class OneToOne(AssociationReferenceProxy):
         @param obj: Application object.
         @param value: Referenced object.
         """
-        assert value is None or isinstance(value, self.col.vcls), '%s != %s' % (value.__class__, self.col.vcls) # fixme: AssociationError
         assert obj is not None
+
+        if not (value is None or isinstance(value, self.col.vcls)):
+            raise bazaar.exc.AssociationError('referenced object\'s class mismatch', obj, value)
+
         if value is None:
             self.saveForeignKey(obj, None)
         else:
@@ -691,8 +707,8 @@ class List(AssociationReferenceProxy):
         @param obj: Application object.
         @param value: Referenced object.
         """
-        self.save(obj, value)
         juggle(obj, value, self.appended, self.removed)
+        self.save(obj, value)
 
 
     def remove(self, obj, value):

@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.19 2003/09/27 00:18:50 wrobell Exp $
+# $Id: conf.py,v 1.20 2003/09/28 15:56:21 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -31,6 +31,7 @@ Of course, both ideas can be mixed::
 import logging
 
 import bazaar.core
+import bazaar.exc
 
 log = logging.getLogger('bazaar.conf')
 
@@ -121,7 +122,7 @@ class Persistence(type):
     @ivar columns: List of application class attribute descriptions.
     """
 
-    def __new__(self, name, bases = (bazaar.core.PersistentObject, ), data = None, relation = ''):
+    def __new__(self, name, bases = (bazaar.core.PersistentObject, ), data = None, relation = None):
         """
         Create application class.
 
@@ -130,8 +131,9 @@ class Persistence(type):
         if data is None:
             data = {}
 
-        if not relation:
+        if relation is None:
             relation = name
+            if __debug__: log.debug('setting relation name to class name')
 
         if 'relation' not in data:
             data['relation'] = relation
@@ -144,7 +146,8 @@ class Persistence(type):
         if __debug__:
             log.debug('new class "%s" for relation "%s"' % (c.__name__, data['relation']))
 
-        assert c.relation, 'class relation should not be empty' # fixme: MappingError
+        if not c.relation:
+            raise bazaar.exc.RelationMappingError('wrong relation name', c)
 
         return c
 
@@ -165,10 +168,6 @@ class Persistence(type):
 
         @see: bazaar.conf.Column
         """
-        if attr in self.columns:
-            raise ValueError('column "%s" is already defined in class "%s"' % (attr, self.__name__))
-            # fixme: MappingError
-
         col = Column(attr, col)
         col.vcls = vcls
         col.link = link
@@ -176,6 +175,12 @@ class Persistence(type):
         col.vattr = vattr
 
         self.delete_values = False
+
+        if not attr:
+            raise ColumnMappingError('wrong column name', self, col)
+
+        if attr in self.columns:
+            raise bazaar.exc.ColumnMappingError('column is defined', self, col)
 
         self.columns[col.attr] = col
 

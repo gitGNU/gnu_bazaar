@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.10 2003/09/24 16:44:25 wrobell Exp $
+# $Id: conf.py,v 1.11 2003/09/28 15:56:21 wrobell Exp $
 
 import unittest
 
@@ -40,13 +40,7 @@ class ConfTestCase(unittest.TestCase):
 
         Person = bazaar.conf.Persistence('Person', relation = 'person')
         Person.addColumn('name')
-        try:
-            Person.addColumn('name')
-        except ValueError, exc:
-            self.assertEqual(str(exc), 'column "name" is already defined in class "Person"')
-        else:
-            self.fail('adding the column twice should fail')
-
+        self.assertRaises(bazaar.exc.ColumnMappingError, Person.addColumn, 'name')
         Person.addColumn('surname')
         Person.addColumn('birthdate')
 

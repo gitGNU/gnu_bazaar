@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.8 2003/09/26 16:03:48 wrobell Exp $
+# $Id: assoc.py,v 1.9 2003/09/28 15:56:21 wrobell Exp $
 
 import app
 import btest
@@ -174,6 +174,10 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
 
         self.assert_(ord not in emp.orders, \
             'removed referenced object found in association')
+
+        # fixme: 
+        #self.assertRaises(KeyError, emp.orders.__delitem__, ord)
+
         self.assert_(ord1 in emp.orders, \
             'appended referenced object not found in association')
         self.assert_(ord2 in emp.orders, \

@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.16 2003/09/25 16:26:08 wrobell Exp $
+# $Id: motor.py,v 1.17 2003/09/28 15:56:21 wrobell Exp $
 """
 Data convertor and database access objects.
 """
@@ -67,7 +67,6 @@ class Convertor:
             asc = col.association
             self.queries[asc] = {}
 
-#            if col.is_many_to_many:
             self.asc_cols[asc] = (col.col, col.vcol)
             relation = col.link
 
@@ -78,15 +77,6 @@ class Convertor:
                 )
             self.queries[asc][self.delPair] = 'delete from "%s" where %s' % \
                 (relation, ' and '.join(['"%s" = %%s' % c for c in self.asc_cols[asc]]))
-
-#            elif col.is_one_to_many:
-#                self.asc_cols[asc] = (col.vcol, '__key__')
-#                relation = col.vcls.relation
-#                self.queries[asc][self.addPair] = \
-#                    'update "%s" set "%s" = %%(%s)s where __key__ = %%(__key__)s' \
-#                    % (relation, col.vcol, col.vcol)
-#            else:
-#                assert False # fixme: throw MappingError exception
 
             self.queries[asc][self.getPair] = 'select %s from "%s"' % \
                 (', '.join(['"%s"' % c for c in self.asc_cols[asc]]), relation)
@@ -108,12 +98,8 @@ class Convertor:
         Load objects from database.
         """
         for data in self.motor.getData(self.queries[self.getObjects], ['__key__'] + self.columns):
-#            for col in self.one_to_one_associations:
-#                data[col.name] = data[col.afkey]
-
-            obj = self.cls(data)      # create object instance
+            obj = self.cls(data)          # create object instance
             obj.__key__ = data['__key__'] # and set object key
-
             yield obj
 
 
