@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.7 2003/09/21 00:41:48 wrobell Exp $
+# $Id: assoc.py,v 1.8 2003/09/21 03:07:22 wrobell Exp $
 """
 Association classes.
 """
@@ -353,7 +353,9 @@ class ListAssociation(AssociationReferenceProxy):
         @param value: Referenced object.
         """
         if obj is not None:                  # None cannot have list of referenced objects
-            if obj not in self.obj_lists:    # if list of referenced objects does not exist, then create it
+
+            if obj not in self.obj_lists:    # if list of referenced objects does not exist,
+                                             # then create it
                 self.obj_lists[obj] = ObjectList(obj, self)
 
             self.obj_lists[obj].append(value)
@@ -422,20 +424,40 @@ class OneToMany(ListAssociation):
 
 class ObjectList(list):
     def __init__(self, obj, association):
+        list.__init__(self)
         self.obj = obj
         self.association = association
 
+
     def __getitem__(self, item):
-        return self.association[(self.obj, item)]
+        return self.get(item)
+
 
     def __setitem__(self, index, value):
-        self.association.add(self.obj, index, value)
+        self.set(index, value)
 
 
     def append(self, value):
         index = len(self)
         list.append(self, None)
+        self.set(index, value)
+
+
+    def __iter__(self):
+        for i in range(len(self)):
+            yield self.get(i)
+
+
+    def __str__(self):
+        return str([val for val in self])
+
+
+    def set(self, index, value):
         self.association.add(self.obj, index, value)
+
+
+    def get(self, index):
+        return self.association[(self.obj, index)]
 
 
     def update(self):
