@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.43 2003/11/26 02:34:31 wrobell Exp $
+# $Id: assoc.py,v 1.44 2003/11/26 13:36:21 wrobell Exp $
 """
 Association classes.
 """
@@ -587,8 +587,10 @@ class List(AssociationReferenceProxy):
                 yield self.vbroker.get(vkey)
         
 
-        assert None not in getObjects(), '%s.%s -> %s.%s (obj: %s) iterated objects: %s' % \
-            (self.broker.cls, self.col.attr, self.col.vcls, self.col.col, obj, list(getObjects()))
+        assert None not in getObjects(), \
+            '%s.%s -> %s.%s (obj: %s, key: %s) iterated objects: %s' % \
+            (self.broker.cls, self.col.attr, self.col.vcls, self.col.col, \
+                obj, obj.__key__, list(getObjects()))
 
         if obj in self.ref_buf:
             # return all objects
