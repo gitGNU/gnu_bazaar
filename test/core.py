@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.5 2003/08/09 03:21:15 wrobell Exp $
+# $Id: core.py,v 1.6 2003/08/27 13:28:26 wrobell Exp $
 
 import unittest
 import logging
@@ -11,24 +11,20 @@ import btest
 log = logging.getLogger('bazaar.test.core')
 
 """
-<s>Test object loading and reloading from database.</s>
+Test object loading and reloading from database.
 """
 
 class ObjectLoadTestCase(btest.DBBazaarTestCase):
     """
-    <s>Test object loading and reloading from database.</s>
+    Test object loading and reloading from database.
 
-    <attr name = 'params'>
-        Object checking parameters (class, relation, relation columns, test
+    @ivar params: Object checking parameters (class, relation, relation columns, test
         function).
-    </attr>
     """
     def setUp(self):
         """
-        <s>
-            Create Bazaar layer instance and connect with database, then
-            prepare object checking parameters.
-        </s>
+        Create Bazaar layer instance and connect with database, then
+        prepare object checking parameters.
         """
         btest.DBBazaarTestCase.setUp(self)
         self.params = [
@@ -61,16 +57,13 @@ class ObjectLoadTestCase(btest.DBBazaarTestCase):
 
     def checkObjects(self, amount, columns, relation, test):
         """
-        <s>Check all application objects data integrity.</s>
+        Check all application objects data integrity.
 
-        <attr name = 'amount'>Amount of objects.</attr>
-        <attr name = 'columns'>List of relation columns.</attr>
-        <attr name = 'relation'>Relation name.</attr>
-        <attr name = 'test'>
-            Test function. Tests if for given row the object exists and the
-            object data are integral with row data (returns true
-            on success).
-        </attr>
+        @param amount: Amount of objects.
+        @param columns: List of relation columns.
+        @param relation: Relation name.
+        @param test: Test function. Tests if for given row the object exists and the
+            object data are integral with row data (returns true on success).
         """
         dbc = self.bazaar.motor.dbc
         query = 'select %s from "%s"' % (', '.join(['"%s"' % col for col in columns]), relation)
@@ -87,7 +80,7 @@ class ObjectLoadTestCase(btest.DBBazaarTestCase):
 
     def testObjectLoading(self):
         """
-        <s>Test loaded application objects data integrity.</s>
+        Test loaded application objects data integrity.
         """
 
         log.info('begin test of loading application objects data integrity')
@@ -102,7 +95,7 @@ class ObjectLoadTestCase(btest.DBBazaarTestCase):
 
     def testObjectReload(self):
         """
-        <s>Test application objects reloading.</s>
+        Test application objects reloading.
         """
         log.info('begin test of application objects reloading')
 
@@ -131,7 +124,7 @@ class ObjectLoadTestCase(btest.DBBazaarTestCase):
 
     def testObjectReloadNow(self):
         """
-        <s>Test application objects reloading.</s>
+        Test application objects reloading.
         """
         log.info('begin test of application objects immediate reloading')
 
@@ -163,7 +156,7 @@ class ObjectLoadTestCase(btest.DBBazaarTestCase):
 
 class ModifyObjectTestCase(btest.DBBazaarTestCase):
     """
-    <s>Test application objects modification.</s>
+    Test application objects modification.
     """
     def checkOrderObject(self, no, order):
         self.bazaar.motor.dbc.execute('select "no", "finished" from "order" where "no" = %(no)s'
@@ -200,7 +193,7 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
 
     def testObjectAdding(self):
         """
-        <s>Test adding objects into database.</s>
+        Test adding objects into database.
         """
         log.info('begin test of application objects adding')
 
@@ -262,7 +255,7 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
 
     def testObjectUpdating(self):
         """
-        <s>Test updating objects in database.</s>
+        Test updating objects in database.
         """
         log.info('begin test of application objects updating')
 
@@ -303,7 +296,7 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
 
     def testObjectDeleting(self):
         """
-        <s>Test updating objects in database.</s>
+        Test updating objects in database.
         """
         log.info('begin test of application objects deleting')
 
@@ -333,11 +326,11 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
 
 class TransactionsTestCase(btest.DBBazaarTestCase):
     """
-    <s>Test database transaction commiting and rollbacking.</s>
+    Test database transaction commiting and rollbacking.
     """
     def testCommit(self):
         """
-        <s>Test database transaction commit.</s>
+        Test database transaction commit.
         """
         self.bazaar.getObjects(app.Employee)
         emp = self.bazaar.brokers[app.Employee].cache[('n1001', 's1001')]
@@ -357,7 +350,7 @@ class TransactionsTestCase(btest.DBBazaarTestCase):
 
     def testRollback(self):
         """
-        <s>Test database transaction rollback.</s>
+        Test database transaction rollback.
         """
         self.bazaar.getObjects(app.Employee)
         emp = self.bazaar.brokers[app.Employee].cache[('n1001', 's1001')]

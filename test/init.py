@@ -1,4 +1,4 @@
-# $Id: init.py,v 1.2 2003/07/17 23:46:38 wrobell Exp $
+# $Id: init.py,v 1.3 2003/08/27 13:28:26 wrobell Exp $
 
 import unittest
 import logging
@@ -10,19 +10,19 @@ import btest
 import app
 
 """
-<s>Test layer initialization.</s>
+Test layer initialization.
 """
 
 log = logging.getLogger('bazaar.test.connection')
 
 class InitTestCase(unittest.TestCase):
     """
-    <s>Test layer initialization.</s>
+    Test layer initialization.
     """
 
     def testBazaarInit(self):
         """
-        <s>Test layer initialization.</s>
+        Test layer initialization.
         """
         log.info('begin test of Bazaar layer initialization')
 
@@ -45,7 +45,7 @@ class InitTestCase(unittest.TestCase):
 
     def testConnection(self):
         """
-        <s>Test layer initialization and database connection.</s>
+        Test layer initialization and database connection.
         """
         log.info('begin test of Bazaar layer initialization with connection')
 

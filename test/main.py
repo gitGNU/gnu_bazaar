@@ -1,15 +1,14 @@
-# $Id: main.py,v 1.4 2003/08/27 13:10:51 wrobell Exp $
+# $Id: main.py,v 1.5 2003/08/27 13:28:26 wrobell Exp $
 
 import unittest
 import logging
 import logging.config
 
 """
-<s>Run all bazaar test modules.</s>
-<attr name = 'db_module'>Python Database API module.</attr>
-<attr name = 'dsn'>
-    Database source name (as specified in Python DB API Specification).
-</attr>
+Bazaar module test suites runner.
+
+@var db_module: Python Database API module.
+@var dsn: Database source name (as specified in Python DB API Specification).
 """
 
 logging.config.fileConfig('log.ini')

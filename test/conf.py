@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.4 2003/07/22 15:11:26 wrobell Exp $
+# $Id: conf.py,v 1.5 2003/08/27 13:28:26 wrobell Exp $
 
 import unittest
 import logging
@@ -6,19 +6,19 @@ import logging
 import bazaar.conf
 
 """
-<s>Test mapping application classes to database relations.</s>
+Test mapping application classes to database relations.
 """
 
 log = logging.getLogger('bazaar.test.conf')
 
 class ConfTestCase(unittest.TestCase):
     """
-    <s>Test class defining.</s>
+    Test class defining.
     """
 
     def testClassDef(self):
         """
-        <s>Test application class to database relation mapping.</s>
+        Test application class to database relation mapping.
         """
 
         log.info('begin testing class defining')
@@ -41,7 +41,7 @@ class ConfTestCase(unittest.TestCase):
 
     def testColumnDef(self):
         """
-        <s>Test database relation columns defining.</s>
+        Test database relation columns defining.
         """
 
         log.info('begin testing db relation columns defining')
@@ -69,7 +69,7 @@ class ConfTestCase(unittest.TestCase):
 
     def testKeyDef(self):
         """
-        <s>Test database relation key defining.</s>
+        Test database relation key defining.
         """
         log.info('begin testing db relation key defining')
 

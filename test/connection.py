@@ -1,4 +1,4 @@
-# $Id: connection.py,v 1.1 2003/07/10 23:06:07 wrobell Exp $
+# $Id: connection.py,v 1.2 2003/08/27 13:28:26 wrobell Exp $
 
 import unittest
 import logging
@@ -9,18 +9,18 @@ import app
 import btest
 
 """
-<s>Test layer database connection management.</s>
+Test layer database connection management.
 """
 
 log = logging.getLogger('bazaar.test.connection')
 
 class ConnTestCase(btest.BazaarTestCase):
     """
-    <s>Test layer database connection managment.</s>
+    Test layer database connection managment.
     """
     def testConnection(self):
         """
-        <s>Test database connection initialization.</s>
+        Test database connection initialization.
         """
         log.info('begin test of database connection initialization')
 
@@ -37,7 +37,7 @@ class ConnTestCase(btest.BazaarTestCase):
 
     def testConnectionClosing(self):
         """
-        <s>Test database connection closing.</s>
+        Test database connection closing.
         """
         log.info('begin test of database connection closing')
 
