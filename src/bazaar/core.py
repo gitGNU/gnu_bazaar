@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.26 2003/11/25 16:27:48 wrobell Exp $
+# $Id: core.py,v 1.27 2003/11/26 13:35:14 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -132,20 +132,17 @@ class Broker:
 
     def get(self, key):
         """
-        Get application object of given key.
+        Get application object.
 
-        Objects is returned from cache.
+        Object is returned from cache.
 
-        @param key: key of object to load
+        @param key: object's primary key value
 
-        @return: Object with primary key value equal to C{key}
+        @return: Object with primary key value equal to C{key}.
 
         @see: L{bazaar.cache}
         """
-        if key is None:
-            return None
-        else:
-            return self.cache[key]
+        return self.cache[key]
 
 
     def add(self, obj):
