@@ -1,4 +1,4 @@
-# $Id: btest.py,v 1.17 2004/01/22 23:21:40 wrobell Exp $
+# $Id: btest.py,v 1.18 2004/02/02 18:01:45 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -185,6 +185,14 @@ class DBBazaarTestCase(BazaarTestCase):
         dbc.execute(query)
         db_data = dbc.fetchall()
         db_data.sort()
+        if db_data != mem_data:
+            print db_data
+            print mem_data
+            import sets
+            print sets.Set(db_data) - sets.Set(mem_data)
+            print sets.Set(mem_data) - sets.Set(db_data)
+            print app.Employee.orders.cache
+            print 'e:', app.Employee.orders.cache.empty
         self.assertEqual(db_data, mem_data, 'database data are different than memory data')
 
 
