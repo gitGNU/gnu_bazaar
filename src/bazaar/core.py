@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.20 2003/11/07 17:22:53 wrobell Exp $
+# $Id: core.py,v 1.21 2003/11/22 14:27:17 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -114,6 +114,17 @@ class Broker:
         self.cache.clear()
         if now:
             self.loadObjects()
+
+
+    def find(self, query, dict = None, field = 0):
+        """
+        Find objects in database.
+
+        @see: L{bazaar.core.Bazaar.find}
+        """
+        for key in self.convertor.find(query, dict, field):
+            # fixme: yield self.cache[key]
+            yield self.get(key)
 
 
     def get(self, key):
@@ -335,6 +346,13 @@ class Bazaar:
         @param now: Reload objects immediately.
         """
         self.brokers[cls].reloadObjects(now)
+
+
+    def find(self, cls, query, param = None, field = 0):
+        """
+        Find objects in database.
+        """ # fixme: finish description
+        return self.brokers[cls].find(query, param, field)
 
 
     def add(self, obj):
