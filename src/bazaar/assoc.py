@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.26 2003/09/25 20:58:20 wrobell Exp $
+# $Id: assoc.py,v 1.27 2003/09/26 10:47:55 wrobell Exp $
 """
 Association classes.
 """
@@ -48,7 +48,7 @@ class ReferenceBuffer(dict):
     objects as values.
     @see: l{bazaar.assoc.ListReferenceBuffer}
     """
-    def __contains__(self, (obj, value)):
+    def __contains__(self, item):
         """
         Check if application object is stored in reference buffer.
 
@@ -57,7 +57,11 @@ class ReferenceBuffer(dict):
 
         @return: Returns true if C{obj} is in reference buffer.
         """
-        return super(ReferenceBuffer, self).__contains__(obj)
+        if isinstance(item, tuple):
+            return super(ReferenceBuffer, self).__contains__(item[0])
+        else:
+            return super(ReferenceBuffer, self).__contains__(item)
+
 
 
     def __delitem__(self, (obj, value)):
@@ -93,15 +97,15 @@ class ListReferenceBuffer(ReferenceBuffer):
 
         @param item: Application object or pair of application object and referenced object.
         """
-        ref_buf = super(ListReferenceBuffer, self)
+        ref_buf = super(ReferenceBuffer, self) # we check in dictionary not in ReferenceBuffer
         if isinstance(item, tuple):
             obj, value = item
             if value is None:
-                return ref_buf.__contains__(item)
+                return ref_buf.__contains__(obj)
             else:
-                return ref_buf.__contains__(item) and item[1] in self[item[0]]
+                return ref_buf.__contains__(obj) and value in self[obj]
         else:
-            return ref_buf.__contains__((item, None))
+            return ref_buf.__contains__(item)
 
 
     def __setitem__(self, obj, value):
@@ -313,26 +317,18 @@ class AssociationReferenceProxy(object):
         @see: L{saveForeignKey} L{bazaar.assoc.ReferenceBuffer}
             L{bazaar.assoc.ListReferenceBuffer}
         """
+        assert obj is not None and value is not None
+
         # remove entry from reference buffer if it exists
         if (obj, value) in self.ref_buf:
             del self.ref_buf[obj, value]
 
-        # if value is NULL/None or value's primary key is NULL/None
-        # then set referenced object's column foreign key value to None
-        vkey = None
-
-        if value is not None:
-            if value.__key__ is None:
-                # refernced object's primary key is not defined,
-                # store object in reference buffer
-                self.ref_buf[obj] = value
-            else:
-                # set referenced object's column foreign key value
-                # to referenced object's primary key
-                vkey = value.__key__
-
-        # store foreign key value
-        self.saveForeignKey(obj, vkey)
+        if value.__key__ is None:
+            # refernced object's primary key is not defined,
+            # store object in reference buffer
+            self.ref_buf[obj] = value
+        else:
+            self.saveForeignKey(obj, value.__key__)
 
 
     def saveForeignKey(self, obj, vkey):
@@ -398,7 +394,10 @@ class OneToOne(AssociationReferenceProxy):
         """
         assert value is None or isinstance(value, self.col.vcls), '%s != %s' % (value.__class__, self.col.vcls) # fixme: AssociationError
         assert obj is not None
-        self.save(obj, value)
+        if value is None:
+            self.saveForeignKey(obj, None)
+        else:
+            self.save(obj, value)
 
 
 
