@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.14 2003/09/22 00:21:05 wrobell Exp $
+# $Id: motor.py,v 1.15 2003/09/25 14:10:49 wrobell Exp $
 """
 Data convertor and database access objects.
 """
@@ -27,13 +27,13 @@ class Convertor:
         cls_columns = self.cls.columns.values()
         self.columns = [col.col for col in cls_columns if col.association is None]
 
-        self.one_to_one_associations = [col for col in cls_columns if col.is_one_to_one]
-        for col in self.one_to_one_associations:
+        self.oto_ascs = [col for col in cls_columns if col.is_one_to_one]
+        for col in self.oto_ascs:
             self.columns.append(col.col)
 
         if __debug__: log.debug('class %s columns: %s' % (self.cls, self.columns))
 
-        self.many_to_many_associations = [col for col in cls_columns if col.is_many]
+        self.mtm_ascs = [col for col in cls_columns if col.is_many_to_many]
 
         #
         # prepare queries
@@ -59,41 +59,48 @@ class Convertor:
         self.queries[self.delete] = 'delete from "%s" where __key__ = %%s' % self.cls.relation
         if __debug__: log.debug('delete object query: "%s"' % self.queries[self.delete])
 
-        self.association_columns = {}
-        for col in self.many_to_many_associations:
+        self.asc_cols = {}
+        for col in self.mtm_ascs:
 
             assert col.association.col.vcls == col.vcls
 
-            self.queries[col] = {}
+            asc = col.association
+            self.queries[asc] = {}
 
-            if col.is_many_to_many:
-                self.association_columns[col] = (col.col, col.vcol)
-                relation = col.link
+#            if col.is_many_to_many:
+            self.asc_cols[asc] = (col.col, col.vcol)
+            relation = col.link
 
-                self.queries[col][self.addPair] = 'insert into "%s" (%s) values(%s)' % \
-                    (relation,
-                     ', '.join(['"%s"' % c for c in self.association_columns[col]]),
-                     ', '.join(['%%(%s)s' % c for c in self.association_columns[col]])
-                    )
+            self.queries[asc][self.addPair] = 'insert into "%s" (%s) values(%s)' % \
+                (relation,
+                 ', '.join(['"%s"' % c for c in self.asc_cols[asc]]),
+                 ', '.join(('%s', ) * len(self.asc_cols[asc]))
+                )
+            self.queries[asc][self.delPair] = 'delete from "%s" where %s' % \
+                (relation, ' and '.join(['%s = %%s' % c for c in self.asc_cols]))
 
-            elif col.is_one_to_many:
-                self.association_columns[col] = (col.vcol, '__key__')
-                relation = col.vcls.relation
-                self.queries[col][self.addPair] = \
-                    'update "%s" set %s = %%(%s)s where __key__ = %%(__key__)s' \
-                    % (relation, col.vcol, col.vcol)
-            else:
-                assert False # fixme: throw MappingError exception
+#            elif col.is_one_to_many:
+#                self.asc_cols[asc] = (col.vcol, '__key__')
+#                relation = col.vcls.relation
+#                self.queries[asc][self.addPair] = \
+#                    'update "%s" set "%s" = %%(%s)s where __key__ = %%(__key__)s' \
+#                    % (relation, col.vcol, col.vcol)
+#            else:
+#                assert False # fixme: throw MappingError exception
 
-            self.queries[col][self.getPair] = 'select %s from "%s"' % \
-                (', '.join(['"%s"' % c for c in self.association_columns[col]]), relation)
+            self.queries[asc][self.getPair] = 'select %s from "%s"' % \
+                (', '.join(['"%s"' % c for c in self.asc_cols[asc]]), relation)
 
             if __debug__:
                 log.debug('association load query: "%s"' % \
-                        self.queries[col][self.getPair])
+                        self.queries[asc][self.getPair])
             if __debug__:
                 log.debug('association insert query: "%s"' % \
-                        self.queries[col][self.addPair])
+                        self.queries[asc][self.addPair])
+
+            if __debug__:
+                log.debug('association delete query: "%s"' % \
+                        self.queries[asc][self.delPair])
 
 
     def getObjects(self):
@@ -122,7 +129,7 @@ class Convertor:
         data = obj.__dict__.copy()
 
         # get one-to-one association foreign key values
-        for col in self.one_to_one_associations:
+        for col in self.oto_ascs:
             value = getattr(obj, col.attr)
             if value is None:
                 data[col.col] = None
@@ -131,21 +138,31 @@ class Convertor:
         return data
 
 
-    def addPair(self, col, okey, vkey):
+    def addPair(self, asc, pairs):
         """
         fixme
         """
-        data = dict(zip(self.association_columns[col], (okey, vkey))) #fixme
-        self.motor.add(self.queries[col][self.addPair], data)
+        if __debug__: log.debug('association %s.%s->%s: adding pairs' % (asc.broker.cls, asc.col.attr, asc.col.vcls))
+        self.motor.executeMany(self.queries[asc][self.addPair], pairs)
+        if __debug__: log.debug('association %s.%s->%s: pairs added' % (asc.broker.cls, asc.col.attr, asc.col.vcls))
 
 
-    def getPair(self, col):
+    def delPair(self, asc, pairs):
         """
         fixme
         """
-        okey, vkey = self.association_columns[col] # fixme
-        for data in self.motor.getData(self.queries[col][self.getPair], \
-                self.association_columns[col]):
+        if __debug__: log.debug('association %s.%s->%s: deleting pairs' % (asc.broker.cls, asc.col.attr, asc.col.vcls))
+        self.motor.executeMany(self.queries[asc][self.delPair], pairs)
+        if __debug__: log.debug('association %s.%s->%s: pairs deleted' % (asc.broker.cls, asc.col.attr, asc.col.vcls))
+
+
+    def getPair(self, asc):
+        """
+        fixme
+        """
+        okey, vkey = self.asc_cols[asc] # fixme
+        for data in self.motor.getData(self.queries[asc][self.getPair], \
+                self.asc_cols[asc]):
             yield data[okey], data[vkey]
 
 
@@ -291,6 +308,16 @@ class Motor:
         dbc = self.db_conn.cursor()
         dbc.execute(query, (key, ))
         if __debug__: log.debug('query "%s", key = %s: executed' % (query, key))
+
+
+    def executeMany(self, query, iterator):
+        """
+        fixme
+        """
+        if __debug__: log.debug('query "%s": executing' % query)
+        dbc = self.db_conn.cursor()
+        dbc.executemany(query, iterator)
+        if __debug__: log.debug('query "%s": executed' % query)
 
 
     def commit(self):

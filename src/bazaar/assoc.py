@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.20 2003/09/25 13:10:18 wrobell Exp $
+# $Id: assoc.py,v 1.21 2003/09/25 14:10:48 wrobell Exp $
 """
 Association classes.
 """
@@ -616,7 +616,7 @@ class List(AssociationReferenceProxy):
 
         assert len(self.value_keys) == 0 and len(self.appended) ==0 and len(self.removed) == 0
 
-        for okey, vkey in self.broker.convertor.getPair(self.col):
+        for okey, vkey in self.broker.convertor.getPair(self):
             obj = self.broker.get(okey)
             if obj is not None:
                 self.getValueKeys(obj).add(vkey)
@@ -658,13 +658,14 @@ class List(AssociationReferenceProxy):
         """
         okey = obj.__key__
 
-        def equalize(set, method):
+        def getPairs(set):
             if obj in set:
                 for value in set[obj]:
-                    method(self.col, okey, value.__key__)
-                set.clear()
-#        equalize(sel.removed, self.broker.convertor.delAssociationPair)
-        equalize(self.appended, self.broker.convertor.addPair)
+                    yield (okey, value.__key__)
+                set[obj].clear()
+
+        self.broker.convertor.delPair(self, getPairs(self.removed))
+        self.broker.convertor.addPair(self, getPairs(self.appended))
 
 
     def append(self, obj, value):
@@ -716,7 +717,7 @@ class List(AssociationReferenceProxy):
 
         @return: True if object is referenced by application object.
         """
-        assert obj.__class__ == self.broker.cls)
+        assert obj.__class__ == self.broker.cls
         assert value is not None and isinstance(value, self.col.vcls)
 
         if obj in self.value_keys:
