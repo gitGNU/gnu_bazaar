@@ -8,7 +8,7 @@ fi
 MAX=$1
 
 for i in $(seq 1000 1000 $MAX); do
-    ./scale.py psycopg 'dbname = ord port = 5433' $i
+    python -O scale.py psycopg 'dbname = ord port = 5433' $i
 done | tee scale.out
 
 gnuplot <<END

@@ -2,7 +2,6 @@
 
 import sys
 import time
-import psycopg
 
 import bazaar.core
 
