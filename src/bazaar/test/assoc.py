@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.1 2004/05/21 18:12:38 wrobell Exp $
+# $Id: assoc.py,v 1.2 2004/05/22 23:29:11 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -110,7 +110,7 @@ class ManyToManyAssociationTestCase(bazaar.test.bzr.TestCase):
     def testAppending(self):
         """Test appending objects to many-to-many association
         """
-        emp = self.bazaar.getObjects(bazaar.test.app.Employee)[0]
+        emp = list(self.bazaar.getObjects(bazaar.test.app.Employee))[0]
 
         ord1 = bazaar.test.app.Order()
         ord1.no = 1002
@@ -278,8 +278,8 @@ class OneToManyAssociationTestCase(bazaar.test.bzr.TestCase):
     def testAppending(self):
         """Test appending objects to one-to-many association
         """
-        ord = self.bazaar.getObjects(bazaar.test.app.Order)[0]
-        art = self.bazaar.getObjects(bazaar.test.app.Article)[0]
+        ord = list(self.bazaar.getObjects(bazaar.test.app.Order))[0]
+        art = list(self.bazaar.getObjects(bazaar.test.app.Article))[0]
 
         oi1 = bazaar.test.app.OrderItem()
         oi1.pos = 1000
@@ -366,7 +366,7 @@ class OneToManyAssociationTestCase(bazaar.test.bzr.TestCase):
             if len(ord.items) > 0:
                 break
 
-        art = self.bazaar.getObjects(bazaar.test.app.Article)[0]
+        art = list(self.bazaar.getObjects(bazaar.test.app.Article))[0]
 
         oi1 = bazaar.test.app.OrderItem()
         oi1.pos = 1000
@@ -447,7 +447,7 @@ class OneToManyAssociationTestCase(bazaar.test.bzr.TestCase):
 
         self.assertEqual(len(ord.items), 0)
 
-        art = self.bazaar.getObjects(bazaar.test.app.Article)[0]
+        art = list(self.bazaar.getObjects(bazaar.test.app.Article))[0]
 
         oi1 = bazaar.test.app.OrderItem()
         oi1.pos = 1000

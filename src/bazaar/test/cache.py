@@ -1,4 +1,4 @@
-# $Id: cache.py,v 1.2 2004/05/22 21:17:59 wrobell Exp $
+# $Id: cache.py,v 1.3 2004/05/22 23:29:11 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -33,7 +33,7 @@ import bazaar.test.app
 Test object and association data cache.
 """
 
-class LazyTestCase(bazaar.test.TestCase):
+class LazyTestCase(bazaar.test.bzr.TestCase):
     """
     Test lazy cache.
     """
@@ -66,7 +66,7 @@ class LazyTestCase(bazaar.test.TestCase):
         self.assertEqual(len(abroker.cache), 0)
 
         # test objects integrity
-        self.checkObjects(bazaar.test.app.Article, len(self.bazaar.getObjects(bazaar.test.app.Article)))
+        self.checkObjects(bazaar.test.app.Article, len(list(self.bazaar.getObjects(bazaar.test.app.Article))))
 
 
     def testAscLoading(self):
@@ -83,7 +83,7 @@ class LazyTestCase(bazaar.test.TestCase):
         self.bazaar.connectDB()
         self.config.remove_section('bazaar.asc')
 
-        order = self.bazaar.getObjects(bazaar.test.app.Order)[0]
+        order = list(self.bazaar.getObjects(bazaar.test.app.Order))[0]
         oikeys = [oi.__key__ for oi in order.items]
         oikeys.sort()
 
@@ -94,7 +94,7 @@ class LazyTestCase(bazaar.test.TestCase):
 
         self.assertEqual(oikeys, dbkeys)
 
-        art = self.bazaar.getObjects(bazaar.test.app.Article)[0]
+        art = list(self.bazaar.getObjects(bazaar.test.app.Article))[0]
                                                                                                                                
         oi1 = bazaar.test.app.OrderItem()
         oi1.pos = 1000
@@ -116,7 +116,7 @@ class LazyTestCase(bazaar.test.TestCase):
         self.assertEqual(len(bazaar.test.app.Order.items.cache), 0)
 
 
-        emp = self.bazaar.getObjects(bazaar.test.app.Employee)[0]
+        emp = list(self.bazaar.getObjects(bazaar.test.app.Employee))[0]
         ordkeys = [ord.__key__ for ord in emp.orders]
         ordkeys.sort()
 
@@ -127,7 +127,7 @@ class LazyTestCase(bazaar.test.TestCase):
 
         self.assertEqual(ordkeys, dbkeys)
 
-        art = self.bazaar.getObjects(bazaar.test.app.Article)[0]
+        art = list(self.bazaar.getObjects(bazaar.test.app.Article))[0]
                                                                                                                                
         ord1 = bazaar.test.app.Order()
         ord1.no = 1000
@@ -164,7 +164,7 @@ class FullTestCase(bazaar.test.bzr.TestCase):
 
     def testAscLoading(self):
         """Test association full cache"""
-        order = self.bazaar.getObjects(bazaar.test.app.Order)[0]
+        order = list(self.bazaar.getObjects(bazaar.test.app.Order))[0]
         self.checkOrdAsc()
 
 

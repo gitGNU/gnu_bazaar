@@ -1,4 +1,4 @@
-# $Id: cache.py,v 1.14 2004/03/29 23:14:15 wrobell Exp $
+# $Id: cache.py,v 1.15 2004/05/22 23:29:09 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -306,9 +306,24 @@ class LazyObject(Lazy, weakref.WeakValueDictionary):
         Load referenced object with primary key value C{key}.
         """
         assert self.owner is not None
-        obj = self.owner.convertor.get(key)
-        self[key] = obj
+        self[key] = obj = self.owner.convertor.get(key)
         return obj
+
+
+    def itervalues(self):
+        """
+        Return all application class objects from database.
+
+        Method load objects from database, then checks if specific object
+        exists in cache. If exists then object from cache is returned
+        instead of object from database.
+        """
+        for obj in self.owner.convertor.getObjects():
+            if obj.__key__ in self:
+                yield self[obj.__key__]
+            else:
+                self[obj.__key__] = obj
+                yield obj
 
 
 

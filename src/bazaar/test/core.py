@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.1 2004/05/21 18:12:39 wrobell Exp $
+# $Id: core.py,v 1.2 2004/05/22 23:29:11 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -39,7 +39,7 @@ class ObjectLoadTestCase(bazaar.test.bzr.TestCase):
     def testObjectLoading(self):
         """Test loaded application objects data integrity"""
         for cls in self.cls_list:
-            self.checkObjects(cls, len(self.bazaar.getObjects(cls)))
+            self.checkObjects(cls, len(list(self.bazaar.getObjects(cls))))
 
 
     def testObjectReload(self):
@@ -57,9 +57,10 @@ class ObjectLoadTestCase(bazaar.test.bzr.TestCase):
         dbc.execute('update employee set phone = \'000\'')
 
         # reload objects (not immediately) and get them from database
+        objects = {} # save objects in memory in case of Lazy cache
         for cls in self.cls_list:
             self.bazaar.reloadObjects(cls)
-            self.bazaar.getObjects(cls)
+            objects[cls] = list(self.bazaar.getObjects(cls))
 
         # check data integrity
         for cls in self.cls_list:
@@ -71,7 +72,7 @@ class ObjectLoadTestCase(bazaar.test.bzr.TestCase):
 
         # load objects
         for cls in self.cls_list:
-            self.bazaar.getObjects(cls)
+            list(self.bazaar.getObjects(cls))
 
         dbc = self.bazaar.motor.conn.cursor()
         # change data in database
@@ -81,8 +82,9 @@ class ObjectLoadTestCase(bazaar.test.bzr.TestCase):
         dbc.execute('update employee set phone = \'000\'')
 
         # reload objects immediately
+        objects = {} # save objects in memory in case of Lazy cache
         for cls in self.cls_list:
-            self.bazaar.reloadObjects(cls, True)
+            objects[cls] = list(self.bazaar.reloadObjects(cls, True))
             self.assertEqual(self.bazaar.brokers[cls].reload, False, \
                 'class "%s" objects are not loaded from db' % cls)
 
@@ -121,7 +123,7 @@ class CreateObjectTestCase(bazaar.test.bzr.TestCase):
 
         # load all articles, so they will not be reloaded when checking
         # order item article below
-        self.bazaar.getObjects(bazaar.test.app.Article)
+        list(self.bazaar.getObjects(bazaar.test.app.Article))
 
         self.bazaar.add(apple)
 
@@ -145,7 +147,7 @@ class ModifyObjectTestCase(bazaar.test.bzr.TestCase):
         # this way added objects will not be reloaded when accessing object
         # cache
         for cls in self.cls_list:
-            self.bazaar.getObjects(cls)
+            list(self.bazaar.getObjects(cls))
 
         # add and check order object
         order = bazaar.test.app.Order()
@@ -202,22 +204,22 @@ class ModifyObjectTestCase(bazaar.test.bzr.TestCase):
     def testObjectUpdating(self):
         """Test updating objects in database"""
 
-        order = self.bazaar.getObjects(bazaar.test.app.Order)[0]
+        order = list(self.bazaar.getObjects(bazaar.test.app.Order))[0]
         order.finished = True
         self.bazaar.update(order)
         self.checkObjects(bazaar.test.app.Order, key = order.__key__)
 
-        article = self.bazaar.getObjects(bazaar.test.app.Article)[0]
+        article = list(self.bazaar.getObjects(bazaar.test.app.Article))[0]
         article.price = 1.12
         self.bazaar.update(article)
         self.checkObjects(bazaar.test.app.Article, key = article.__key__)
 
-        order_item = self.bazaar.getObjects(bazaar.test.app.OrderItem)[0]
+        order_item = list(self.bazaar.getObjects(bazaar.test.app.OrderItem))[0]
         order_item.article = article
         self.bazaar.update(order_item)
         self.checkObjects(bazaar.test.app.OrderItem, key = order_item.__key__)
 
-        emp = self.bazaar.getObjects(bazaar.test.app.Employee)[0]
+        emp = list(self.bazaar.getObjects(bazaar.test.app.Employee))[0]
         emp.phone = '00000'
         self.bazaar.update(emp)
         self.checkObjects(bazaar.test.app.Employee, key = emp.__key__)

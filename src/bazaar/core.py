@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.34 2004/03/23 13:48:27 wrobell Exp $
+# $Id: core.py,v 1.35 2004/05/22 23:29:10 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -115,6 +115,7 @@ class Broker:
             self.cache[obj.__key__] = obj
 
         self.reload = False
+        return self.cache.itervalues()
 
 
     def getObjects(self):
@@ -127,9 +128,11 @@ class Broker:
         @see: L{bazaar.core.Broker.loadObjects} L{bazaar.core.Broker.reloadObjects}
         """
         if self.reload:
-            self.loadObjects()
-
-        return self.cache.values()
+            for obj in self.loadObjects():
+                yield obj
+        else:
+            for obj in self.cache.values():
+                yield obj
 
 
     def reloadObjects(self, now = False):
@@ -138,6 +141,9 @@ class Broker:
 
         All objects are removed from cache. If C{now} is set to true, then
         objects are loaded from database immediately.
+
+        If objects immediate reload is requested, then method returns iterator
+        of objects being loaded from database.
         
         @param now: Reload objects immediately.
 
@@ -146,7 +152,7 @@ class Broker:
         self.reload = True
         self.cache.clear()
         if now:
-            self.loadObjects()
+            return self.loadObjects()
 
 
     def find(self, query, param = None, field = 0):
@@ -480,12 +486,15 @@ class Bazaar:
         """
         Reload objects from database.
 
+        If objects immediate reload is requested, then method returns iterator
+        of objects being loaded from database.
+
         @param cls: Application class.
         @param now: Reload objects immediately.
 
         @see: L{bazaar.core.Bazaar.getObjects}
         """
-        self.brokers[cls].reloadObjects(now)
+        return self.brokers[cls].reloadObjects(now)
 
 
     def find(self, cls, query, param = None, field = 0):
