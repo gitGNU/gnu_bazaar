@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.31 2004/03/12 15:16:35 wrobell Exp $
+# $Id: core.py,v 1.32 2004/03/12 15:24:40 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -360,7 +360,7 @@ class Bazaar:
         """
         dbmod = config.getDBModule()
         if dbmod is not None:
-            self.dbmod = __import__(dbmod, globals(), locals(), ['']))
+            self.dbmod = __import__(dbmod, globals(), locals(), [''])
             log.info('DB API module: %s' % self.dbmod.__name__)
 
         dsn = config.getDSN()
