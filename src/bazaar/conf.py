@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.11 2003/08/31 08:40:56 wrobell Exp $
+# $Id: conf.py,v 1.12 2003/08/31 08:45:06 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -156,8 +156,8 @@ class Persistence(type):
     relation name.
 
     @ivar relation: Database relation name.
-    @ivar columns: Database relation column list.
-    @ivar key_columns: Database relation column names.
+    @ivar columns: Database relation list of columns.
+    @ivar key_columns: Database relation key column names.
     """
 
     def __new__(self, name, bases = (bazaar.core.PersistentObject, ), data = None, relation = ''):
@@ -206,7 +206,7 @@ class Persistence(type):
 
         @param name: Column name.
         @param cls: Associated application object class.
-        @param attr: fixme
+        @param attr:  Application class attribute name, defaults to name.
         @param fkey_columns: List of foreign key's column names.
         """
 
