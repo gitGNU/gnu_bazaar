@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.18 2003/10/06 14:57:24 wrobell Exp $
+# $Id: core.py,v 1.19 2003/10/18 16:13:27 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -26,17 +26,9 @@ class PersistentObject(object):
 
         @param data: Dictionary with initial values of object attributes.
         """
-        if data is None: data = {}
-
-        # set object attributes
-        for col in self.__class__.columns.values():
-            if col.col in data:
-                self.__dict__[col.col] = data[col.col]
-            else:
-                self.__dict__[col.col] = None
-
-        # set key
-        self.__key__ = None
+        if data is not None:
+            # set object attributes
+            self.__dict__.update(data)
 
 #        if __debug__: log.debug('object created (key = "%s"): %s' % (self.key, data))
 

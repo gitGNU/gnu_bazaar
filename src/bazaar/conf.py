@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.24 2003/09/30 15:04:12 wrobell Exp $
+# $Id: conf.py,v 1.25 2003/10/18 16:13:27 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -161,6 +161,8 @@ class Persistence(type):
         if not c.relation:
             raise bazaar.exc.RelationMappingError('wrong relation name', c)
 
+        setattr(c, '__key__', None)
+
         return c
 
 
@@ -189,6 +191,10 @@ class Persistence(type):
         col.vcol = vcol
         col.vattr = vattr
         self.update = update
+
+        setattr(self, attr, None)
+        if col.is_one_to_one and col.attr != col.col:
+            setattr(self, col.col, None)
 
         if not attr:
             raise ColumnMappingError('wrong column name', self, col)

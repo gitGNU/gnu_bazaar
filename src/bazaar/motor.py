@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.19 2003/10/02 10:24:55 wrobell Exp $
+# $Id: motor.py,v 1.20 2003/10/18 16:13:27 wrobell Exp $
 """
 Data convertor and database access classes.
 """
@@ -102,9 +102,12 @@ class Convertor:
         """
         Load objects from database.
         """
-        for data in self.motor.getData(self.queries[self.getObjects], ['__key__'] + self.columns):
-            obj = self.cls(data)          # create object instance
-            obj.__key__ = data['__key__'] # and set object key
+        cols = ['__key__'] + self.columns
+        iter = range(len(cols))
+        for data in self.motor.getData(self.queries[self.getObjects], cols):
+            obj = self.cls()              # create object instance
+            for i in iter:
+                setattr(obj, cols[i], data[i])
             yield obj
 
 
@@ -154,7 +157,7 @@ class Convertor:
         okey, vkey = self.asc_cols[asc] # fixme
         for data in self.motor.getData(self.queries[asc][self.getPair], \
                 self.asc_cols[asc]):
-            yield data[okey], data[vkey]
+            yield data[0], data[1]
 
 
     def add(self, obj):
@@ -248,14 +251,9 @@ class Motor:
 
         if __debug__: log.debug('query "%s": executed, rows = %d' % (query, dbc.rowcount))
 
-        iter = range(len(cols))
         row = dbc.fetchone()
         while row:
-            data = {}
-
-            for i in iter: data[cols[i]] = row[i]
-            yield data
-
+            yield row
             row = dbc.fetchone()
 
         if __debug__: log.debug('query "%s": got all data, len = %d' % (query, dbc.rowcount))
