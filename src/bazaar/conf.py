@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.2 2003/06/19 16:39:59 wrobell Exp $
+# $Id: conf.py,v 1.3 2003/06/19 17:20:16 wrobell Exp $
 
 import logging
 
@@ -9,10 +9,10 @@ log = logging.getLogger('bazaar.conf')
 <p>
     Application class can be defined by standard Python class definition.
     <code>
-        class Person(PersitentObject):
-            __metaclass__ = Persistence
+        class Person(bazaar.core.PersitentObject):
+            __metaclass__ = bazaar.conf.Persistence
             relation      = 'person'
-            attrs         = {
+            columns       = {
                 'name'      : Column('name'),
                 'surname'   : Column('surname'),
                 'birthdate' : Column('birthdate'),
@@ -22,7 +22,7 @@ log = logging.getLogger('bazaar.conf')
 
     It is possible to create application class by class instantiation.
     <code>
-        Person = Persitence('person')
+        Person = bazaar.conf.Persitence('person')
         Person.addColumn('name')
         Person.addColumn('surname')
         Person.addColumn('birthdate')
@@ -31,8 +31,8 @@ log = logging.getLogger('bazaar.conf')
 
     Of course, both ideas can be mixed.
     <code>
-        class Person(PersitentObject):
-            __metaclass__ = Persistence
+        class Person(bazaar.core.PersitentObject):
+            __metaclass__ = bazaar.conf.Persistence
             relation      = 'person'
 
         Person.addColumn('name')
@@ -46,6 +46,7 @@ log = logging.getLogger('bazaar.conf')
 class Column:
     """
     <s>Database relation column.</s>
+    <p>The column name becomes application class attribute.</p>
     <attr name = 'name'>Column name.</attr>
     """
 
@@ -61,6 +62,12 @@ class Column:
 class Persitence(type):
     """
     <s>Application class metaclass.</s>
+    <p>
+        Programmer defines application classes with the metaclass. The
+        class is assigned to the database relation.  If programmer does not
+        provide a database relation, then class name will be used as
+        relation name.
+    </p>
     <attr name = 'relation'>Database relation name.</attr>
     <attr name = 'columns'>Database relation column list.</attr>
     """
@@ -117,7 +124,10 @@ class Persitence(type):
     def setKey(cls, columns):
         """
         <s>Set relation key.</s>
-        <attr name = 'columns'>Key columns.</attr>
+        <attr name = 'columns'>
+            List of key columns. It cannot be empty and all specified
+            columns should exist on application column list.
+        </attr>
         """
         if __debug__: log.debug('key columns "%s"' % (columns, ))
 
@@ -129,5 +139,5 @@ class Persitence(type):
             if c not in cls.columns:
                 raise AttributeError('key column "%s" not found on column list' % c)
 
-        cls.key_columns = columns
+        cls.key_columns = tuple(columns)
         if __debug__: log.debug('class "%s" key: %s' % (cls.__name__, cls.key_columns))
