@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.10 2003/09/22 22:58:16 wrobell Exp $
+# $Id: assoc.py,v 1.11 2003/09/22 22:59:45 wrobell Exp $
 """
 Association classes.
 """
@@ -320,7 +320,7 @@ class ListAssociation(AssociationReferenceProxy):
         if obj:
 
             if self.reload:
-                self.load()
+                self.loadAll()
 
             if obj not in self.obj_lists:
                 self.obj_lists[obj] = ObjectList(obj, self)
@@ -378,10 +378,10 @@ class ListAssociation(AssociationReferenceProxy):
         self.appended.clear()
         self.removed.clear()
         if now:
-            self.load()
+            self.loadAll()
 
 
-    def load(self):
+    def loadAll(self):
         """
         Load association data from database.
         """
