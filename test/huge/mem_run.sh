@@ -13,7 +13,7 @@ done | tee mem.out
 
 gnuplot <<END
 set xlabel 'Ilosc obiektow'
-set ylabel 'Pamiêæ[kB]'
+set ylabel 'Pamiec[kB]'
 set terminal pdf
 set output 'mem.pdf'
 plot "mem.out" with points pointtype 3, 0.3*x+8752
