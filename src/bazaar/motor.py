@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.12 2003/09/12 13:26:40 wrobell Exp $
+# $Id: motor.py,v 1.13 2003/09/19 16:56:49 wrobell Exp $
 """
 Data convertor and database access objects.
 """
@@ -25,10 +25,10 @@ class Convertor:
         self.motor = mtr
 
         cls_columns = self.cls.columns.values()
-        self.columns = [col.name for col in cls_columns if not col.one_to_one]
+        self.columns = [col.name for col in cls_columns if col.association is None]
         self.one_to_one_associations = [col for col in cls_columns if col.one_to_one]
         for col in self.one_to_one_associations:
-            self.columns += list(col.fkey_columns)
+            self.columns += list(col.afkey)
 
         #
         # prepare queries
@@ -91,7 +91,7 @@ class Convertor:
             # fixme: does not work when len(value.key) == 2
             if value is not None:
                 data[col.name] = value.key
-            data.update(dict(zip(col.fkey_columns, col.association.convertKey(data[col.name]))))
+            data.update(dict(zip(col.afkey, col.association.convertKey(data[col.name]))))
         return data
 
 
