@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.13 2003/09/19 16:56:49 wrobell Exp $
+# $Id: motor.py,v 1.14 2003/09/22 00:21:05 wrobell Exp $
 """
 Data convertor and database access objects.
 """
@@ -25,20 +25,25 @@ class Convertor:
         self.motor = mtr
 
         cls_columns = self.cls.columns.values()
-        self.columns = [col.name for col in cls_columns if col.association is None]
-        self.one_to_one_associations = [col for col in cls_columns if col.one_to_one]
+        self.columns = [col.col for col in cls_columns if col.association is None]
+
+        self.one_to_one_associations = [col for col in cls_columns if col.is_one_to_one]
         for col in self.one_to_one_associations:
-            self.columns += list(col.afkey)
+            self.columns.append(col.col)
+
+        if __debug__: log.debug('class %s columns: %s' % (self.cls, self.columns))
+
+        self.many_to_many_associations = [col for col in cls_columns if col.is_many]
 
         #
         # prepare queries
         #
-        self.queries[self.getObjects] = 'select %s from "%s"' \
+        self.queries[self.getObjects] = 'select "__key__", %s from "%s"' \
             % (', '.join(['"%s"' % col for col in self.columns]), self.cls.relation)
 
         if __debug__: log.debug('get object query: "%s"' % self.queries[self.getObjects])
 
-        self.queries[self.add] = 'insert into "%s" (%s) values (%s)' \
+        self.queries[self.add] = 'insert into "%s" (__key__, %s) values (%%(__key__)s, %s)' \
             % (self.cls.relation,
                ', '.join(['"%s"' % col for col in self.columns]),
                ', '.join(['%%(%s)s' % col for col in self.columns])
@@ -46,30 +51,61 @@ class Convertor:
 
         if __debug__: log.debug('add object query: "%s"' % self.queries[self.add])
 
-        self.queries[self.update] = 'update "%s" set %s where %s' \
-            % (self.cls.relation,
-               ', '.join(['"%s" = %%s' % col for col in self.columns]),
-               ' and '.join(['"%s" = %%s' % col for col in self.cls.key_columns])
-              )
+        self.queries[self.update] = 'update "%s" set %s where __key__ = %%s' \
+            % (self.cls.relation, ', '.join(['"%s" = %%s' % col for col in self.columns]))
+
         if __debug__: log.debug('update object query: "%s"' % self.queries[self.update])
 
-        self.queries[self.delete] = 'delete from "%s" where %s' \
-            % (self.cls.relation,
-               ' and '.join(['"%s" = %%s' % col for col in self.cls.key_columns])
-              )
+        self.queries[self.delete] = 'delete from "%s" where __key__ = %%s' % self.cls.relation
         if __debug__: log.debug('delete object query: "%s"' % self.queries[self.delete])
+
+        self.association_columns = {}
+        for col in self.many_to_many_associations:
+
+            assert col.association.col.vcls == col.vcls
+
+            self.queries[col] = {}
+
+            if col.is_many_to_many:
+                self.association_columns[col] = (col.col, col.vcol)
+                relation = col.link
+
+                self.queries[col][self.addPair] = 'insert into "%s" (%s) values(%s)' % \
+                    (relation,
+                     ', '.join(['"%s"' % c for c in self.association_columns[col]]),
+                     ', '.join(['%%(%s)s' % c for c in self.association_columns[col]])
+                    )
+
+            elif col.is_one_to_many:
+                self.association_columns[col] = (col.vcol, '__key__')
+                relation = col.vcls.relation
+                self.queries[col][self.addPair] = \
+                    'update "%s" set %s = %%(%s)s where __key__ = %%(__key__)s' \
+                    % (relation, col.vcol, col.vcol)
+            else:
+                assert False # fixme: throw MappingError exception
+
+            self.queries[col][self.getPair] = 'select %s from "%s"' % \
+                (', '.join(['"%s"' % c for c in self.association_columns[col]]), relation)
+
+            if __debug__:
+                log.debug('association load query: "%s"' % \
+                        self.queries[col][self.getPair])
+            if __debug__:
+                log.debug('association insert query: "%s"' % \
+                        self.queries[col][self.addPair])
 
 
     def getObjects(self):
         """
         Load objects from database.
         """
-        for data in self.motor.getData(self.queries[self.getObjects], self.columns):
-            for col in self.one_to_one_associations:
-                data[col.name] = col.association.getKey(data)
+        for data in self.motor.getData(self.queries[self.getObjects], ['__key__'] + self.columns):
+#            for col in self.one_to_one_associations:
+#                data[col.name] = data[col.afkey]
 
-            obj = self.cls(data)   # create object instance
-            obj.key = self.cls.getKey(obj.__dict__) # and set object key
+            obj = self.cls(data)      # create object instance
+            obj.__key__ = data['__key__'] # and set object key
 
             yield obj
 
@@ -88,11 +124,29 @@ class Convertor:
         # get one-to-one association foreign key values
         for col in self.one_to_one_associations:
             value = getattr(obj, col.attr)
-            # fixme: does not work when len(value.key) == 2
-            if value is not None:
-                data[col.name] = value.key
-            data.update(dict(zip(col.afkey, col.association.convertKey(data[col.name]))))
+            if value is None:
+                data[col.col] = None
+            else:
+                data[col.col] = value.__key__
         return data
+
+
+    def addPair(self, col, okey, vkey):
+        """
+        fixme
+        """
+        data = dict(zip(self.association_columns[col], (okey, vkey))) #fixme
+        self.motor.add(self.queries[col][self.addPair], data)
+
+
+    def getPair(self, col):
+        """
+        fixme
+        """
+        okey, vkey = self.association_columns[col] # fixme
+        for data in self.motor.getData(self.queries[col][self.getPair], \
+                self.association_columns[col]):
+            yield data[okey], data[vkey]
 
 
     def add(self, obj):
@@ -102,8 +156,10 @@ class Convertor:
         @param obj: Object to add.
         """
         data = self.getData(obj)
+        key = self.motor.getKey(self.cls.relation + '_seq') # fixme
+        data['__key__'] = key
         self.motor.add(self.queries[self.add], data)
-        obj.key = self.cls.getKey(data)
+        obj.__key__ = key
  
 
     def update(self, obj):
@@ -114,9 +170,7 @@ class Convertor:
         """
         data = self.getData(obj)
         
-        self.motor.update(self.queries[self.update], \
-           [data[col] for col in self.columns], self.cls.convertKey(obj.key))
-        obj.key = self.cls.getKey(data)
+        self.motor.update(self.queries[self.update], [data[col] for col in self.columns], obj.__key__)
 
 
     def delete(self, obj):
@@ -125,7 +179,7 @@ class Convertor:
 
         @param obj: Object to delete.
         """
-        self.motor.delete(self.queries[self.delete], self.cls.convertKey(obj.key))
+        self.motor.delete(self.queries[self.delete], obj.__key__)
 
 
 
@@ -135,7 +189,6 @@ class Motor:
 
     @ivar db_module: Python DB API module.
     @ivar db_conn: Python DB API connection object.
-    @ivar dbc: Python DB API cursor object.
     """
     def __init__(self, db_module):
         """
@@ -143,7 +196,6 @@ class Motor:
         """
         self.db_module = db_module
         self.db_conn = None
-        self.dbc = None
         log.info('Motor object initialized')
 
 
@@ -156,7 +208,6 @@ class Motor:
         @see: L{bazaar.motor.Motor.closeDBConn}
         """
         self.db_conn = self.db_module.connect(dsn)
-        self.dbc = self.db_conn.cursor()
         if __debug__: log.debug('connected to database with dsn "%s"' % dsn)
 
 
@@ -168,7 +219,6 @@ class Motor:
         """
         self.db_conn.close()
         self.db_conn = None
-        self.dbc = None
         if __debug__: log.debug('close database connection')
 
 
@@ -185,21 +235,22 @@ class Motor:
         """
         if __debug__: log.debug('query "%s": executing' % query)
 
-        self.dbc.execute(query)
+        dbc = self.db_conn.cursor()
+        dbc.execute(query)
 
-        if __debug__: log.debug('query "%s": executed, rows = %d' % (query, self.dbc.rowcount))
+        if __debug__: log.debug('query "%s": executed, rows = %d' % (query, dbc.rowcount))
 
         iter = range(len(cols))
-        row = self.dbc.fetchone()
+        row = dbc.fetchone()
         while row:
             data = {}
 
             for i in iter: data[cols[i]] = row[i]
             yield data
 
-            row = self.dbc.fetchone()
+            row = dbc.fetchone()
 
-        if __debug__: log.debug('query "%s": got all data, len = %d' % (query, self.dbc.rowcount))
+        if __debug__: log.debug('query "%s": got all data, len = %d' % (query, dbc.rowcount))
 
 
     def add(self, query, data):
@@ -210,7 +261,8 @@ class Motor:
         @param data: Row data to insert.
         """
         if __debug__: log.debug('query "%s", data = %s: executing' % (query, data))
-        self.dbc.execute(query, data)
+        dbc = self.db_conn.cursor()
+        dbc.execute(query, data)
         if __debug__: log.debug('query "%s", data = %s: executed' % (query, data))
 
 
@@ -223,7 +275,8 @@ class Motor:
         @param key: Key of the row to update.
         """
         if __debug__: log.debug('query "%s", data = %s, key = %s: executing' % (query, data, key))
-        self.dbc.execute(query, tuple(data) + tuple(key))
+        dbc = self.db_conn.cursor()
+        dbc.execute(query, tuple(data) + (key, ))
         if __debug__: log.debug('query "%s", data = %s, key = %s: executed' % (query, data, key))
 
 
@@ -235,7 +288,8 @@ class Motor:
         @param key: Key of the row to delete.
         """
         if __debug__: log.debug('query "%s", key = %s: executing' % (query, key))
-        self.dbc.execute(query, key)
+        dbc = self.db_conn.cursor()
+        dbc.execute(query, (key, ))
         if __debug__: log.debug('query "%s", key = %s: executed' % (query, key))
 
 
@@ -251,3 +305,10 @@ class Motor:
         Rollback database transactions.
         """
         self.db_conn.rollback()
+
+
+    # fixme
+    def getKey(self, seq):
+        dbc = self.db_conn.cursor()
+        dbc.execute('select nextval(%s)', (seq, ))
+        return dbc.fetchone()[0]
