@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# $Id: fill.py,v 1.8 2003/09/30 12:42:13 wrobell Exp $
+# $Id: fill.py,v 1.9 2003/10/01 14:26:52 wrobell Exp $
 
 import sys
 import random
@@ -134,5 +134,8 @@ insert(db, ObjectRow('boss', {'__key__': 1000, 'dep_key': 1000}))
 insert(db, ObjectRow('boss', {'__key__': 1001, 'dep_key': 1001}))
 insert(db, ObjectRow('department', {'__key__': 1000, 'boss_key': 1000}))
 insert(db, ObjectRow('department', {'__key__': 1001, 'boss_key': 1001}))
+
+for rel in ['order', 'employee', 'article', 'order_item', 'boss', 'department']:
+    db.cursor().execute('select setval(\'%s_seq\', max(__key__)) from "%s"' % (rel, rel))
 
 db.commit()
