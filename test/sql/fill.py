@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# $Id: fill.py,v 1.4 2003/09/03 22:52:31 wrobell Exp $
+# $Id: fill.py,v 1.5 2003/09/22 00:46:40 wrobell Exp $
 
 import sys
 import random
@@ -50,15 +50,15 @@ def gen_articles(amount):
 def gen_order_items(order, amount):
     for i in xrange(1, random.randint(2, amount)):
         yield Row('order_item', {
-                'order': order,
-                'article_fkey': 'art %02d' % random.randint(1, AMOUNT_ARTICLE-1),
+                'order_fkey': order,
+                'article_fkey': random.randint(1, AMOUNT_ARTICLE-1),
                 'pos': i,
                 'quantity': random.uniform(1, 10)
         })
 
 
 def gen_orders(amount):
-    for i in xrange(amount):
+    for i in xrange(1, amount + 1):
         yield Row('order', {
             'no': i,
             'finished': 'false'
@@ -69,8 +69,7 @@ def gen_orders(amount):
 
         for j in xrange(1, random.randint(1, AMOUNT_EMPLOYEE - 1)):
             yield Row('employee_orders', {
-                'employee_name': 'p%02d' % j,
-                'employee_surname': 's%02d' % j,
+                'employee': j,
                 'order': i,
             })
 
@@ -97,7 +96,7 @@ for row in gen_orders(AMOUNT_ORDER):
 # insert article, order and employee rows, so we can delete them by test
 # cases
 insert(dbc, Row('article', {'name': 'article', 'price': random.uniform(0, 10)}))
-insert(dbc, Row('order', { 'no': 1001, 'finished': 'false' }))
+insert(dbc, Row('order', {'no': 1001, 'finished': 'false' }))
 insert(dbc, Row('employee', {'name': 'n1001', 'surname': 's1001', 'phone': '1001'}))
 
 db.commit()
