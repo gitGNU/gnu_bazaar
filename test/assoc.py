@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.7 2003/09/25 21:08:09 wrobell Exp $
+# $Id: assoc.py,v 1.8 2003/09/26 16:03:48 wrobell Exp $
 
 import app
 import btest
@@ -57,13 +57,13 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
 
 
     def testLoading(self):
-        """Test many-to-many association loading.
+        """Test many-to-many association loading
         """
         self.checkAsc()
 
 
     def testReloading(self):
-        """Test many-to-many association loading.
+        """Test many-to-many association loading
         """
         emp = self.bazaar.getObjects(app.Employee)[0]
         orders = emp.orders
@@ -80,7 +80,7 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
 
 
     def testErrorAppending(self):
-        """Test error when appending object with undefined primary key value.
+        """Test error when appending object with undefined primary key value
         """
         emp = self.bazaar.getObjects(app.Employee)[0]
 
@@ -93,7 +93,7 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
 
 
     def testAppending(self):
-        """Test appending objects to many-to-many association.
+        """Test appending objects to many-to-many association
         """
         emp = self.bazaar.getObjects(app.Employee)[0]
 
@@ -123,7 +123,7 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
 
 
     def testRemoving(self):
-        """Test removing objects from many-to-many association.
+        """Test removing objects from many-to-many association
         """
         emp = self.bazaar.getObjects(app.Employee)[0]
         assert len(emp.orders) > 0
@@ -136,7 +136,7 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
 
 
     def testMixedUpdate(self):
-        """Test appending and removing objects to/from many-to-many association.
+        """Test appending and removing objects to/from many-to-many association
         """
         emp = self.bazaar.getObjects(app.Employee)[0]
 
@@ -210,7 +210,7 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
     Test one-to-many associations.
     """
     def testLoading(self):
-        """Test one-to-many association loading.
+        """Test one-to-many association loading
         """
         orders = self.bazaar.getObjects(app.Order)
         for order in orders:
@@ -218,7 +218,7 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
 
 
     def testAppending(self):
-        """Test appending to one-to-many association.
+        """Test appending to one-to-many association
         """
         orders = self.bazaar.getObjects(app.Order)
         arts = self.bazaar.getObjects(app.Article)
