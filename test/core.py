@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.3 2003/07/19 10:09:14 wrobell Exp $
+# $Id: core.py,v 1.4 2003/08/07 18:00:04 wrobell Exp $
 
 import unittest
 import logging
@@ -14,7 +14,7 @@ log = logging.getLogger('bazaar.test.core')
 <s>Test object loading and reloading from database.</s>
 """
 
-class ObjectLoadTestCase(btest.BazaarTestCase):
+class ObjectLoadTestCase(btest.DBBazaarTestCase):
     """
     <s>Test object loading and reloading from database.</s>
 
@@ -25,43 +25,38 @@ class ObjectLoadTestCase(btest.BazaarTestCase):
     """
     def setUp(self):
         """
-        <s>Create Bazaar layer instance and connect with database.</s>
+        <s>
+            Create Bazaar layer instance and connect with database, then
+            prepare object checking parameters.
+        </s>
         """
-        btest.BazaarTestCase.setUp(self)
-        self.bazaar.connectDB(app.dsn)
+        btest.DBBazaarTestCase.setUp(self)
         self.params = [
             { 
                 'cls'     : app.Order,
                 'relation': 'order',
                 'cols'    : ('no', 'finished'),
-                'test'    : self.checkOrders
+                'test'    : self.checkOrder
             },
             { 
                 'cls'     : app.Article,
                 'relation': 'article',
                 'cols'    : ('name', 'price'),
-                'test'    : self.checkArticles
+                'test'    : self.checkArticle
             },
             { 
                 'cls'     : app.OrderItem,
                 'relation': 'order_item',
                 'cols'    : ('order', 'pos', 'quantity'),
-                'test'    : self.checkOrderItems
+                'test'    : self.checkOrderItem
             },
             { 
                 'cls'     : app.Employee,
                 'relation': 'employee',
                 'cols'    : ('name', 'surname', 'phone'),
-                'test'    : self.checkEmployees
+                'test'    : self.checkEmployee
             }
         ]
-
-
-    def tearDown(self):
-        """
-        <s>Close database connection.</s>
-        """
-        self.bazaar.closeDBConn()
 
 
     def checkObjects(self, amount, columns, relation, test):
@@ -88,38 +83,6 @@ class ObjectLoadTestCase(btest.BazaarTestCase):
         while row:
             self.assert_(test(row), 'data integrity test failed: %s' % str(row))
             row = dbc.fetchone()
-
-
-    def checkOrders(self, row):
-        """
-        <s>Order class data integrity test function.</s>
-        """
-        order = self.bazaar.brokers[app.Order].cache[row[0]]
-        return order.no == row[0] and order.finished == row[1]
-
-
-    def checkEmployees(self, row):
-        """
-        <s>Employee class data integrity test function.</s>
-        """
-        emp = self.bazaar.brokers[app.Employee].cache[(row[0], row[1])]
-        return emp.name == row[0] and emp.surname == row[1] and emp.phone == row[2]
-
-
-    def checkArticles(self, row):
-        """
-        <s>Article class data integrity test function.</s>
-        """
-        art = self.bazaar.brokers[app.Article].cache[row[0]]
-        return art.name == row[0] and art.price == row[1]
-
-
-    def checkOrderItems(self, row):
-        """
-        <s>OrderItem class data integrity test function.</s>
-        """
-        oi = self.bazaar.brokers[app.OrderItem].cache[(row[0], row[1])]
-        return oi.order == row[0] and oi.pos == row[1] and oi.quantity == row[2]
 
 
     def testObjectLoading(self):
@@ -195,3 +158,204 @@ class ObjectLoadTestCase(btest.BazaarTestCase):
                 p['cols'], p['relation'], p['test'])
 
         log.info('finished test of application objects immediate reloading')
+
+
+
+class ModifyObjectTestCase(btest.DBBazaarTestCase):
+    """
+    <s>Test application objects modification.</s>
+    """
+    def checkOrderObject(self, no, order):
+        self.bazaar.motor.dbc.execute('select "no", "finished" from "order" where "no" = %(no)s'
+            % { 'no': no})
+        row = self.bazaar.motor.dbc.fetchone()
+        self.assert_(self.checkOrder(row), 'data integrity test failed: %s' % str(row))
+
+
+    def checkOrderItemObject(self, order_no, pos, order_item):
+        self.bazaar.motor.dbc.execute(
+            'select "order", "pos", "quantity" from "order_item" \
+             where "order" = %(order)s and pos = %(pos)s', 
+            {'order': order_no, 'pos': pos})
+        row = self.bazaar.motor.dbc.fetchone()
+        self.assert_(self.checkOrderItem(row), 'data integrity test failed: %s' % str(row))
+
+
+    def checkArticleObject(self, name, article):
+        self.bazaar.motor.dbc.execute(
+            'select "name", "price" from "article" where "name" = %(name)s',
+            { 'name': name })
+        row = self.bazaar.motor.dbc.fetchone()
+        self.assert_(self.checkArticle(row), 'data integrity test failed: %s' % str(row))
+
+
+    def checkEmployeeObject(self, name, surname, emp):
+        self.bazaar.motor.dbc.execute(
+            'select "name", "surname", "phone" from "employee" \
+             where "name" = %(name)s and "surname" = %(surname)s',
+             { 'name': name, 'surname': surname })
+        row = self.bazaar.motor.dbc.fetchone()
+        self.assert_(self.checkEmployee(row), 'data integrity test failed: %s' % str(row))
+
+
+    def testObjectAdding(self):
+        """
+        <s>Test adding objects into database.</s>
+        """
+        log.info('begin test of application objects adding')
+
+        dbc = self.bazaar.motor.dbc
+
+        # add and check order object
+        order = app.Order({
+            'no': 1000,
+            'finished': True
+        })
+        self.bazaar.add(order)
+        self.assert_(1000 in self.bazaar.brokers[app.Order].cache, \
+            'order object not found in cache')
+        self.assertEqual(self.bazaar.brokers[app.Order].cache[1000], order,
+            'cache object mismatch')
+        self.checkOrderObject(1000, order)
+
+        # add and check article object
+        article = app.Article({
+            'name': 'apple',
+            'price': 1.23
+        })
+        self.bazaar.add(article)
+        self.assert_('apple' in self.bazaar.brokers[app.Article].cache, \
+            'article object not found in cache')
+        self.assertEqual(self.bazaar.brokers[app.Article].cache['apple'], article,
+            'cache object mismatch')
+        self.checkArticleObject('apple', article)
+
+        # add and check order item object
+        order_item = app.OrderItem({
+            'order': 1000,
+            'pos': 0,
+            'quantity': 2.123,
+            'article': 'apple'
+        })
+        self.bazaar.add(order_item)
+        self.assert_((1000, 0) in self.bazaar.brokers[app.OrderItem].cache, \
+            'order item object not found in cache')
+        self.assertEqual(self.bazaar.brokers[app.OrderItem].cache[(1000, 0)], order_item,
+            'cache object mismatch')
+        self.checkOrderItemObject(1000, 0, order_item)
+
+        # add and check employee object
+        emp = app.Employee({
+            'name': 'name',
+            'surname': 'surname',
+            'phone': '0123456789'
+        })
+        self.bazaar.add(emp)
+        self.assert_(('name', 'surname') in self.bazaar.brokers[app.Employee].cache, \
+            'employee object not found in cache')
+        self.assertEqual(self.bazaar.brokers[app.Employee].cache[('name', 'surname')], emp,
+            'cache object mismatch')
+        self.checkEmployeeObject('name', 'surname', emp)
+
+        log.info('finished test of application objects adding')
+
+
+    def testObjectUpdating(self):
+        """
+        <s>Test updating objects in database.</s>
+        """
+        log.info('begin test of application objects updating')
+
+        order = self.bazaar.getObjects(app.Order)[0]
+        order.finished = True
+        self.bazaar.update(order)
+        self.checkOrderObject(order.key, order)
+
+        article = self.bazaar.getObjects(app.Article)[0]
+        article.price = 1.12
+        self.bazaar.update(article)
+        self.checkArticleObject(article.key, article)
+
+        order_item = self.bazaar.getObjects(app.OrderItem)[0]
+        order_item.article = 'art 09'
+        self.bazaar.update(order_item)
+        self.checkOrderItemObject(order_item.order, order_item.pos, order_item)
+
+        emp = self.bazaar.getObjects(app.Employee)[0]
+        emp.phone = '00000'
+        self.bazaar.update(emp)
+        self.checkEmployeeObject(emp.name, emp.surname, emp)
+
+        log.info('finished test of application objects updating')
+
+
+    def testObjectDeleting(self):
+        """
+        <s>Test updating objects in database.</s>
+        """
+        log.info('begin test of application objects deleting')
+
+#        order_item = self.bazaar.getObjects(app.OrderItem)[0]
+#        self.bazaar.delete(order_item)
+#        self.assert_(order_item.key not in self.bazaar.brokers[app.OrderItem].cache, \
+#            'order item object found in cache <- error, it is deleted')
+
+#        order = self.bazaar.getObjects(app.Order)[0]
+#        self.bazaar.delete(order)
+#        self.assert_(order.key not in self.bazaar.brokers[app.Order].cache, \
+#            'order object found in cache <- error, it is deleted')
+
+#        article = self.bazaar.getObjects(app.Article)[0]
+#        self.bazaar.delete(article)
+#        self.assert_(article.key not in self.bazaar.brokers[app.Article].cache, \
+#            'article object found in cache <- error, it is deleted')
+
+        self.bazaar.getObjects(app.Employee)
+        emp = self.bazaar.brokers[app.Employee].cache[('n1001', 's1001')]
+        self.bazaar.delete(emp)
+        self.assert_(emp.key not in self.bazaar.brokers[app.Employee].cache, \
+            'employee object found in cache <- error, it is deleted')
+
+        log.info('finished test of application objects deleting')
+
+
+class TransactionsTestCase(btest.DBBazaarTestCase):
+    """
+    <s>Test database transaction commiting and rollbacking.</s>
+    """
+    def testCommit(self):
+        """
+        <s>Test database transaction commit.</s>
+        """
+        self.bazaar.getObjects(app.Employee)
+        emp = self.bazaar.brokers[app.Employee].cache[('n1001', 's1001')]
+        self.bazaar.delete(emp)
+        self.bazaar.commit()
+        self.bazaar.reloadObjects(app.Employee)
+        # objects is deleted, so it does not exist in cache due to objects
+        # reload
+        self.assert_(emp.key not in self.bazaar.brokers[app.Employee].cache, \
+            'employee object found in cache <- error, it is deleted')
+        self.bazaar.add(emp)
+        self.bazaar.commit()
+        self.bazaar.reloadObjects(app.Employee)
+        self.assert_(emp.key in self.bazaar.brokers[app.Employee].cache, \
+            'employee object not found in cache')
+
+
+    def testRollback(self):
+        """
+        <s>Test database transaction rollback.</s>
+        """
+        self.bazaar.getObjects(app.Employee)
+        emp = self.bazaar.brokers[app.Employee].cache[('n1001', 's1001')]
+        self.bazaar.delete(emp)
+        self.bazaar.rollback()
+
+        # reload objects immediately, so we can find them in cache
+        self.bazaar.reloadObjects(app.Employee, True)
+
+        # objects is deleted, but it should exist in cache due to objects
+        # reload
+        self.assert_(emp.key in self.bazaar.brokers[app.Employee].cache, \
+            'employee object not found in cache')
