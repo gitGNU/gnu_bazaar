@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.30 2003/09/29 16:49:47 wrobell Exp $
+# $Id: assoc.py,v 1.31 2003/09/30 15:04:12 wrobell Exp $
 """
 Association classes.
 """
@@ -53,10 +53,9 @@ class ReferenceBuffer(dict):
         """
         Check if application object is stored in reference buffer.
 
-        @param obj: Application object.
-        @param value: Referenced object.
+        @param item: Tuple of application object and referenced object.
 
-        @return: Returns true if C{obj} is in reference buffer.
+        @return: Returns true if application object is in reference buffer.
         """
         if isinstance(item, tuple):
             return super(ReferenceBuffer, self).__contains__(item[0])

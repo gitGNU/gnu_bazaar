@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.23 2003/09/30 14:04:48 wrobell Exp $
+# $Id: conf.py,v 1.24 2003/09/30 15:04:12 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -124,6 +124,7 @@ class Persistence(type):
     relation name, by default.
 
     @ivar relation: Database relation name.
+    @ivar sequencer: Name of primary key values generator sequencer.
     @ivar columns: List of application class attribute descriptions.
     """
 
@@ -132,6 +133,7 @@ class Persistence(type):
         Create application class.
 
         @param relation: Database relation name.
+        @param sequencer: Name of primary key values generator sequencer.
         """
         if data is None:
             data = {}

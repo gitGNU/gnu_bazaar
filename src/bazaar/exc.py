@@ -49,9 +49,9 @@ class ColumnMappingError(MappingError):
         """
         Create relation column mapping exception.
 
-        @ivar msg: Exception message.
-        @ivar cls: Application class.
-        @ivar col: Application class column object.
+        @param msg: Exception message.
+        @param cls: Application class.
+        @param col: Application class column object.
         """
         MappingError.__init__(self, msg, cls)
         self.col = col
