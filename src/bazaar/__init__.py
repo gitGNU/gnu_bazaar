@@ -1,7 +1,11 @@
-# $Id: __init__.py,v 1.7 2003/11/07 17:19:36 wrobell Exp $
+# $Id: __init__.py,v 1.8 2003/11/24 16:40:40 wrobell Exp $
 """
 Bazaar is an easy to use and powerful abstraction layer between
 relational database and object oriented application.
+
+First.
+
+Second.
 
 Features:
     - easy to use: define classes and programmer is ready to get and modify
@@ -36,10 +40,12 @@ Using the layer
 ===============
 Diagram::
 
-    Order | 1 ---- * > OrderItem | * ---- 1 > Article
+    # Order | 1 ---- * > OrderItem | * ---- 1 > Article
 
 First, define classes (more about class and relationships defining in
 L{bazaar.conf} module documentation)::
+
+    import bazaar.conf
 
     Article = bazaar.conf.Persistence('Article', relation = 'article')
     Article.addColumn('name')
