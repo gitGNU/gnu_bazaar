@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.23 2003/09/25 16:15:19 wrobell Exp $
+# $Id: assoc.py,v 1.24 2003/09/25 17:41:11 wrobell Exp $
 """
 Association classes.
 """
@@ -84,10 +84,10 @@ class ListReferenceBuffer(ReferenceBuffer):
 
         @param item: Application object or pair of application object and referenced object.
         """
-        if isinstance(item, tuple) is None:
+        if isinstance(item, tuple):
             obj, value = item
-            assert value is not Null
-            return super(ListReferenceBuffer, self).__contains__((obj, value)) and value in self[obj]
+            assert value is not None
+            return super(ListReferenceBuffer, self).__contains__(obj) and value in self[obj]
         else:
             return super(ListReferenceBuffer, self).__contains__(item)
 
@@ -726,14 +726,13 @@ class List(AssociationReferenceProxy):
 
         @return: True if object is referenced by application object.
         """
-        assert obj.__class__ == self.broker.cls
+        assert isinstance(obj, self.broker.cls)
         assert value is not None and isinstance(value, self.col.vcls)
 
         if obj in self.value_keys:
-            keys = self.value_keys[obj]
-            return value.__key__ in keys or (obj, value) in self.ref_buf
+            return value.__key__ in self.value_keys[obj] or (obj, value) in self.ref_buf
         else:
-            return (obj, value) in  self.ref_buf
+            return (obj, value) in self.ref_buf
 
 
 
