@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.10 2003/09/22 10:30:17 wrobell Exp $
+# $Id: core.py,v 1.11 2003/09/24 17:13:27 wrobell Exp $
 
 import unittest
 
@@ -18,71 +18,12 @@ class ObjectLoadTestCase(btest.DBBazaarTestCase):
     @ivar params: Object checking parameters (class, relation, relation columns, test
         function).
     """
-    def setUp(self):
-        """
-        Create Bazaar layer instance and connect with database, then
-        prepare object checking parameters.
-        """
-        btest.DBBazaarTestCase.setUp(self)
-        self.params = [
-            { 
-                'cls'     : app.Order,
-                'relation': 'order',
-                'cols'    : ('no', 'finished'),
-                'test'    : self.checkOrder
-            },
-            { 
-                'cls'     : app.Article,
-                'relation': 'article',
-                'cols'    : ('name', 'price'),
-                'test'    : self.checkArticle
-            },
-            { 
-                'cls'     : app.OrderItem,
-                'relation': 'order_item',
-                'cols'    : ('order_fkey', 'pos', 'quantity'),
-                'test'    : self.checkOrderItem
-            },
-            { 
-                'cls'     : app.Employee,
-                'relation': 'employee',
-                'cols'    : ('name', 'surname', 'phone'),
-                'test'    : self.checkEmployee
-            }
-        ]
-
-
-    def checkObjects(self, amount, columns, relation, test):
-        """
-        Check all application objects data integrity.
-
-        @param amount: Amount of objects.
-        @param columns: List of relation columns.
-        @param relation: Relation name.
-        @param test: Test function. Tests if for given row the object exists and the
-            object data are integral with row data (returns true on success).
-        """
-        dbc = self.bazaar.motor.db_conn.cursor()
-        query = 'select "__key__", %s from "%s"' \
-                % (', '.join(['"%s"' % col for col in columns]), relation)
-        dbc.execute(query)
-
-        self.assertEqual(amount, dbc.rowcount, \
-            'objects count: %d, row count: %d' % (amount, dbc.rowcount))
-
-        row = dbc.fetchone()
-        while row:
-            self.assert_(test(row[0], row[1:]), 'data integrity test failed: %s' % str(row))
-            row = dbc.fetchone()
-
-
     def testObjectLoading(self):
         """Test loaded application objects data integrity"""
 
         # check test application objects
-        for p in self.params:
-            self.checkObjects(len(self.bazaar.getObjects(p['cls'])), \
-                p['cols'], p['relation'], p['test'])
+        for cls in self.cls_list:
+            self.checkObjects(cls, len(self.bazaar.getObjects(cls)))
 
 
     def testObjectReload(self):
@@ -105,9 +46,8 @@ class ObjectLoadTestCase(btest.DBBazaarTestCase):
             self.bazaar.getObjects(cls)
 
         # check data integrity
-        for p in self.params:
-            self.checkObjects(len(self.bazaar.brokers[p['cls']].cache), \
-                p['cols'], p['relation'], p['test'])
+        for cls in self.cls_list:
+            self.checkObjects(cls, len(self.bazaar.brokers[cls].cache))
 
 
     def testObjectReloadNow(self):
@@ -132,9 +72,8 @@ class ObjectLoadTestCase(btest.DBBazaarTestCase):
 
         # check data integrity but do not load objects from database
         # (they should be loaded at this moment)
-        for p in self.params:
-            self.checkObjects(len(self.bazaar.brokers[p['cls']].cache), \
-                p['cols'], p['relation'], p['test'])
+        for cls in self.cls_list:
+            self.checkObjects(cls, len(self.bazaar.brokers[cls].cache))
 
 
 
@@ -142,39 +81,6 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
     """
     Test application objects modification.
     """
-    def loadRow(self, query, data):
-        dbc = self.bazaar.motor.db_conn.cursor()
-        dbc.execute(query, data)
-        return dbc.fetchone()
-
-
-    def checkOrderObject(self, key, order):
-        row = self.loadRow('select "no", "finished" from "order" where "__key__" = %(__key__)s',
-            { '__key__': key})
-        self.assert_(self.checkOrder(key, row), 'data integrity test failed: %s' % str(row))
-
-
-    def checkOrderItemObject(self, key, order_item):
-        row = self.loadRow( \
-            'select "order_fkey", "pos", "quantity" from "order_item" where __key__ = %(__key__)s', 
-            { '__key__': key })
-        self.assert_(self.checkOrderItem(key, row), 'data integrity test failed: %s' % str(row))
-
-
-    def checkArticleObject(self, key, article):
-        row = self.loadRow(
-            'select "name", "price" from "article" where "__key__" = %(__key__)s',
-            { '__key__': key })
-        self.assert_(self.checkArticle(key, row), 'data integrity test failed: %s' % str(row))
-
-
-    def checkEmployeeObject(self, key, emp):
-        row = self.loadRow(
-            'select "name", "surname", "phone" from "employee" where __key__ = %(__key__)s',
-             { "__key__": key })
-        self.assert_(self.checkEmployee(key, row), 'data integrity test failed: %s' % str(row))
-
-
     def testObjectAdding(self):
         """Test adding objects into database"""
 
@@ -190,7 +96,7 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
             'order object not found in cache')
         self.assertEqual(self.bazaar.brokers[app.Order].cache[order.__key__], order,
             'cache object mismatch')
-        self.checkOrderObject(order.__key__, order)
+        self.checkObjects(app.Order, key = order.__key__)
 
         # add and check article object
         article = app.Article()
@@ -202,7 +108,7 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
             'article object not found in cache')
         self.assertEqual(self.bazaar.brokers[app.Article].cache[article.__key__], article,
             'cache object mismatch')
-        self.checkArticleObject(article.__key__, article)
+        self.checkObjects(app.Article, key = article.__key__)
 
         # add and check order item object
         order_item = app.OrderItem()
@@ -216,7 +122,7 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
             'order item object not found in cache')
         self.assertEqual(self.bazaar.brokers[app.OrderItem].cache[order_item.__key__], order_item,
             'cache object mismatch')
-        self.checkOrderItemObject(order_item.__key__, order_item)
+        self.checkObjects(app.OrderItem, key = order_item.__key__)
 
         # add and check employee object
         emp = app.Employee()
@@ -229,7 +135,7 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
             'employee object not found in cache')
         self.assertEqual(self.bazaar.brokers[app.Employee].cache[emp.__key__], emp,
             'cache object mismatch')
-        self.checkEmployeeObject(emp.__key__, emp)
+        self.checkObjects(app.Employee, key = emp.__key__)
 
 
     def testObjectUpdating(self):
@@ -238,22 +144,22 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
         order = self.bazaar.getObjects(app.Order)[0]
         order.finished = True
         self.bazaar.update(order)
-        self.checkOrderObject(order.__key__, order)
+        self.checkObjects(app.Order, key = order.__key__)
 
         article = self.bazaar.getObjects(app.Article)[0]
         article.price = 1.12
         self.bazaar.update(article)
-        self.checkArticleObject(article.__key__, article)
+        self.checkObjects(app.Article, key = article.__key__)
 
         order_item = self.bazaar.getObjects(app.OrderItem)[0]
         order_item.article = article
         self.bazaar.update(order_item)
-        self.checkOrderItemObject(order_item.__key__, order_item)
+        self.checkObjects(app.OrderItem, key = order_item.__key__)
 
         emp = self.bazaar.getObjects(app.Employee)[0]
         emp.phone = '00000'
         self.bazaar.update(emp)
-        self.checkEmployeeObject(emp.__key__, emp)
+        self.checkObjects(app.Employee, key = emp.__key__)
         
 
     def testObjectDeleting(self):

@@ -1,4 +1,4 @@
-# $Id: btest.py,v 1.6 2003/09/22 00:33:53 wrobell Exp $
+# $Id: btest.py,v 1.7 2003/09/24 17:13:27 wrobell Exp $
 
 import unittest
 
@@ -38,6 +38,55 @@ class DBBazaarTestCase(BazaarTestCase):
         Close database connection.
         """
         self.bazaar.closeDBConn()
+
+
+    def checkObjects(self, cls, amount = None, key = None):
+        """
+        Check all application objects data integrity.
+
+        @param amount: Amount of objects.
+        """
+        params = {
+            app.Order: {
+                'relation': 'order',
+                'cols'    : ('no', 'finished'),
+                'test'    : self.checkOrder
+            },
+            app.Article: {
+                'relation': 'article',
+                'cols'    : ('name', 'price'),
+                'test'    : self.checkArticle
+            },
+            app.OrderItem: {
+                'relation': 'order_item',
+                'cols'    : ('order_fkey', 'pos', 'quantity'),
+                'test'    : self.checkOrderItem
+            },
+            app.Employee: {
+                'relation': 'employee',
+                'cols'    : ('name', 'surname', 'phone'),
+                'test'    : self.checkEmployee
+            },
+        }
+
+        dbc = self.bazaar.motor.db_conn.cursor()
+
+        query = 'select "__key__", %s from "%s"' \
+                % (', '.join(['"%s"' % col for col in params[cls]['cols']]), params[cls]['relation'])
+
+        if key is not None:
+            query += 'where __key__ = %d' % key
+
+        dbc.execute(query)
+
+        if amount is not None:
+            self.assertEqual(amount, dbc.rowcount, \
+                'objects count: %d, row count: %d' % (amount, dbc.rowcount))
+
+        row = dbc.fetchone()
+        while row:
+            self.assert_(params[cls]['test'](row[0], row[1:]), 'data integrity test failed: %s' % str(row))
+            row = dbc.fetchone()
 
 
     def checkOrder(self, key, row):
