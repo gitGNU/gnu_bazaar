@@ -1,4 +1,4 @@
-# $Id: init.py,v 1.1 2003/07/10 23:10:30 wrobell Exp $
+# $Id: init.py,v 1.2 2003/07/17 23:46:38 wrobell Exp $
 
 import unittest
 import logging
@@ -6,6 +6,7 @@ import logging
 import bazaar.core
 import bazaar.motor
 
+import btest
 import app
 
 """
@@ -25,7 +26,7 @@ class InitTestCase(unittest.TestCase):
         """
         log.info('begin test of Bazaar layer initialization')
 
-        cls_list = (app.Person, app.Address)
+        cls_list = (app.Order, app.Employee, app.Article, app.OrderItem)
 
         b = bazaar.core.Bazaar(cls_list, app.db_module)
 
@@ -48,7 +49,7 @@ class InitTestCase(unittest.TestCase):
         """
         log.info('begin test of Bazaar layer initialization with connection')
 
-        cls_list = (app.Person, app.Address)
+        cls_list = (app.Order, app.Employee, app.Article, app.OrderItem)
 
         # init bazaar layer with connection
         b = bazaar.core.Bazaar(cls_list, app.db_module, app.dsn)

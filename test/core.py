@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.1 2003/07/10 23:11:12 wrobell Exp $
+# $Id: core.py,v 1.2 2003/07/17 23:46:38 wrobell Exp $
 
 import unittest
 import logging
@@ -21,4 +21,4 @@ class ObjectLoadTestCase(btest.BazaarTestCase):
 
 
     def testObjectLoading(self):
-        self.bazaar.getObjects(app.Person)
+        self.bazaar.getObjects(app.Order)
