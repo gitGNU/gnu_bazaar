@@ -1,4 +1,4 @@
-# $Id: cache.py,v 1.13 2004/03/29 17:17:03 wrobell Exp $
+# $Id: cache.py,v 1.14 2004/03/29 23:14:15 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -205,8 +205,6 @@ class Cache:
 class Full(Cache, dict):
     """
     Abstract, basic cache class for loading all objects and association data.
-
-    @see: L{getEmpty} L{bazaar.cache.FullObject} L{bazaar.cache.FullAssociation}
     """
     def __init__(self, param):
         Cache.__init__(self, param)
@@ -221,7 +219,7 @@ class Full(Cache, dict):
         @param param: Referenced object primary key value or application object.
 
         @return: Referenced object or association data (depends on cache type).
-            If data is not found then C{None} or empty set is returned.
+            If data is not found then C{None}.
 
         @see: L{bazaar.cache.FullObject} L{bazaar.cache.FullAssociation}
         """
@@ -230,15 +228,7 @@ class Full(Cache, dict):
         if param in self:
             return dict.__getitem__(self, param)
         else:
-            return self.getEmpty()
-
-
-    def getEmpty(self):
-        """
-        Get data which will be returned when object or association data
-        will not be found in the cache.
-        """
-        raise NotImplementedError
+            return None
 
 
 
@@ -246,16 +236,6 @@ class FullObject(Full):
     """
     Cache class for loading all objects of application class from database.
     """
-    def getEmpty(self):
-        """
-        Get data which will be returned when object or association data
-        will not be found in the cache.
-
-        This method returns C{None}.
-        """
-        return None
-
-
     def load(self, key):
         """
         Load all application class objects from database.
@@ -271,16 +251,6 @@ class FullAssociation(Full):
     """
     Cache for loading all association data of relationship from database.
     """
-    def getEmpty(self):
-        """
-        Get data which will be returned when object or association data
-        will not be found in the cache.
-
-        This method returns empty set.
-        """
-        return sets.Set()
-
-
     def load(self, obj):
         """
         Load all association data from database.

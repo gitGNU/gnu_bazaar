@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.27 2004/03/23 13:49:50 wrobell Exp $
+# $Id: assoc.py,v 1.28 2004/03/29 23:14:15 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -444,6 +444,8 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
         """
         # find order with amount of items equal to zero
         ord = self.bazaar.find(app.Order, {'__key__': 1000}).next()
+
+        self.assertEqual(len(ord.items), 0)
 
         art = self.bazaar.getObjects(app.Article)[0]
 

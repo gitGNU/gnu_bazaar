@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.47 2004/01/22 23:21:40 wrobell Exp $
+# $Id: assoc.py,v 1.48 2004/03/29 23:14:15 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -509,7 +509,14 @@ class List(AssociationReferenceProxy):
         @param vkey: Referenced object's primary key value.
         """
         if vkey is not None:
-            self.cache[obj].add(vkey)
+            if obj in self.cache:
+                # get association data from cache, which will be loaded
+                # when needed
+                keys = self.cache[obj]
+            else:
+                keys = sets.Set()
+                self.cache[obj] = keys
+            keys.add(vkey)
 
 
     def __get__(self, obj, cls):
@@ -588,11 +595,13 @@ class List(AssociationReferenceProxy):
         @param vkey: Referenced object's primary key value.
         """
         obj = self.broker.get(okey)
-        if obj not in self.cache:
+        if obj in self.cache:
+            # get data from dictionary but not with cache mechanism, we are
+            # loading data now and cache[obj] will be a unwanted recursive call
+            keys = self.cache.dicttype.__getitem__(self.cache, obj)
+        else:
             keys = sets.Set()
             self.cache[obj] = keys
-        else:
-            keys = self.cache.dicttype.__getitem__(self.cache, obj)
         assert isinstance(keys, sets.Set)
         keys.add(vkey)
 
@@ -627,8 +636,10 @@ class List(AssociationReferenceProxy):
         """
         # return all objects with defined primary key values
         def getObjects():
-            for vkey in list(self.cache[obj]):
-                yield self.vbroker.get(vkey)
+            keys = self.cache[obj]
+            if keys is not None:
+                for vkey in list(self.cache[obj]):
+                    yield self.vbroker.get(vkey)
         
 
         assert None not in getObjects(), \
@@ -739,7 +750,9 @@ class List(AssociationReferenceProxy):
         Return amount of all referenced objects by application object.
         """
         size = 0
-        size += len(self.cache[obj])  # amount of objects with defined primary key value
+        keys = self.cache[obj]
+        if keys is not None:
+            size += len(self.cache[obj])  # amount of objects with defined primary key value
         if obj in self.ref_buf:       # amount of objects with undefined primary key value
             size += len(self.ref_buf[obj])
         return size
@@ -757,11 +770,17 @@ class List(AssociationReferenceProxy):
         assert isinstance(obj, self.broker.cls)
         assert value is not None and isinstance(value, self.col.vcls)
 
+        # load data from cache, so we can check existence of referenced
+        # object
+        # fixme: overload Cache.__contains__ and: if obj not in self.cache?
         keys = self.cache[obj]
-        if value.__key__ in keys:
-            return True
+        if keys is not None:
+            if value.__key__ in keys:
+                return True
+            else:
+                return (obj, value) in self.ref_buf
         else:
-            return (obj, value) in self.ref_buf
+            return False
 
 
 
