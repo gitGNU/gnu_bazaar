@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.25 2003/09/25 18:17:14 wrobell Exp $
+# $Id: assoc.py,v 1.26 2003/09/25 20:58:20 wrobell Exp $
 """
 Association classes.
 """
@@ -116,16 +116,12 @@ class ListReferenceBuffer(ReferenceBuffer):
         """
         assert obj is not None and value is not None
 
-        ref_buf = super(ListReferenceBuffer, self)
-        if ref_buf.__contains__((obj, value)):
-            obj_set = ref_buf.__getitem__(obj)
-        else:
-            obj_set = sets.Set()
-            ref_buf.__setitem__(obj, obj_set)
+        if obj not in self:
+            ref_buf = super(ListReferenceBuffer, self).__setitem__(obj, sets.Set())
+        key_set = self[obj]
 
-        assert isinstance(obj_set, sets.Set)
-
-        obj_set.add(value)
+        assert isinstance(key_set, sets.Set)
+        key_set.add(value)
 
 
     def __delitem__(self, (obj, value)):
@@ -146,7 +142,8 @@ class ListReferenceBuffer(ReferenceBuffer):
             if len(self[obj]) == 0:
                 super(ListReferenceBuffer, self).__delitem__((obj, None))
 
-        assert obj not in self or (obj, None) in ref_buf and len(ref_buf[obj]) > 0 and value not in ref_buf[obj]
+        assert (obj not in self or len(self[obj]) > 0) \
+            and (obj, value) not in self
 
 
 
