@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.6 2003/07/19 10:00:29 wrobell Exp $
+# $Id: conf.py,v 1.7 2003/07/22 15:11:26 wrobell Exp $
 
 import logging
 
@@ -121,7 +121,7 @@ class Persitence(type):
         """
 
         if name in cls.columns:
-            raise AttributeError('column "%s" is defined in class "%s"' % (name, cls.__name__))
+            raise ValueError('column "%s" is already defined in class "%s"' % (name, cls.__name__))
 
         cls.columns[name] = Column(name)
 
@@ -139,12 +139,12 @@ class Persitence(type):
         if __debug__: log.debug('key columns "%s"' % (columns, ))
 
         if len(columns) < 1:
-            raise AttributeError , 'key columns list should not be empty'
+            raise ValueError , 'list of key\'s columns should not be empty'
 
         # check if given columns exist in list of relation columns
         for c in columns: 
             if c not in cls.columns:
-                raise AttributeError('key column "%s" not found on column list' % c)
+                raise ValueError('key\'s column "%s" not found on list of relation columns' % c)
 
         cls.key_columns = tuple(columns)
 

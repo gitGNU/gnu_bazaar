@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.3 2003/07/19 10:01:06 wrobell Exp $
+# $Id: core.py,v 1.4 2003/07/22 15:11:26 wrobell Exp $
 
 import logging
 
@@ -163,7 +163,7 @@ class Bazaar:
         <see><r class = 'Bazaar' method = 'connectDB'/></see>
         """
         if len(cls_list) < 1:
-            raise AttributeError('application class list cannot be empty')
+            raise ValueError('list of application classes should not be empty')
 
         self.motor = motor.Motor(db_module)
         self.brokers = {}
