@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.2 2003/09/07 11:46:54 wrobell Exp $
+# $Id: assoc.py,v 1.3 2003/09/09 07:46:07 wrobell Exp $
 """
 Association classes.
 """
@@ -62,11 +62,11 @@ class AssociationReferenceProxy(dict):
         Return reference of associated object.
 
         Foreign key value of associating object's column is extracted with 
-        L{bazaar.assoc.AssociationReferenceProxy.getForeignKey} method.
+        L{getForeignKey} method.
 
         @param buffer_key: Buffer key value.
 
-        @see: L{bazaar.assoc.AssociationReferenceProxy.getForeignKey}
+        @see: L{getForeignKey}
         """
         assert self.broker is not None
 
@@ -88,12 +88,12 @@ class AssociationReferenceProxy(dict):
         Set reference of associated object.
 
         Foreign key value of associating object's column is set with 
-        L{bazaar.assoc.AssociationReferenceProxy.setForeignKey} method.
+        L{setForeignKey} method.
 
         @param buffer_key: Buffer key value.
         @param value: Associated object.
 
-        @see: L{bazaar.assoc.AssociationReferenceProxy.setForeignKey}
+        @see: L{setForeignKey}
         """
         # if value is None then just set associating object foreign key
         # column value to None
@@ -144,16 +144,6 @@ class OneToOneAssociation(AssociationReferenceProxy):
 
     @see: L{bazaar.assoc.AssociationReferenceProxy}
     """
-    def __init__(self, column):
-        """
-        Create one to one association descriptor and reference proxy.
-
-        @param column: Application class column.
-
-        @see: L{bazaar.assoc.AssociationReferenceProxy.__init__}
-        """
-        super(OneToOneAssociation, self).__init__(column)
-
 
     def __get__(self, obj, cls):
         """
