@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.29 2004/02/10 23:40:15 wrobell Exp $
+# $Id: motor.py,v 1.30 2004/03/29 18:11:17 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -187,7 +187,15 @@ class Convertor:
 
         @see: L{bazaar.core.Bazaar.find}
         """
-        return ' and '.join(['"%s" = %%(%s)s' % (col, col) for col in param])
+        cols = self.cls.getColumns()
+        cond = []
+        for attr in param:
+            if attr in cols:
+                col = cols[attr]
+            else:
+                col = attr
+            cond.append('"%s" = %%(%s)s' % (col, attr))
+        return ' and '.join(cond)
 
 
     def objToData(self, param):
@@ -200,10 +208,7 @@ class Convertor:
         if param is not None:
             cols = self.cls.columns
             for attr, value in param.items():
-                # change class attribute and object value pair into relation
-                # column and primary key value
-                if attr in cols:
-                    attr = cols[attr].col
+                # change persistent objects with primary key value
                 if isinstance(value, bazaar.core.PersistentObject):
                     value = value.__key__
 
