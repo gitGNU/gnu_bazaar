@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.14 2003/09/12 13:24:32 wrobell Exp $
+# $Id: conf.py,v 1.15 2003/09/19 14:58:32 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -122,14 +122,26 @@ def getGetKeyMethod(key_columns):
 
 class Column:
     """
-    Describes application class column.
+    Describes application class attribute.
 
     The column name is attribute name by default.
 
+    Take a look L{bazaar.conf.Persistence.addColumn}'s method description
+    to understand how the class describes associations between
+    application classes.
+
     @ivar name: Application class column name.
     @ivar attr: Application class attribute name.
+    @ivar cls:  Application class of associated objects.
+
+    @ivar afkey: Foreign key's column list.
+    @ivar link:  Many-to-many link relation name.
+    @ivar bfkey: Foreign key's column list.
+
+    @ivar one_to_one:  Association is one-to-one association.
     @ivar association: Association descriptor of given column.
-    @ivar one_to_one: Association is one-to-one association.
+
+    @see bazaar.conf.Persistence.addColumn
     """
 
     def __init__(self, name, attr = None):
@@ -140,12 +152,19 @@ class Column:
         @param attr: Attribute name.
         """
         self.name = name
-        self.association = None
-        self.one_to_one = False
+
         if attr is None:
             self.attr = self.name
         else:
             self.attr = attr
+
+        self.cls = None
+        self.association = None
+        self.afkey = None
+        self.link = None
+        self.bfkey = None
+
+        self.one_to_one = False
 
 
 
@@ -200,17 +219,25 @@ class Persistence(type):
         return c
 
 
-    def addColumn(self, name, attr = None, cls = None, fkey_columns = None):
+    def addColumn(self, name, attr = None, cls = None,
+            afkey = None, link = None, bfkey = None, bidir = None):
         """
         Add column to persistent application class.
 
         This way the application class attribute and associations between
         application classes are defined.
 
-        @param name: Column name.
-        @param cls: Associated application object class.
-        @param attr:  Application class attribute name, defaults to name.
-        @param fkey_columns: List of foreign key's column names.
+        @param name: Application class column name.
+        @param attr: Application class attribute name, defaults to name.
+        @param cls:  Application class of associated objects.
+
+        @param afkey: Foreign key's column list.
+        @param link:  Many-to-many link relation name.
+        @param bfkey: Foreign key's column list.
+
+        @param bidir:
+
+        @see: bazaar.conf.Column
         """
 
         if name in self.columns:
@@ -218,16 +245,58 @@ class Persistence(type):
 
         col = Column(name, attr)
 
-        if cls is not None:
-            # fixme: throw exc when len(fkey_columns) < 1 or is None
-            col.cls = cls
-            col.association = bazaar.assoc.OneToOneAssociation(col)
-            col.one_to_one = True
-            col.fkey_columns = fkey_columns
-            setattr(self, col.attr, col.association)
+        def setAssociation(cls, col, assoc_cls, fkey):
+            col.association = assoc_cls(col)
+            setattr(cls, col.attr, col.association)
             # set association foreign key extraction and conversion methods
-            col.association.getKey = getGetKeyMethod(fkey_columns)()
-            col.association.convertKey = getConvertKeyMethod(fkey_columns)()
+            col.association.getKey = getGetKeyMethod(fkey)()
+            col.association.convertKey = getConvertKeyMethod(fkey)()
+
+
+        if cls is not None:
+            col.cls = cls
+            if bfkey is not None and afkey is None:
+                pass
+            elif bfkey is not None and afkey is not None and link is not None:
+                pass
+            elif afkey is not None:
+                # fixme: throw MappingError exc when len(afkey) < 1
+                col.afkey = afkey
+                assoc_cls = bazaar.assoc.UniDirOneToOneAssociation
+            else:
+                pass # throw MappingError exc
+
+            assert issubclass(assoc_cls, bazaar.assoc.AssociationReferenceProxy)
+
+            if bidir is None:
+                setAssociation(self, col, assoc_cls, col.afkey)
+                if __debug__:
+                    log.debug('uni-directional association %s.%s -> %s: ' % (self, attr, cls))
+
+            else: # if association is going to be bi-directional
+                if __debug__:
+                    log_info = 'bi-directional association %s.%s <-> %s.%s: %%s' \
+                        % (self, attr, cls, bidir)
+                    log.info(log_info % 'detected')
+
+                # If second direction column is defined, then create
+                # association objects, otherwise delay it.
+                # The association objects will be created while defining second
+                # direction column.
+                if bidir in cls.columns:
+                    if __debug__:
+                        log.info(log_info % 'creating association objects')
+
+                    if issubclass(assoc_cls, bazaar.assoc.OneToOneAssociation):
+                        assoc_cls = bazaar.assoc.BiDirOneToOneAssociation
+                    else:
+                        pass # throw MappingError exception
+                        
+                    setAssociation(self, col, assoc_cls, afkey)
+                    setAssociation(cls, cls.columns[bidir], assoc_cls, cls.columns[bidir].afkey)
+                else:
+                    if __debug__:
+                        log.info(log_info % 'delaying creation of association objects')
 
         self.columns[name] = col
 
