@@ -1,8 +1,6 @@
 #!/usr/bin/python
 
-# $Id: fill.py,v 1.1 2003/07/18 09:10:14 wrobell Exp $
-
-from __future__ import generators
+# $Id: fill.py,v 1.2 2003/07/26 16:44:59 wrobell Exp $
 
 import sys
 import random

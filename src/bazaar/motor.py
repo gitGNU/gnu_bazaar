@@ -1,6 +1,5 @@
-# $Id: motor.py,v 1.4 2003/07/19 09:57:52 wrobell Exp $
+# $Id: motor.py,v 1.5 2003/07/26 16:44:59 wrobell Exp $
 
-from __future__ import generators
 import logging
 
 log = logging.getLogger('bazaar.motor')
