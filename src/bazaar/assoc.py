@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.22 2003/09/25 15:24:44 wrobell Exp $
+# $Id: assoc.py,v 1.23 2003/09/25 16:15:19 wrobell Exp $
 """
 Association classes.
 """
@@ -48,7 +48,7 @@ class ReferenceBuffer(dict):
     objects as values.
     @see: l{bazaar.assoc.ListReferenceBuffer}
     """
-    def __contains__(self, (obj, value)):
+    def __contains__(self, obj):
         """
         Check if application object is stored in reference buffer.
 
@@ -77,18 +77,19 @@ class ListReferenceBuffer(ReferenceBuffer):
 
     @see: L{bazaar.assoc.ReferenceBuffer}
     """
-    def __contains__(self, (obj, value)):
+    def __contains__(self, item):
         """
         Check if application object referenced objects are in reference
         buffer.
 
-        @param obj: Application object.
-        @param value: Referenced object.
+        @param item: Application object or pair of application object and referenced object.
         """
-        if value is None:
-            return super(ListReferenceBuffer, self).__contains__((obj, value))
-        else:
+        if isinstance(item, tuple) is None:
+            obj, value = item
+            assert value is not Null
             return super(ListReferenceBuffer, self).__contains__((obj, value)) and value in self[obj]
+        else:
+            return super(ListReferenceBuffer, self).__contains__(item)
 
 
     def __setitem__(self, obj, value):
@@ -356,7 +357,7 @@ class OneToOne(AssociationReferenceProxy):
         @return: Referenced object when C{obj} is not null, otherwise descriptor object.
         """
         if obj:
-            if (obj, None) in self.ref_buf:
+            if obj in self.ref_buf:
                 return self.ref_buf[obj]
             else:
                 return self.vbroker.get(getattr(obj, self.col.col))
@@ -541,7 +542,8 @@ class List(AssociationReferenceProxy):
         @param obj: Application object.
         @param vkey: Referenced object's primary key value.
         """
-        self.getValueKeys(obj).add(vkey)
+        if vkey is not None:
+            self.getValueKeys(obj).add(vkey)
 
 
     def __get__(self, obj, cls):
@@ -642,8 +644,12 @@ class List(AssociationReferenceProxy):
             if obj in self.value_keys:
                 for vkey in list(self.value_keys[obj]):
                     yield self.vbroker.get(vkey)
+        
 
-        if (obj, None) in self.ref_buf:
+        assert None not in getObjects(), '%s.%s -> %s.%s (obj: %s) iterated objects: %s' % \
+            (self.broker.cls, self.col.attr, self.col.vcls, self.col.col, obj, list(getObjects()))
+
+        if obj in self.ref_buf:
             # return all objects
             return itertools.chain(getObjects(), self.ref_buf[obj])
         else:
@@ -706,7 +712,7 @@ class List(AssociationReferenceProxy):
         size = 0
         if obj in self.value_keys:            # amount of objects with defined primary key value
             size += len(self.value_keys[obj])
-        if (obj, None) in self.ref_buf:       # amount of objects with undefined primary key value
+        if obj in self.ref_buf:       # amount of objects with undefined primary key value
             size += len(self.ref_buf[obj])
         return size
 
