@@ -1,9 +1,8 @@
--- $Id: init.sql,v 1.10 2004/01/21 23:06:28 wrobell Exp $
+-- $Id: init.sql,v 1.11 2004/01/22 18:29:05 wrobell Exp $
 
 create sequence order_seq;
 create table "order" (
     __key__      integer,
--- --     __key__      integer default nextval('order_seq'),
     no           integer not null unique,
     finished     boolean not null,
     created      timestamp not null default current_timestamp,
@@ -13,7 +12,6 @@ create table "order" (
 create sequence employee_seq;
 create table employee (
     __key__      integer,
--- --     __key__      integer default nextval('employee_seq'),
     name         varchar(10) not null,
     surname      varchar(20) not null,
     phone        varchar(12) not null,
@@ -24,7 +22,6 @@ create table employee (
 create sequence article_seq;
 create table article (
     __key__      integer,
--- --     __key__      integer default nextval('article_seq'),
     name         varchar(20) not null,
     price        numeric(10,2) not null,
     unique (name),
@@ -34,7 +31,6 @@ create table article (
 create sequence order_item_seq;
 create table order_item (
     __key__      integer,
--- --     __key__      integer default nextval('order_item_seq'),
     order_fkey   integer,
     pos          integer not null,
     article_fkey integer not null,
@@ -54,7 +50,9 @@ create table employee_orders (
 );
 
 create table boss (
-    dep_fkey     integer
+    __key__      integer primary key, -- it should be removed when derived
+                                      -- __key__ column (from employee relation) will be seen
+    dep_fkey     integer unique
 --  see below
 --    foreign key (dep_fkey) references department(__key__) initially deferred
 ) inherits(employee);
@@ -62,11 +60,10 @@ create table boss (
 
 create sequence department_seq;
 create table department (
-    __key__     integer,
--- --     __key__     integer default nextval('department_seq'),
+    __key__      integer,
     boss_fkey    integer unique,
-    primary key (__key__)
---    foreign key (boss_fkey) references boss(__key__) initially deferred
+    primary key (__key__),
+    foreign key (boss_fkey) references boss(__key__) initially deferred
 );
 
 alter table boss add foreign key (dep_fkey) references department(__key__) initially deferred;
