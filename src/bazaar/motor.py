@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.15 2003/09/25 14:10:49 wrobell Exp $
+# $Id: motor.py,v 1.16 2003/09/25 16:26:08 wrobell Exp $
 """
 Data convertor and database access objects.
 """
@@ -77,7 +77,7 @@ class Convertor:
                  ', '.join(('%s', ) * len(self.asc_cols[asc]))
                 )
             self.queries[asc][self.delPair] = 'delete from "%s" where %s' % \
-                (relation, ' and '.join(['%s = %%s' % c for c in self.asc_cols]))
+                (relation, ' and '.join(['"%s" = %%s' % c for c in self.asc_cols[asc]]))
 
 #            elif col.is_one_to_many:
 #                self.asc_cols[asc] = (col.vcol, '__key__')
