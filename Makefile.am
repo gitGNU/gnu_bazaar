@@ -1,4 +1,4 @@
-SUBDIRS = src
+SUBDIRS = src test
 
 EPYDOC_OPTIONS = -n "Bazaar $(VERSION) API Documentation" $(srcdir)/src/bazaar
 

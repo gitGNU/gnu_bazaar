@@ -7,4 +7,7 @@ AC_OUTPUT([
     Makefile
     src/Makefile
     src/bazaar/Makefile
+    test/Makefile
+    test/sql/Makefile
+    test/huge/Makefile
 ])
