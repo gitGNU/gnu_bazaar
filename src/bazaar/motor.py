@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.5 2003/07/26 16:44:59 wrobell Exp $
+# $Id: motor.py,v 1.6 2003/08/02 15:59:18 wrobell Exp $
 
 import logging
 
@@ -37,6 +37,15 @@ class Convertor:
         for data in self.motor.getData(self.queries[self.getObjects], self.columns):
             obj = self.cls(data)   # create object instance
             yield obj
+
+
+    def add(self, obj):
+        """
+        <s>Add object to database.</s>
+
+        <attr name = 'obj'>Object to add.</attr>
+        """
+        self.motor.add(self.queries[self.add], self.rw_columns, obj.__dict__)
 
 
 
@@ -112,3 +121,15 @@ class Motor:
             row = self.dbc.fetchone()
 
         if __debug__: log.debug('query "%s": got all data, len = %d' % (query, self.dbc.rowcount))
+
+
+    def add(self, query, data):
+        """
+        <s>Insert data into database.</s>
+
+        <attr name = 'query'>SQL query.</attr>
+        <attr name = 'data'>Data to insert.</attr>
+        """
+        if __debug__: log.debug('query "%s", data = %s: executing', (query, data))
+        self.dbc.execute(query, data)
+        if __debug__: log.debug('query "%s", data = %s: executed', (query, data))
