@@ -1,4 +1,4 @@
-AC_INIT(bazaar, [0.99.2], [wrobell@pld-linux.org])
+AC_INIT(bazaar, [0.99.3], [wrobell@pld-linux.org])
 AM_INIT_AUTOMAKE([dist-bzip2])
 
 AM_PATH_PYTHON(2.3)
