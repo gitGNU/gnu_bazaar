@@ -1,4 +1,4 @@
-# $Id: btest.py,v 1.5 2003/08/27 15:02:47 wrobell Exp $
+# $Id: btest.py,v 1.6 2003/09/22 00:33:53 wrobell Exp $
 
 import unittest
 
@@ -40,33 +40,33 @@ class DBBazaarTestCase(BazaarTestCase):
         self.bazaar.closeDBConn()
 
 
-    def checkOrder(self, row):
+    def checkOrder(self, key, row):
         """
         Order class data integrity test function.
         """
-        order = self.bazaar.brokers[app.Order].cache[row[0]]
+        order = self.bazaar.brokers[app.Order].cache[key]
         return order.no == row[0] and order.finished == row[1]
 
 
-    def checkEmployee(self, row):
+    def checkEmployee(self, key, row):
         """
         Employee class data integrity test function.
         """
-        emp = self.bazaar.brokers[app.Employee].cache[(row[0], row[1])]
+        emp = self.bazaar.brokers[app.Employee].cache[key]
         return emp.name == row[0] and emp.surname == row[1] and emp.phone == row[2]
 
 
-    def checkArticle(self, row):
+    def checkArticle(self, key, row):
         """
         Article class data integrity test function.
         """
-        art = self.bazaar.brokers[app.Article].cache[row[0]]
+        art = self.bazaar.brokers[app.Article].cache[key]
         return art.name == row[0] and art.price == row[1]
 
 
-    def checkOrderItem(self, row):
+    def checkOrderItem(self, key, row):
         """
         OrderItem class data integrity test function.
         """
-        oi = self.bazaar.brokers[app.OrderItem].cache[(row[0], row[1])]
-        return oi.order == row[0] and oi.pos == row[1] and oi.quantity == row[2]
+        oi = self.bazaar.brokers[app.OrderItem].cache[key]
+        return oi.order_fkey == row[0] and oi.pos == row[1] and oi.quantity == row[2]
