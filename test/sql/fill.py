@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# $Id: fill.py,v 1.2 2003/07/26 16:44:59 wrobell Exp $
+# $Id: fill.py,v 1.3 2003/08/07 17:56:54 wrobell Exp $
 
 import sys
 import random
@@ -93,5 +93,11 @@ for row in gen_articles(AMOUNT_ARTICLE):
 
 for row in gen_orders(AMOUNT_ORDER):
     insert(dbc, row)
+
+# insert article, order and employee rows, so we can delete them by test
+# cases
+insert(dbc, Row('article', {'name': 'article', 'price': random.uniform(0, 10)}))
+insert(dbc, Row('order', { 'no': 1001, 'finished': 'false' }))
+insert(dbc, Row('employee', {'name': 'n1001', 'surname': 's1001', 'phone': '1001'}))
 
 db.commit()
