@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.29 2003/09/29 11:36:04 wrobell Exp $
+# $Id: assoc.py,v 1.30 2003/09/29 16:49:47 wrobell Exp $
 """
 Association classes.
 """
@@ -485,7 +485,12 @@ class BiDirOneToOne(OneToOne):
         @param value: Referenced object.
         """
         assert obj is not None and value is not None
-        self.save(obj, None)
+        if (obj, value) in self.ref_buf:
+            del self.ref_buf[(obj, value)]
+        else:
+            self.saveForeignKey(obj, None)
+
+        assert getattr(obj, self.col.col) is None
 
 
 
@@ -559,6 +564,27 @@ class List(AssociationReferenceProxy):
         self.removed = {}
         self.reload = True
         assert isinstance(self.ref_buf, ListReferenceBuffer)
+
+        # set methods, which are used with List.update method
+        if self.col.is_many_to_many:
+            self.addPair = self.addPairWithDB
+            self.delPair = self.delPairWithDB
+            self.getPair = self.getPairFromDB
+            self.getUpdatePair = self.getKeyPair
+
+        elif self.col.is_one_to_many:
+            if self.col.update:
+                self.addPair = self.updateReferencedObjects
+                self.delPair = self.updateReferencedObjects
+            else:
+                self.addPair = self.addReferencedObjects
+                self.delPair = self.delReferencedObjects
+
+            self.getPair = self.getPairFromBroker
+            self.getUpdatePair = self.getObjectPair
+
+        else:
+            assert False
 
 
     def saveForeignKey(self, obj, vkey):
@@ -637,25 +663,61 @@ class List(AssociationReferenceProxy):
         self.value_keys.clear()
         self.appended.clear()
         self.removed.clear()
+        self.ref_buf.clear()
+        if self.col.is_one_to_many:
+            self.vbroker.reloadObjects(now)
         if now:
             self.loadData()
 
+
+    def getPairFromBroker(self):
+        """
+        Return tuple of application object's and referenced object's
+        primary key values.
+
+        Referenced object is taken from referenced class broker.
+        
+        The method is used as C{List.getPair} method with one-to-many
+        associations.
+        """
+        for value in self.vbroker.getObjects():
+            yield getattr(value, self.col.vcol), value.__key__
+
+
+
+    def getPairFromDB(self):
+        """
+        Return tuple of application object's and referenced object's
+        primary key values.
+
+        Referenced object's primary key value is taken from database with
+        appropriate convertor methods.
+        
+        The method is used as C{List.getPair} method with many-to-many
+        associations.
+
+        @see: L{getPairFromBroker} L{bazaar.motor.Convertor.getPair}
+        """
+        for item in self.broker.convertor.getPair(self):
+            yield item
 
 
     def loadData(self):
         """
         Load association data from database.
+
+        @see: L{reloadData} L{getPairFromDB} L{getPairFromBroker}
         """
         log.info('load association %s.%s' % (self.broker.cls, self.col.attr))
 
         assert len(self.value_keys) == 0 and len(self.appended) ==0 and len(self.removed) == 0
 
-        for okey, vkey in self.broker.convertor.getPair(self):
+        for okey, vkey in self.getPair():
             obj = self.broker.get(okey)
             if obj is not None:
                 self.getValueKeys(obj).add(vkey)
 
-        log.info('len(%s.%s) = %d' % (self.broker.cls, self.col.attr, len(self.value_keys)))
+        log.info('application objects of %s.%s = %d' % (self.broker.cls, self.col.attr, len(self.value_keys)))
 
         self.reload = False
 
@@ -686,24 +748,114 @@ class List(AssociationReferenceProxy):
             return getObjects()
 
 
+    def addReferencedObjects(self, pairs):
+        """
+        Add referenced objects into database.
+
+        The method is used as C{addPair} method with one-to-many
+        associations when updating relationship.
+
+        @see: L{delReferencedObjects} L{updateReferencedObjects} L{update}
+        """
+        for obj, value in pairs:
+            self.vbroker.add(value)
+
+
+    def delReferencedObjects(self, pairs):
+        """
+        Delete referenced objects from database.
+
+        The method is used as C{delPair} method with one-to-many
+        associations when updating relationship.
+
+        @see: L{addReferencedObjects} L{updateReferencedObjects} L{update}
+        """
+        for obj, value in pairs:
+            self.vbroker.delete(value)
+
+
+    def updateReferencedObjects(self, pairs):
+        """
+        Update referenced objects in database.
+
+        The method is used as C{addPair} and as C{delPair} with one-to-many
+        associations when updating relationship.
+
+        @see: L{addReferencedObjects} L{delReferencedObjects} L{update}
+        """
+        for obj, value in pairs:
+            self.vbroker.update(value)
+
+
+    def delPairWithDB(self, pairs):
+        """
+        Remove pair of application object's and referenced object's primary
+        key values from m-n relationship's database link relation.
+
+        Method is used as C{delPair} method with many-to-many associations
+        when updating relationship.
+
+        @see: L{addPairWithDB} L{update}
+        """
+        self.broker.convertor.delPair(self, pairs)
+
+
+    def addPairWithDB(self, pairs):
+        """
+        Add pair of application object's and referenced object's primary
+        key values into m-n relationship's database link relation.
+
+        Method is used as C{addPair} method with many-to-many associations
+        when updating relationship.
+
+        @see: L{delPairWithDB} L{update}
+        """
+        self.broker.convertor.addPair(self, pairs)
+
+
+    def getObjectPair(self, obj, value):
+        """
+        Return pair of application object and referenced object.
+
+        Method is used as c{updatePair} method to update one-to-many
+        association.
+
+        @see: L{update}
+        """
+        return (obj, value)
+
+
+    def getKeyPair(self, obj, value):
+        """
+        Return pair of application object's and referenced object's primary
+        key values.
+
+        Method is used as c{updatePair} method to update many-to-many
+        association.
+
+        @see: L{update}
+        """
+        return obj.__key__, value.__key__
+
+
     def update(self, obj):
         """
         Update relational data of association of given application object
         in database.
 
         @param obj: Application object.
-        fixme: nfy
-        """
-        okey = obj.__key__
 
+        @see: L{updateReferencedObjects} L{addReferencedObjects} L{delReferencedObjects}
+            L{addPairWithDB} L{delPairWithDB} L{getObjectPair} L{getKeyPair}
+        """
         def getPairs(set):
             if obj in set:
                 for value in set[obj]:
-                    yield (okey, value.__key__)
+                    yield self.getUpdatePair(obj, value)
                 set[obj].clear()
 
-        self.broker.convertor.delPair(self, getPairs(self.removed))
-        self.broker.convertor.addPair(self, getPairs(self.appended))
+        self.delPair(getPairs(self.removed))
+        self.addPair(getPairs(self.appended))
 
 
     def append(self, obj, value):
