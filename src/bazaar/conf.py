@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.7 2003/07/22 15:11:26 wrobell Exp $
+# $Id: conf.py,v 1.8 2003/08/02 15:39:38 wrobell Exp $
 
 import logging
 
@@ -96,7 +96,7 @@ class Persitence(type):
         if 'key_columns' in data:
             cls_data['key_columns'] = data['key_columns']
         else:
-            cls_data['key_columns'] = None
+            cls_data['key_columns'] = ()
 
         if 'getKey' in data:
             cls_data['getKey'] = classmethod(data['getKey'])
