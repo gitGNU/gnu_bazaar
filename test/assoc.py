@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.14 2003/09/29 18:39:31 wrobell Exp $
+# $Id: assoc.py,v 1.15 2003/09/30 12:45:36 wrobell Exp $
 
 import app
 import btest
@@ -76,14 +76,16 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
     def testReloading(self):
         """Test many-to-many association loading
         """
-        emp = self.bazaar.getObjects(app.Employee)[0]
-        orders = emp.orders
+        for emp in self.bazaar.getObjects(app.Employee):
+            if len(emp.orders) > 0:
+                break
 
-        # remove some referenced objects
-        assert len(orders) > 0
-        for o in orders:
-            del orders[o]
-        assert len(orders) == 0
+        assert len(emp.orders) > 0
+
+        for o in emp.orders:
+            del emp.orders[o]
+
+        assert len(emp.orders) == 0
 
         # reload data and check if they are reloaded
         app.Employee.orders.reloadData()
@@ -135,8 +137,12 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
     def testRemoving(self):
         """Test removing objects from many-to-many association
         """
-        emp = self.bazaar.getObjects(app.Employee)[0]
+        for emp in self.bazaar.getObjects(app.Employee):
+            if len(emp.orders) > 0:
+                break
+
         assert len(emp.orders) > 0
+
         orders = list(emp.orders)
         ord = orders[0]
         del emp.orders[ord]
@@ -152,8 +158,6 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
     def testMixedUpdate(self):
         """Test appending and removing objects to/from many-to-many association
         """
-        emp = self.bazaar.getObjects(app.Employee)[0]
-
         ord1 = app.Order()
         ord1.no = 1002
         ord1.finished = False
@@ -162,15 +166,21 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
         ord2.no = 1003
         ord2.finished = False
 
+        # first, get order object to remove, this way we are sure that we
+        # will not remove object appended as ord1
+        for emp in self.bazaar.getObjects(app.Employee):
+            if len(emp.orders) > 0:
+                break
+        orders = list(emp.orders)
+        ord = orders[0]
+
         # append object with _defined_ primary key value
         self.bazaar.add(ord1)
         emp.orders.append(ord1)
 
-        assert len(emp.orders) > 0
-        orders = list(emp.orders)
-        ord = orders[0]
         # fixme: improve test code, so assertion below is not required
         assert ord != ord2 != ord1
+
         del emp.orders[ord]
 
         # append object with _undefined_ primary key value
@@ -340,15 +350,19 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
         oi2.quantity = 10.4
         oi2.article = art
 
+        # first, get order item object to remove, this way we are sure that we
+        # will not remove object appended as oi1
+        assert len(ord.items) > 0
+        items = list(ord.items)
+        oi = items[0]
+
         # append object with _defined_ primary key value
         self.bazaar.add(oi1)
         ord.items.append(oi1)
 
-        assert len(ord.items) > 0
-        items = list(ord.items)
-        oi = items[0]
         # fixme: improve test code, so assertion below is not required
         assert oi != oi2 != oi1
+
         del ord.items[oi]
 
         # append object with _undefined_ primary key value
