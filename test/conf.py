@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.17 2004/03/22 15:58:21 wrobell Exp $
+# $Id: conf.py,v 1.18 2004/03/23 13:48:27 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -77,6 +77,7 @@ class ConfTestCase(unittest.TestCase):
         B = bazaar.conf.Persistence('B', bases = (A,))
         B.addColumn('b1')
         B.addColumn('b2')
+        self.assertEqual(B.defaults, {'a1': None, 'a2': None, 'b1': None, 'b2': None})
 
         C = bazaar.conf.Persistence('C')
         C.addColumn('c1')
@@ -85,6 +86,12 @@ class ConfTestCase(unittest.TestCase):
         D = bazaar.conf.Persistence('D', bases = (B, C))
         D.addColumn('d1')
         D.addColumn('d2')
+        self.assertEqual(D.defaults, \
+            {'a1': None, 'a2': None, 
+             'b1': None, 'b2': None,
+             'c1': None, 'c2': None, 
+             'd1': None, 'd2': None,
+        })
 
         self.assertEqual(list(B.__bases__), [A])
 

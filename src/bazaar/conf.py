@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.31 2004/01/22 23:21:40 wrobell Exp $
+# $Id: conf.py,v 1.32 2004/03/23 13:48:24 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -311,6 +311,8 @@ class Persistence(type):
     @ivar relation: Database relation name.
     @ivar sequencer: Name of primary key values generator sequencer.
     @ivar columns: List of application class attribute descriptions.
+    @ivar cache: Object cache class.
+    @ivar defaults: Default values for class attributes.
     """
 
     def __new__(self, name, bases = (bazaar.core.PersistentObject, ), data = None, relation = None, sequencer = None, modname = __name__):
@@ -344,6 +346,13 @@ class Persistence(type):
 
         if 'cache' not in data:
             data['cache'] = bazaar.cache.FullObject
+
+        if 'defaults' not in data:
+            data['defaults'] = {}
+
+        for c in bases:
+            if hasattr(c, 'defaults'):
+                data['defaults'].update(c.defaults)
 
         c = type.__new__(self, name, bases, data)
 
@@ -386,9 +395,10 @@ class Persistence(type):
 
         col.cache = None
 
-        setattr(self, attr, None)
+        self.defaults[attr] = None
         if col.is_one_to_one and col.attr != col.col:
-            setattr(self, col.col, None)
+            self.defaults[col.col] = None
+            
 
         # set default association buffer
         if col.is_many:

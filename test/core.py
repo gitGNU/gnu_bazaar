@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.19 2004/02/10 23:44:40 wrobell Exp $
+# $Id: core.py,v 1.20 2004/03/23 13:48:27 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -101,12 +101,22 @@ class CreateObjectTestCase(btest.DBBazaarTestCase):
     """
     def testObjectCreation(self):
         """Test object creation"""
+        # check for attributes with no value assigned before attribute
+        # access
+        apple = app.Article()
+        self.assertEqual(apple.name, None)
+        self.assertEqual(apple.price, None)
+        self.assertEqual(apple.__dict__['name'], None)
+        self.assertEqual(apple.__dict__['price'], None)
+
+        # check attribute value assigning
         apple = app.Article()
         apple.name = 'apple'
         apple.price = 2.33
         self.assertEqual(apple.name, 'apple')
         self.assertEqual(apple.price, 2.33)
 
+        # check attribute value assigning via constructor
         apple = app.Article(name = 'apple', price = 3)
         self.assertEqual(apple.name, 'apple')
         self.assertEqual(apple.price, 3)
@@ -117,6 +127,7 @@ class CreateObjectTestCase(btest.DBBazaarTestCase):
 
         self.bazaar.add(apple)
 
+        # check attribute value assigning when attribute is an reference
         oi = app.OrderItem(pos = 1, quantity = 100, article = apple)
         self.assertEqual(oi.article, apple)
         self.assertEqual(oi.article_fkey, apple.__key__)
