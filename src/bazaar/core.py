@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.8 2003/08/25 19:01:06 wrobell Exp $
+# $Id: core.py,v 1.9 2003/09/03 22:39:47 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -178,6 +178,11 @@ class Bazaar:
             self.brokers[c] = Broker(c, self.motor)
 #            if len(c.key_columns) < 1:
 #                raise bazaar.exc.MappingError('class "%s" key is not defined')
+        # again to assign brokers for associations
+        for c in cls_list:
+            for col in c.columns.values():
+                if col.one_to_one:
+                    col.association.broker = self.brokers[col.cls]
 
         if dsn:
             self.connectDB(dsn)
