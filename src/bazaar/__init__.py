@@ -1,4 +1,4 @@
-# $Id: __init__.py,v 1.3 2003/10/03 14:06:54 wrobell Exp $
+# $Id: __init__.py,v 1.4 2003/10/03 14:16:58 wrobell Exp $
 """
 Bazaar is an easy to use and powerful abstraction layer between
 relational database and object oriented application.
@@ -30,7 +30,7 @@ Using the layer
 ===============
 Diagram::
 
-    Order | 1 ---- * > OrderItems | * ---- 1 > Article
+    Order | 1 ---- * > OrderItem | * ---- 1 > Article
 
 First, define classes (more about class and relationships defining in
 L{bazaar.conf} module documentation)::
@@ -44,8 +44,8 @@ L{bazaar.conf} module documentation)::
     Order.addColumn('items')
 
     OrderItem = bazaar.conf.Persistence('OrderItem', relation = 'order_item')
-    OrderItems.addColumn('pos')
-    OrderItems.addColumn('article')
+    OrderItem.addColumn('pos')
+    OrderItem.addColumn('article')
 
 
 @todo:
