@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.24 2003/09/25 17:41:11 wrobell Exp $
+# $Id: assoc.py,v 1.25 2003/09/25 18:17:14 wrobell Exp $
 """
 Association classes.
 """
@@ -48,7 +48,7 @@ class ReferenceBuffer(dict):
     objects as values.
     @see: l{bazaar.assoc.ListReferenceBuffer}
     """
-    def __contains__(self, obj):
+    def __contains__(self, (obj, value)):
         """
         Check if application object is stored in reference buffer.
 
@@ -80,16 +80,28 @@ class ListReferenceBuffer(ReferenceBuffer):
     def __contains__(self, item):
         """
         Check if application object referenced objects are in reference
-        buffer.
+        buffer. Operator ``in'' can be used in two ways::
+
+            # buffer contains minimum one referenced value by application
+            # object obj (len(ref_buf[obj]) > 0):
+            obj in ref_buf
+            (obj, None) in ref_buf
+
+            # referenced object value is referenced by obj and exists in
+            # buffer:
+            (obj, value) in ref_buf
 
         @param item: Application object or pair of application object and referenced object.
         """
+        ref_buf = super(ListReferenceBuffer, self)
         if isinstance(item, tuple):
             obj, value = item
-            assert value is not None
-            return super(ListReferenceBuffer, self).__contains__(obj) and value in self[obj]
+            if value is None:
+                return ref_buf.__contains__(item)
+            else:
+                return ref_buf.__contains__(item) and item[1] in self[item[0]]
         else:
-            return super(ListReferenceBuffer, self).__contains__(item)
+            return ref_buf.__contains__((item, None))
 
 
     def __setitem__(self, obj, value):
@@ -129,13 +141,12 @@ class ListReferenceBuffer(ReferenceBuffer):
         """
         assert obj is not None and value is not None
 
-        ref_buf = ListReferenceBuffer(self)
-        if obj in ref_buf:
-            ref_buf[obj].discard(value)
-            if len(ref_buf[obj]) == 0:
-                del ref_buf[obj]
+        if (obj, value) in self:
+            self[obj].remove(value)
+            if len(self[obj]) == 0:
+                super(ListReferenceBuffer, self).__delitem__((obj, None))
 
-        assert obj not in ref_buf or obj in ref_buf and len(ref_buf[obj]) > 0 and value not in ref_buf[obj]
+        assert obj not in self or (obj, None) in ref_buf and len(ref_buf[obj]) > 0 and value not in ref_buf[obj]
 
 
 
@@ -160,8 +171,8 @@ class ObjectIterator(object):
 
         Several operators are supported
             - len: C{len(items)}
-            - in: C{obj in items}
-            - del: C{del items[obj]}
+            - in: C{oi in items}
+            - del: C{del items[oi]}
 
 
         @param obj: Application object.
@@ -512,7 +523,7 @@ class List(AssociationReferenceProxy):
 
     Conclusion. Store referenced objects with lists internally by
     default and make configuration option, so switching to sets is
-    possible.
+    possible or always use sets so system is scalable.
     """
     def __init__(self, col):
         """

@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.5 2003/09/25 16:33:32 wrobell Exp $
+# $Id: assoc.py,v 1.6 2003/09/25 18:17:14 wrobell Exp $
 
 import app
 import btest
@@ -112,6 +112,12 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
         # append object with _undefined_ primary key value
         emp.orders.append(ord2)
         self.bazaar.add(ord2)
+        self.assert_(ord1 in emp.orders, \
+            'appended referenced object not found in association %s -> %s' % \
+            (emp, ord1))
+        self.assert_(ord2 in emp.orders, \
+            'appended referenced object not found in association %s -> %s' % \
+            (emp, ord2))
         emp.orders.update()
         self.checkAsc()
 
@@ -123,6 +129,8 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
         assert len(emp.orders) > 0
         orders = list(emp.orders)
         del emp.orders[orders[0]]
+        self.assert_(orders[0] not in emp.orders, \
+            'removed referenced object found in association')
         emp.orders.update()
         self.checkAsc()
 
@@ -154,7 +162,45 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
         # append object with _undefined_ primary key value
         emp.orders.append(ord2)
         self.bazaar.add(ord2)
+
+        self.assert_(ord not in emp.orders, \
+            'removed referenced object found in association')
+        self.assert_(ord1 in emp.orders, \
+            'appended referenced object not found in association')
+        self.assert_(ord2 in emp.orders, \
+            'appended referenced object not found in association')
+
         emp.orders.update()
+
+        self.assert_(ord not in emp.orders, \
+            'removed referenced object found in association')
+        self.assert_(ord1 in emp.orders, \
+            'appended referenced object not found in association')
+        self.assert_(ord2 in emp.orders, \
+            'appended referenced object not found in association')
+
+        self.checkAsc()
+
+        emp.orders.append(ord)
+        emp.orders.remove(ord1)
+        emp.orders.remove(ord2)
+
+        self.assert_(ord not in emp.orders, \
+            'removed referenced object found in association')
+        self.assert_(ord1 in emp.orders, \
+            'appended referenced object not found in association')
+        self.assert_(ord2 in emp.orders, \
+            'appended referenced object not found in association')
+
+        emp.orders.update()
+
+        self.assert_(ord not in emp.orders, \
+            'removed referenced object found in association')
+        self.assert_(ord1 in emp.orders, \
+            'appended referenced object not found in association')
+        self.assert_(ord2 in emp.orders, \
+            'appended referenced object not found in association')
+
         self.checkAsc()
 
 
