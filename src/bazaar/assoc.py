@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.31 2003/09/30 15:04:12 wrobell Exp $
+# $Id: assoc.py,v 1.32 2003/10/02 13:45:51 wrobell Exp $
 """
 Association classes.
 """
@@ -141,10 +141,9 @@ class ListReferenceBuffer(ReferenceBuffer):
         """
         assert obj is not None and value is not None
 
-        if (obj, value) in self:
-            self[obj].remove(value)
-            if len(self[obj]) == 0:
-                super(ListReferenceBuffer, self).__delitem__((obj, None))
+        self[obj].remove(value)
+        if len(self[obj]) == 0:
+            super(ListReferenceBuffer, self).__delitem__((obj, None))
 
         assert (obj not in self or len(self[obj]) > 0) \
             and (obj, value) not in self
@@ -337,16 +336,15 @@ class AssociationReferenceProxy(object):
         """
         assert obj is not None and value is not None
 
-        # remove entry from reference buffer if it exists
-        if (obj, value) in self.ref_buf:
-            del self.ref_buf[obj, value]
-
         if value.__key__ is None:
             # refernced object's primary key is not defined,
             # store object in reference buffer
             self.ref_buf[obj] = value
         else:
-            self.saveForeignKey(obj, value.__key__)
+            # remove entry from reference buffer if it exists
+            if (obj, value) in self.ref_buf:
+                del self.ref_buf[obj, value]
+        self.saveForeignKey(obj, value.__key__)
 
 
     def saveForeignKey(self, obj, vkey):
