@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.28 2003/09/28 15:56:21 wrobell Exp $
+# $Id: assoc.py,v 1.29 2003/09/29 11:36:04 wrobell Exp $
 """
 Association classes.
 """
@@ -208,7 +208,10 @@ class ObjectIterator(object):
                 self.association, self.obj, value)
 
         if not isinstance(value, self.association.col.vcls):
-            raise bazaar.exc.AssociationError('referenced object\'s class mismatch', obj, value)
+            raise bazaar.exc.AssociationError('referenced object\'s class mismatch', self.association, self.obj, value)
+
+        if self.association.contains(self.obj, value):
+            raise bazaar.exc.AssociationError('object is referenced', self.association, self.obj, value)
 
         self.association.append(self.obj, value)
 
@@ -233,7 +236,10 @@ class ObjectIterator(object):
                 self.association, self.obj, value)
 
         if not isinstance(value, self.association.col.vcls):
-            raise bazaar.exc.AssociationError('referenced object\'s class mismatch', obj, value)
+            raise bazaar.exc.AssociationError('referenced object\'s class mismatch', self.association, self.obj, value)
+
+        if not self.association.contains(self.obj, value):
+            raise bazaar.exc.AssociationError('object is not referenced', self.association, self.obj, value)
 
         self.association.remove(self.obj, value)
 
