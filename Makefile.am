@@ -15,3 +15,4 @@ doc/html:
 doc: doc/html doc/pdf/api.pdf
 
 EXTRA_DIST = doc/pdf/api.pdf doc/html
+MAINTAINERCLEANFILES = -r doc
