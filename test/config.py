@@ -1,4 +1,4 @@
-# $Id: config.py,v 1.2 2003/11/23 23:39:18 wrobell Exp $
+# $Id: config.py,v 1.3 2003/11/24 18:42:22 wrobell Exp $
 
 from ConfigParser import ConfigParser
 
@@ -6,6 +6,7 @@ import unittest
 
 import bazaar.core
 import bazaar.config
+import bazaar.cache
 
 import app
 import btest
@@ -35,6 +36,10 @@ class ConfigTestCase(btest.BazaarTestCase):
         self.assertEqual(b.dbmod.__name__, 'psycopg')
         self.assertEqual(b.seqpattern, "select nextval('%s')")
 
-#fixme        self.assertEqual(app.Article.cache, bazaar.cache.LoadObject)
         self.assertEqual(app.Article.relation, 'tarticle')
         self.assertEqual(app.Article.sequencer, 'tarticle_seq')
+
+        self.assertEqual(app.Article.cache, bazaar.cache.LazyObject)
+        self.assertEqual(b.brokers[app.Article].cache.__class__, bazaar.cache.LazyObject)
+
+        self.assertEqual(app.Order.items.col.cache, bazaar.cache.LazyAssociation)

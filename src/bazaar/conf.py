@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.28 2003/11/24 16:42:17 wrobell Exp $
+# $Id: conf.py,v 1.29 2003/11/24 18:42:22 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -204,9 +204,15 @@ class Persistence(type):
         col.vattr = vattr
         self.update = update
 
+        col.cache = None
+
         setattr(self, attr, None)
         if col.is_one_to_one and col.attr != col.col:
             setattr(self, col.col, None)
+
+        # set default association buffer
+        if col.is_many:
+            col.cache = bazaar.cache.FullAssociation
 
         if not attr:
             raise ColumnMappingError('wrong column name', self, col)

@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.24 2003/11/24 16:42:17 wrobell Exp $
+# $Id: core.py,v 1.25 2003/11/24 18:42:22 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -318,7 +318,7 @@ class Bazaar:
                     col.association.vbroker = self.brokers[col.vcls]
 
 
-    def parseConfig(self, config):
+    def parseConfig(self, config): #fixme: debug messages
         """
         Parse Bazaar configuration.
 
@@ -329,22 +329,58 @@ class Bazaar:
         dbmod = config.getDBModule()
         if dbmod is not None:
             self.dbmod = __import__(dbmod)
+            log.info('DB API module: %s' % self.dbmod.__name__)
 
         dsn = config.getDSN()
-        if dsn is not None: self.dsn = dsn
+        if dsn is not None:
+            self.dsn = dsn
+            log.info('data source name loaded from configuration file')
 
         seqpattern = config.getSeqPattern()
-        if seqpattern is not None: self.seqpattern = seqpattern
+        if seqpattern is not None:
+            self.seqpattern = seqpattern
+            log.info('sequencer pattern: "%s"' % self.seqpattern)
 
+        def getClass(path): # get class
+            items = path.split('.')
+            mod = '.'.join(items[:-1])
+            cls = items[-1]
+            return __import__(mod, globals(), locals(), ['']).__dict__[cls]
+
+        # check configuration for every class
         for c in self.cls_list:
             fname = c.__module__ + '.' + c.__name__ # get full name of class
             relation = config.getClassRelation(fname)
-            if relation: c.relation = relation
+            if relation:
+                c.relation = relation
+                log.info('%s relation: %s' % (c, c.relation))
 
             sequencer = config.getClassSequencer(fname)
-            if sequencer: c.sequencer = sequencer
-#fixme            c.cache = bazaar.cache....
+            if sequencer:
+                c.sequencer = sequencer
+                log.info('%s sequencer: %s' % (c, c.sequencer))
 
+            if __debug__:
+                log.debug('get class %s cache' % fname)
+            cache = config.getObjectCache(fname)
+            if __debug__:
+                log.debug('got class %s cache: %s' % (fname, cache))
+            if cache:
+                c.cache = getClass(cache)
+                log.info('%s cache: %s' % (c, c.cache))
+            
+            # check configuration for every attribute
+            for col in c.columns.values():
+                aname = fname + '.' + col.attr
+                if __debug__:
+                    log.debug('get association %s cache' % aname)
+                cache = config.getAssociationCache(aname)
+                if __debug__:
+                    log.debug('got association %s cache: %s' % (aname, cache))
+                if cache:
+                    col.cache = getClass(cache)
+                    log.info('association "%s" cache: %s' % (aname, c.cache))
+            
 
     def setConfig(self, config):
         """
