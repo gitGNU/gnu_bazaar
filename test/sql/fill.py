@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# $Id: fill.py,v 1.7 2003/09/29 18:36:53 wrobell Exp $
+# $Id: fill.py,v 1.8 2003/09/30 12:42:13 wrobell Exp $
 
 import sys
 import random
@@ -77,7 +77,7 @@ def get_random_row(rows):
 
 
 def gen_order_items(order, amount):
-    for i in xrange(1, random.randint(2, amount)):
+    for i in xrange(1, random.randint(5, amount)):
         yield ObjectRow('order_item', {
                 'order_fkey': order,
                 'article_fkey': get_random_row(articles)['__key__'],
