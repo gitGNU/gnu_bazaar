@@ -1,6 +1,8 @@
-# $Id: conf.py,v 1.4 2003/06/20 16:45:26 wrobell Exp $
+# $Id: conf.py,v 1.5 2003/07/10 23:16:01 wrobell Exp $
 
 import logging
+
+import bazaar.core
 
 log = logging.getLogger('bazaar.conf')
 
@@ -72,7 +74,7 @@ class Persitence(type):
     <attr name = 'columns'>Database relation column list.</attr>
     """
 
-    def __new__(cls, name, bases = (object, ), data = {}, relation = ''):
+    def __new__(cls, name, bases = (bazaar.core.PersistentObject, ), data = {}, relation = ''):
         """
         <s>Create application class.</s>
         <attr name = 'relation'>Database relation name.</attr>
@@ -95,6 +97,11 @@ class Persitence(type):
             cls_data['key_columns'] = data['key_columns']
         else:
             cls_data['key_columns'] = None
+
+        if 'getKey' in data:
+            cls_data['getKey'] = classmethod(data['getKey'])
+        else:
+            cls_data['getKey'] = None
 
         c = type.__new__(cls, name, bases, cls_data)
 
@@ -126,7 +133,7 @@ class Persitence(type):
         <s>Set relation key.</s>
         <attr name = 'columns'>
             List of key columns. It cannot be empty and all specified
-            columns should exist on application column list.
+            columns should exist on relation column list.
         </attr>
         """
         if __debug__: log.debug('key columns "%s"' % (columns, ))
@@ -140,4 +147,23 @@ class Persitence(type):
                 raise AttributeError('key column "%s" not found on column list' % c)
 
         cls.key_columns = tuple(columns)
+
+        #
+        # object key value extraction methods
+        #
+
+        # get multi column key value from object
+        def getMKey(cls, obj):
+            tuple([obj.__dict__[c] for c in cls.key_columns])
+
+        # get one column key value from object
+        def getKey(cls, obj):
+            return obj.__dict__[cls.key_columns[0]]
+
+        # create class methods for object key extraction 
+        if len(cls.key_columns) == 1:
+            cls.getKey = classmethod(getMKey)
+        else:
+            cls.getKey = classmethod(getKey)
+
         if __debug__: log.debug('class "%s" key: %s' % (cls.__name__, cls.key_columns))
