@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.14 2003/09/24 00:22:49 wrobell Exp $
+# $Id: assoc.py,v 1.15 2003/09/24 00:43:37 wrobell Exp $
 """
 Association classes.
 """
@@ -73,7 +73,7 @@ class AssociationReferenceProxy(dict):
         """
         Return referenced object.
 
-        Foreign key value of referenced object's column is extracted with 
+        Foreign key value of application object's column is extracted with 
         L{getForeignKey} method.
 
         @param buffer_key: Buffer key value.
@@ -100,7 +100,7 @@ class AssociationReferenceProxy(dict):
         """
         Assign referenced object.
 
-        Foreign key value of referenced object's column is set with 
+        Foreign key value of application object's column is set with 
         L{setForeignKey} method.
 
         @param buffer_key: Buffer key value.
@@ -132,7 +132,7 @@ class AssociationReferenceProxy(dict):
 
     def getForeignKey(self, buffer_key):
         """
-        Abstract method to get foreign key value of referenced
+        Abstract method to get foreign key value of application
         object's column.
 
         @param buffer_key: Buffer key value.
@@ -142,7 +142,7 @@ class AssociationReferenceProxy(dict):
 
     def setForeignKey(self, buffer_key, value_key):
         """
-        Abstract method to set foreign key value of referenced
+        Abstract method to set foreign key value of application
         object's column to referenced object's primary key.
 
         @param buffer_key: Buffer key value.
@@ -179,7 +179,7 @@ class OneToOne(AssociationReferenceProxy):
 
     def getForeignKey(self, buffer_key):
         """
-        Return foreign key value of referenced object's column.
+        Return foreign key value of application object's column.
 
         @param buffer_key: Buffer key value, which is application object.
         """
@@ -278,7 +278,7 @@ class ListAssociation(AssociationReferenceProxy):
 
     def getForeignKey(self, buffer_key):
         """
-        Return foreign key value of referenced object's column.
+        Return foreign key value of application object's column.
 
         @param buffer_key: Buffer key value, which is pair of application
             object and index of referenced object in referenced object list.
