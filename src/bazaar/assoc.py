@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.5 2003/09/09 22:54:32 wrobell Exp $
+# $Id: assoc.py,v 1.6 2003/09/19 14:59:48 wrobell Exp $
 """
 Association classes.
 """
@@ -55,6 +55,7 @@ class AssociationReferenceProxy(dict):
         """
         super(AssociationReferenceProxy, self).__init__()
         self.column = column
+        self.broker = None
 
 
     def __getitem__(self, buffer_key):
@@ -141,9 +142,12 @@ class AssociationReferenceProxy(dict):
 
 class OneToOneAssociation(AssociationReferenceProxy):
     """
-    One to one association descriptor and reference proxy.
+    Base descriptor class for uni and bi-directional one to one association
+    descriptors.
 
     @see: L{bazaar.assoc.AssociationReferenceProxy}
+    @see: L{bazaar.assoc.UniDirOneToOneAssociation}
+    @see: L{bazaar.assoc.BiDirOneToOneAssociation}
     """
 
     def __get__(self, obj, cls):
@@ -160,16 +164,6 @@ class OneToOneAssociation(AssociationReferenceProxy):
             return self[obj]
         else:
             return self
-
-
-    def __set__(self, obj, value):
-        """
-        Descriptor method to set associating object's column value.
-
-        @param obj: Associating object.
-        @param value: Associated object.
-        """
-        self[obj] = value
 
 
     def getForeignKey(self, buffer_key):
@@ -190,3 +184,40 @@ class OneToOneAssociation(AssociationReferenceProxy):
         @param value_key: Associated object's primary key value.
         """
         setattr(buffer_key, self.column.name, value_key)
+
+
+
+class UniDirOneToOneAssociation(OneToOneAssociation):
+    """
+    Uni-directional one-to-one association descriptor.
+    """
+    def __set__(self, obj, value):
+        """
+        Descriptor method to set associating object's column value.
+
+        This method is optimized for uni-directional one-to-one
+        associations.
+
+        @param obj: Associating object.
+        @param value: Associated object.
+        """
+        self[obj] = value
+
+
+
+class BiDirOneToOneAssociation(OneToOneAssociation):
+    """
+    Bi-directional one-to-one association descriptor.
+    """
+    def __set__(self, obj, value):
+        """
+        Descriptor method to set associating object's column value.
+
+        The method keeps data integrity of bi-directional one-to-one
+        associations.
+
+        @param obj: Associating object.
+        @param value: Associated object.
+        """
+        self[obj] = value
+        self.column.association[value] = obj
