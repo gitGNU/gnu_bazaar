@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.16 2003/10/01 14:28:24 wrobell Exp $
+# $Id: assoc.py,v 1.17 2003/10/02 14:32:24 wrobell Exp $
 
 import app
 import btest
@@ -337,6 +337,10 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
             'removed referenced object found in association')
         ord.items.update()
         self.checkOrdAsc()
+
+        ord = app.Order()
+        ord.items.append(oi)
+        del ord.items[oi]
 
         self.assertRaises(bazaar.exc.AssociationError, ord.items.remove, None)
         self.assertRaises(bazaar.exc.AssociationError, ord.items.remove, object())

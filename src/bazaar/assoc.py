@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.32 2003/10/02 13:45:51 wrobell Exp $
+# $Id: assoc.py,v 1.33 2003/10/02 14:32:23 wrobell Exp $
 """
 Association classes.
 """
@@ -24,8 +24,7 @@ def juggle(obj, value, app, rem):
     """
     if obj in rem:
         objects = rem[obj]
-        if value in objects:
-            del objects[value]
+        objects.discard(value)
         if len(objects) == 0:
             del rem[obj]
 
@@ -879,7 +878,7 @@ class List(AssociationReferenceProxy):
 
         if (obj, value) in self.ref_buf:
             del self.ref_buf[(obj, value)]
-        elif obj in self.value_keys:
+        else:
             self.value_keys[obj].discard(value.__key__)
 
 
