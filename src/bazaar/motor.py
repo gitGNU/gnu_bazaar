@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.9 2003/08/25 19:01:06 wrobell Exp $
+# $Id: motor.py,v 1.10 2003/09/03 22:36:57 wrobell Exp $
 """
 Data convertor and database access objects.
 """
@@ -24,25 +24,11 @@ class Convertor:
         self.cls = cls
         self.motor = mtr
 
-        self.columns = [col.name for col in self.cls.columns.values()]
-
-        #
-        # set convert key method for single or multicolumn relation key;
-        # convert key methods creates tupple from object key data
-        #
-
-        # multicolumn key method
-        def getMKey(key):
-            return key
-
-        # single column key method
-        def getKey(key):
-            return (key, )
-
-        if len(self.cls.key_columns) == 1:
-            self.convertKey = getKey
-        else:
-            self.convertKey = getMKey
+        cls_columns = self.cls.columns.values()
+        self.columns = [col.name for col in cls_columns if not col.one_to_one]
+        self.one_to_one_associations = [col for col in cls_columns if col.one_to_one]
+        for col in self.one_to_one_associations:
+            self.columns += list(col.fkey_columns)
 
         #
         # prepare queries
@@ -79,8 +65,14 @@ class Convertor:
         Load objects from database.
         """
         for data in self.motor.getData(self.queries[self.getObjects], self.columns):
+            for col in self.one_to_one_associations:
+                if len(col.fkey_columns) == 1: # fixme: create association object key extraction method
+                    data[col.name] = data[col.fkey_columns[0]]
+                else:
+                    data[col.name] = tuple([data[col_name] for col_name in col.fkey_columns])
+
             obj = self.cls(data)   # create object instance
-            obj.key = obj.__class__.getKey(obj)
+            obj.key = self.cls.getKey(obj.__dict__) # and set object key
 
             yield obj
 
@@ -92,7 +84,7 @@ class Convertor:
         @param obj: Object to add.
         """
         self.motor.add(self.queries[self.add], obj.__dict__)
-        obj.key = obj.__class__.getKey(obj)
+        obj.key = self.cls.getKey(obj.__dict__)
  
 
     def update(self, obj):
@@ -102,8 +94,8 @@ class Convertor:
         @param obj: Object to update.
         """
         self.motor.update(self.queries[self.update], \
-            [obj.__dict__[col] for col in self.columns], self.convertKey(obj.key))
-        obj.key = obj.__class__.getKey(obj)
+            [obj.__dict__[col] for col in self.columns], self.cls.convertKey(obj.key))
+        obj.key = self.cls.getKey(obj.__dict__)
 
 
     def delete(self, obj):
@@ -112,7 +104,7 @@ class Convertor:
 
         @param obj: Object to delete.
         """
-        self.motor.delete(self.queries[self.delete], self.convertKey(obj.key))
+        self.motor.delete(self.queries[self.delete], self.cls.convertKey(obj.key))
 
 
 
