@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.8 2003/08/02 15:39:38 wrobell Exp $
+# $Id: conf.py,v 1.9 2003/08/19 22:30:06 wrobell Exp $
 
 import logging
 
@@ -74,39 +74,33 @@ class Persitence(type):
     <attr name = 'columns'>Database relation column list.</attr>
     """
 
-    def __new__(cls, name, bases = (bazaar.core.PersistentObject, ), data = {}, relation = ''):
+    def __new__(cls, name, bases = (bazaar.core.PersistentObject, ), data = None, relation = ''):
         """
         <s>Create application class.</s>
         <attr name = 'relation'>Database relation name.</attr>
         """
-        cls_data = {}
+        if data is None:
+            data = {}
+
         if not relation:
             relation = name
 
-        if 'relation' in data:
-            cls_data['relation'] = data['relation']
-        else:
-            cls_data['relation'] = relation
+        if 'relation' not in data:
+            data['relation'] = relation
 
-        if 'columns' in data:
-            cls_data['columns'] = data['columns']
-        else:
-            cls_data['columns'] = {}
+        if 'columns' not in data:
+            data['columns'] = {}
 
-        if 'key_columns' in data:
-            cls_data['key_columns'] = data['key_columns']
-        else:
-            cls_data['key_columns'] = ()
+        if 'key_columns' not in data:
+            data['key_columns'] = ()
 
-        if 'getKey' in data:
-            cls_data['getKey'] = classmethod(data['getKey'])
-        else:
-            cls_data['getKey'] = None
+        if 'getKey' not in data:
+            data['getKey'] = None
 
-        c = type.__new__(cls, name, bases, cls_data)
+        c = type.__new__(cls, name, bases, data)
 
         if __debug__:
-            log.debug('new class "%s" for relation "%s"' % (c.__name__, cls_data['relation']))
+            log.debug('new class "%s" for relation "%s"' % (c.__name__, data['relation']))
 
         assert c.relation, 'class relation should not be empty'
 
