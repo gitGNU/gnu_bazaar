@@ -26,8 +26,8 @@ ord = Order({'no': 1, 'finished': False})
 bzr.add(ord)
 
 items = ord.items
-for j in range(0, amount, 1000):
-    max = j + 1000
+for j in range(0, amount, 5000):
+    max = j + 5000
     for i in range(j, max):
         oi = OrderItem()
         oi.article = art
