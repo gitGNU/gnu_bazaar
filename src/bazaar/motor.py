@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.10 2003/09/03 22:36:57 wrobell Exp $
+# $Id: motor.py,v 1.11 2003/09/07 11:45:00 wrobell Exp $
 """
 Data convertor and database access objects.
 """
@@ -66,15 +66,32 @@ class Convertor:
         """
         for data in self.motor.getData(self.queries[self.getObjects], self.columns):
             for col in self.one_to_one_associations:
-                if len(col.fkey_columns) == 1: # fixme: create association object key extraction method
-                    data[col.name] = data[col.fkey_columns[0]]
-                else:
-                    data[col.name] = tuple([data[col_name] for col_name in col.fkey_columns])
+                data[col.name] = col.association.getKey(data)
 
             obj = self.cls(data)   # create object instance
             obj.key = self.cls.getKey(obj.__dict__) # and set object key
 
             yield obj
+
+
+    def getData(self, obj):
+        """
+        Extract relational data from application object.
+
+        @param obj: Application object.
+
+        @return: Dictionary of object's relational data.
+        """
+        # get attribute values
+        data = obj.__dict__.copy()
+
+        # get one-to-one association foreign key values
+        for col in self.one_to_one_associations:
+            value = getattr(obj, col.attr)
+            if value is not None:
+                data[col.name] = value.key
+            data.update(dict(zip(col.fkey_columns, col.association.convertKey(data[col.name]))))
+        return data
 
 
     def add(self, obj):
@@ -83,8 +100,9 @@ class Convertor:
 
         @param obj: Object to add.
         """
-        self.motor.add(self.queries[self.add], obj.__dict__)
-        obj.key = self.cls.getKey(obj.__dict__)
+        data = self.getData(obj)
+        self.motor.add(self.queries[self.add], data)
+        obj.key = self.cls.getKey(data)
  
 
     def update(self, obj):
@@ -93,9 +111,11 @@ class Convertor:
 
         @param obj: Object to update.
         """
+        data = self.getData(obj)
+        
         self.motor.update(self.queries[self.update], \
-            [obj.__dict__[col] for col in self.columns], self.cls.convertKey(obj.key))
-        obj.key = self.cls.getKey(obj.__dict__)
+           [data[col] for col in self.columns], self.cls.convertKey(obj.key))
+        obj.key = self.cls.getKey(data)
 
 
     def delete(self, obj):
