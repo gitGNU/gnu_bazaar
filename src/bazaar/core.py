@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.13 2003/09/22 22:48:33 wrobell Exp $
+# $Id: core.py,v 1.14 2003/09/24 16:44:26 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -217,9 +217,9 @@ class Bazaar:
                 if col.is_one_to_one:
                     asc_cls = assoc.OneToOne
                 elif col.is_one_to_many:
-                    asc_cls = assoc.OneToMany
+                    asc_cls = assoc.BiDirList
                 elif col.is_many_to_many:
-                    asc_cls = assoc.UniDirManyToMany
+                    asc_cls = assoc.List
                 else:
                     assert False
 
@@ -232,15 +232,20 @@ class Bazaar:
                 if col.is_bidir:
                     if col.vattr not in col.vcls.columns:
                         assert False # fixme: MappingError
+
                     vcol = col.vcls.columns[col.vattr]
+
                     if issubclass(asc_cls, assoc.OneToOne):
                         asc_cls = assoc.BiDirOneToOne
                         if vcol.is_one_to_one:
                             asc_vcls = asc_cls
                         elif vcol.is_one_to_many:   
-                            asc_vcls = assoc.OneToMany
-                    elif issubclass(asc_cls, assoc.OneToMany):
-                        asc_vcls = assoc.BiDirOneToOne
+                            asc_vcls = assoc.BiDirList
+                    elif issubclass(asc_cls, assoc.List):
+                        if vcol.is_one_to_one or vcol.is_one_to_many:
+                            asc_vcls = assoc.BiDirOneToOne
+                        elif vcol.is_many_to_many:
+                            asc_vcls = assoc.BiDirList
 
                     assert issubclass(asc_vcls, assoc.AssociationReferenceProxy)
 
