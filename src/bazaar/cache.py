@@ -1,4 +1,4 @@
-# $Id: cache.py,v 1.8 2003/11/26 02:34:32 wrobell Exp $
+# $Id: cache.py,v 1.9 2003/11/26 02:56:01 wrobell Exp $
 """
 Cache classes for application objects.
 """
@@ -126,7 +126,6 @@ class ListReferenceBuffer(ReferenceBuffer):
 
 
 class Cache:
-#class Cache(object):
     """
     Abstract, basic class for different object caches.
 
@@ -138,7 +137,6 @@ class Cache:
 
         @param owner: Owner of the cache - object broker or association object.
         """
-        #super(Cache, self).__init__()
         self.owner = owner
 
 
