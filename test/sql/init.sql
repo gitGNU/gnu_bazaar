@@ -1,4 +1,4 @@
--- $Id: init.sql,v 1.1 2003/07/17 23:03:36 wrobell Exp $
+-- $Id: init.sql,v 1.2 2003/08/03 13:52:43 wrobell Exp $
 
 create table "order" (
     no           integer,
@@ -23,7 +23,7 @@ create table order_item (
     "order"      integer,
     pos          integer,
     article      varchar(20) not null,
-    quantity     numeric(10,2) not null,
+    quantity     numeric(10,3) not null,
     primary key ("order", pos),
     foreign key ("order") references "order"(no),
     foreign key (article) references article(name)
