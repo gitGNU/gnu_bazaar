@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.11 2003/09/28 15:56:21 wrobell Exp $
+# $Id: conf.py,v 1.12 2003/09/29 22:07:53 wrobell Exp $
 
 import unittest
 
@@ -100,7 +100,7 @@ class AssociationTestCase(unittest.TestCase):
 
         A.addColumn('a6', 'a61', B, 'a__b', 'b61')
         bzr = bazaar.core.Bazaar(cls_list, app.db_module)
-        check(A, 'a6', bazaar.assoc.List, 'bi-directional many-to-many')
+        check(A, 'a6', bazaar.assoc.List, 'uni-directional many-to-many')
 
         A.addColumn('a7', vcls = B, vcol = 'b71', vattr = 'b7')
         B.addColumn('b7', 'b71', A, vattr = 'a7')
