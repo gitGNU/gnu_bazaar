@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.35 2004/05/22 23:29:10 wrobell Exp $
+# $Id: core.py,v 1.36 2004/05/23 00:24:32 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -405,9 +405,12 @@ class Bazaar:
             cache = config.getObjectCache(fname)
             if __debug__:
                 log.debug('got class %s cache: %s' % (fname, cache))
+
             if cache:
                 c.cache = getClass(cache)
-                log.info('%s cache: %s' % (c, c.cache))
+            else:
+                c.cache = bazaar.cache.FullObject
+            log.info('%s cache: %s' % (c, c.cache))
             
             # check configuration for every attribute
             for col in c.getColumns().values():
@@ -419,7 +422,9 @@ class Bazaar:
                     log.debug('got association %s cache: %s' % (aname, cache))
                 if cache:
                     col.cache = getClass(cache)
-                    log.info('association "%s" cache: %s' % (aname, c.cache))
+                else:
+                    col.cache = bazaar.cache.FullAssociation
+                log.info('association "%s" cache: %s' % (aname, c.cache))
             
 
     def setConfig(self, config):
