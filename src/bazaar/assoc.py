@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.19 2003/09/25 12:50:55 wrobell Exp $
+# $Id: assoc.py,v 1.20 2003/09/25 13:10:18 wrobell Exp $
 """
 Association classes.
 """
@@ -149,8 +149,15 @@ class ObjectIterator(object):
 
         For example, to print article of order items::
 
-            for oi in order.items:
+            items = order.items
+            for oi in items:
                 print oi.article
+
+
+        Several operators are supported
+            - len: C{len(items)}
+            - in: C{obj in items}
+            - del: C{del items[obj]}
 
 
         @param obj: Application object.
@@ -183,6 +190,13 @@ class ObjectIterator(object):
         self.association.append(self.obj, value)
 
 
+    def update(self):
+        """
+        Update association data for application object.
+        """
+        self.association.update(self.obj)
+
+
     def remove(self, value):
         """
         Remove referenced object from association.
@@ -195,11 +209,7 @@ class ObjectIterator(object):
         self.association.remove(self.obj, value)
 
 
-    def update(self):
-        """
-        Update association data for application object.
-        """
-        self.association.update(self.obj)
+    __delitem__ = remove
 
 
     def __len__(self):
@@ -207,6 +217,20 @@ class ObjectIterator(object):
         Return amount of referenced objects.
         """
         return self.association.len(self.obj)
+
+
+    def __contains__(self, value):
+        """
+        Check if object is referenced in the relationship.
+
+        @param value: Object to check.
+
+        @return: True if object is referenced.
+        """
+        if value is None:
+            return False
+        else:
+            return self.association.contains(self.obj, value)
 
 
 
@@ -681,6 +705,25 @@ class List(AssociationReferenceProxy):
         if (obj, None) in self.ref_buf:       # amount of objects with undefined primary key value
             size += len(self.ref_buf[obj])
         return size
+
+
+    def contains(self, obj, value):
+        """
+        Check if object is referenced by application object.
+
+        @param obj: Application object.
+        @param value: Object to check.
+
+        @return: True if object is referenced by application object.
+        """
+        assert obj.__class__ == self.broker.cls)
+        assert value is not None and isinstance(value, self.col.vcls)
+
+        if obj in self.value_keys:
+            keys = self.value_keys[obj]
+            return value.__key__ in keys or (obj, value) in self.ref_buf
+        else:
+            return (obj, value) in  self.ref_buf
 
 
 
