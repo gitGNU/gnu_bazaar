@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.8 2003/09/21 03:07:22 wrobell Exp $
+# $Id: assoc.py,v 1.9 2003/09/22 00:26:41 wrobell Exp $
 """
 Association classes.
 """
@@ -92,6 +92,7 @@ class AssociationReferenceProxy(dict):
                 return None
             else:
                 return self.vbroker.get(value_key)
+            # fixme: above five lines -> self.vbroker.get(self.getForeignKey(buffer_key))
 
 
     def __setitem__(self, buffer_key, value):
@@ -205,6 +206,8 @@ class OneToOne(AssociationReferenceProxy):
         @param obj: Application object.
         @param value: Referenced object.
         """
+        assert value is None or value.__class__ == self.col.vcls, '%s != %s' % (value.__class__, self.col.vcls)
+        assert obj is not None
         self[obj] = value
 
 
@@ -240,7 +243,8 @@ class BiDirOneToOne(OneToOne):
         @param obj: Application object.
         @param value: Referenced object.
         """
-        super(BiDirOneToOne, self).__set__(obj, value)
+        if obj is not None:
+            super(BiDirOneToOne, self).__set__(obj, value)
 
 
 
@@ -264,6 +268,8 @@ class ListAssociation(AssociationReferenceProxy):
         """
         super(ListAssociation, self).__init__(col)
         self.obj_lists = {}
+        self.appended = {}
+        self.removed = {}
         self.reload = True
 
 
@@ -344,7 +350,7 @@ class ListAssociation(AssociationReferenceProxy):
         self[(obj, index)] = value
 
 
-    def append(self, obj, value):
+    def getList(self, obj):
         """
         Append referenced object to application object's list of referenced
         objects.
@@ -352,13 +358,10 @@ class ListAssociation(AssociationReferenceProxy):
         @param obj: Application object.
         @param value: Referenced object.
         """
-        if obj is not None:                  # None cannot have list of referenced objects
-
-            if obj not in self.obj_lists:    # if list of referenced objects does not exist,
-                                             # then create it
-                self.obj_lists[obj] = ObjectList(obj, self)
-
-            self.obj_lists[obj].append(value)
+        assert obj is not None
+        if obj not in self.obj_lists:    # if list of referenced objects does not exist, then create it
+            self.obj_lists[obj] = ObjectList(obj, self)
+        return self.obj_lists[obj]
 
 
     def reloadAssociations(self):
@@ -374,10 +377,12 @@ class ListAssociation(AssociationReferenceProxy):
         Load association data from database.
         """
         log.info('load association %s.%s' % (self.broker.cls, self.col.attr))
-        for okey, vkey in self.broker.convertor.getAssociationPair(self.col):
+        for okey, vkey in self.broker.convertor.getPair(self.col):
             obj = self.broker.get(okey)
-            value = self.vbroker.get(vkey)
-            self.append(obj, value)
+            if obj is not None:
+                value = self.vbroker.get(vkey)
+                list.append(self.getList(obj), vkey)
+
         log.info('len(%s.%s) = %d' % (self.broker.cls, self.col.attr, len(self.obj_lists)))
 
         self.reload = False
@@ -390,12 +395,42 @@ class ListAssociation(AssociationReferenceProxy):
 
         fixme: nfy
         """
-        afkey = obj_list.obj.__key__
-        for i in range(len(obj_list)):
-            obj = obj_list[i]
-            self.broker.convertor.addAssociationPair(self.col, afkey, obj.__key__)
-            # get from appended list
+        obj = obj_list.obj
+        okey = obj.__key__
 
+        def equalize(set, method):
+            if obj in set:
+                for value in set[obj]:
+                    method(self.col, okey, value.__key__)
+                set.clear()
+#        equalize(sel.removed, self.broker.convertor.delAssociationPair)
+        equalize(self.appended, self.broker.convertor.addPair)
+
+
+    def juggle(self, obj, value, app, rem):
+        if obj in rem:
+            objects = rem[obj]
+            if value in objects:
+                del objects[value]
+            if len(objects) == 0:
+                del rem[obj]
+
+        if obj not in app:
+            app[obj] = sets.Set()
+        app[obj].add(value)
+
+
+    def append(self, obj, index, value):
+        self.add(obj, index, value)
+        self.juggle(obj, value, self.appended, self.removed)
+        assert value in self.appended[obj]
+        assert obj not in self.removed or value not in self.removed[obj]
+
+    def remove(self, obj, index, value):
+        if (obj, index) in self: del self[(obj, index)]
+        self.juggle(obj, value, self.removed, self.appended)
+        assert value in self.removed[obj]
+        assert obj not in self.appended or value not in self.appended[obj]
 
 
 
@@ -407,6 +442,7 @@ class UniDirManyToMany(ListAssociation):
     pass
 
 
+import sets
 class OneToMany(ListAssociation):
     """
     Bi-directional one-to-many association descriptor.
@@ -419,7 +455,10 @@ class OneToMany(ListAssociation):
 
 
     def integrate(self, obj, value):
-        self.append(obj, value)
+        if obj is None:
+            self.remove(obj, value)
+        else:
+            self.getList(obj).append(value)
 
 
 class ObjectList(list):
@@ -434,13 +473,19 @@ class ObjectList(list):
 
 
     def __setitem__(self, index, value):
-        self.set(index, value)
+        raise NotImplementedError
+        #self.set(index, value)
+
+
+    def __delitem__(self, index):
+        self.association.remove(self.obj, index, value)
 
 
     def append(self, value):
+        assert value is None or self.association.col.vcls == value.__class__
         index = len(self)
         list.append(self, None)
-        self.set(index, value)
+        self.association.append(self.obj, index, value)
 
 
     def __iter__(self):
