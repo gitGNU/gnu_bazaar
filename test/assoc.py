@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.24 2004/01/21 23:21:46 wrobell Exp $
+# $Id: assoc.py,v 1.25 2004/01/22 22:37:29 wrobell Exp $
 
 import app
 import btest
@@ -454,5 +454,11 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
         ord.items.append(oi1)
         ord.items.append(oi2)
 
+        ord.items.update()
+        self.checkOrdAsc()
+
+        # remove added data into the database - clean up the test 
+        ord.items.remove(oi1)
+        ord.items.remove(oi2)
         ord.items.update()
         self.checkOrdAsc()
