@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.12 2003/08/31 08:45:06 wrobell Exp $
+# $Id: conf.py,v 1.13 2003/09/07 11:39:58 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -45,7 +45,7 @@ def getConvertKeyMethod(key_columns):
     class is an efficient method for returning key value as a tuple of
     values for both types of keys.
 
-    Examples:
+    Examples::
 
         # convert single column key value
         key = 'John'
@@ -86,7 +86,7 @@ def getGetKeyMethod(key_columns):
     class is an efficient method for returning key value for both types of
     keys.
 
-    Examples:
+    Examples::
 
         data = {'name': 'John', 'surname': 'Smith', 'birthdate': '01-09-1900'}
         
@@ -129,7 +129,7 @@ class Column:
     @ivar name: Application class column name.
     @ivar attr: Application class attribute name.
     @ivar association: Association descriptor of given column.
-    @ivar onet_to_one: Association is one-to-one association.
+    @ivar one_to_one: Association is one-to-one association.
     """
 
     def __init__(self, name, attr = None):
@@ -142,7 +142,10 @@ class Column:
         self.name = name
         self.association = None
         self.one_to_one = False
-        if attr is None: self.attr = self.name
+        if attr is None:
+            self.attr = self.name
+        else:
+            self.attr = attr
 
 
 
@@ -221,7 +224,10 @@ class Persistence(type):
             col.association = bazaar.assoc.OneToOneAssociation(col)
             col.one_to_one = True
             col.fkey_columns = fkey_columns
-            setattr(self, attr, col.association)
+            setattr(self, col.attr, col.association)
+            # set association foreign key extraction and conversion methods
+            col.association.getKey = getGetKeyMethod(fkey_columns)()
+            col.association.convertKey = getConvertKeyMethod(fkey_columns)()
 
         self.columns[name] = col
 
