@@ -1,4 +1,4 @@
-# $Id: app.py,v 1.1 2003/07/10 23:03:43 wrobell Exp $
+# $Id: app.py,v 1.2 2003/07/17 23:29:46 wrobell Exp $
 
 """
 <s>Sample test application for Bazaar layer testing purposes.</s>
@@ -10,9 +10,25 @@ db_module = None
 dsn = ''
 
 # define test application classes
-Person = bazaar.conf.Persitence('Person', relation = 'person')
-Person.addColumn('id')
-Person.addColumn('name')
-Person.setKey(('id', ))
+Order = bazaar.conf.Persitence('Order', relation = 'order')
+Order.addColumn('no')
+Order.addColumn('finished')
+#Order.addColumn('items')
+#Order.addColumn('employees')
+Order.setKey(('no', ))
 
-Address = bazaar.conf.Persitence('Address', relation = 'address')
+Employee = bazaar.conf.Persitence('Employee', relation = 'employee')
+Employee.addColumn('name')
+Employee.addColumn('surname')
+Employee.addColumn('phone')
+#Employee.addColumn('orders')
+Employee.setKey(('name', 'surname'))
+
+Article = bazaar.conf.Persitence('Article', relation = 'article')
+Article.addColumn('name')
+Article.addColumn('price')
+
+OrderItem = bazaar.conf.Persitence('OrderItem', relation = 'order_item')
+OrderItem.addColumn('pos')
+OrderItem.addColumn('quantity')
+#OrderItem.addColumn('article')
