@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.39 2003/10/06 16:29:49 wrobell Exp $
+# $Id: assoc.py,v 1.40 2003/10/06 18:18:55 wrobell Exp $
 """
 Association classes.
 """
@@ -567,25 +567,6 @@ class List(AssociationReferenceProxy):
         self.reload = True
         assert isinstance(self.ref_buf, ListReferenceBuffer)
 
-        # set methods, which are used with List.update method
-        if self.col.is_many_to_many:
-            self.addPair = self.addPairWithDB
-            self.delPair = self.delPairWithDB
-            self.getUpdatePair = self.getKeyPair
-
-        elif self.col.is_one_to_many:
-            if self.col.update:
-                self.addPair = self.updateReferencedObjects
-                self.delPair = self.updateReferencedObjects
-            else:
-                self.addPair = self.addReferencedObjects
-                self.delPair = self.delReferencedObjects
-
-            self.getUpdatePair = self.getObjectPair
-
-        else:
-            assert False
-
 
     def saveForeignKey(self, obj, vkey):
         """
@@ -677,9 +658,6 @@ class List(AssociationReferenceProxy):
         Referenced object's primary key value is taken from database with
         appropriate convertor methods.
         
-        The method is used as C{List.getPair} method with many-to-many
-        associations.
-
         @see: L{getPairFromBroker} L{bazaar.motor.Convertor.getPair}
         """
         for item in self.broker.convertor.getPair(self):
@@ -742,90 +720,30 @@ class List(AssociationReferenceProxy):
             return getObjects()
 
 
-    def addReferencedObjects(self, pairs):
-        """
-        Add referenced objects into database.
-
-        The method is used as C{addPair} method with one-to-many
-        associations when updating relationship.
-
-        @see: L{delReferencedObjects} L{updateReferencedObjects} L{update}
-        """
-        for obj, value in pairs:
-            self.vbroker.add(value)
-
-
-    def delReferencedObjects(self, pairs):
-        """
-        Delete referenced objects from database.
-
-        The method is used as C{delPair} method with one-to-many
-        associations when updating relationship.
-
-        @see: L{addReferencedObjects} L{updateReferencedObjects} L{update}
-        """
-        for obj, value in pairs:
-            self.vbroker.delete(value)
-
-
-    def updateReferencedObjects(self, pairs):
-        """
-        Update referenced objects in database.
-
-        The method is used as C{addPair} and as C{delPair} with one-to-many
-        associations when updating relationship.
-
-        @see: L{addReferencedObjects} L{delReferencedObjects} L{update}
-        """
-        for obj, value in pairs:
-            self.vbroker.update(value)
-
-
-    def delPairWithDB(self, pairs):
+    def delPair(self, pairs):
         """
         Remove pair of application object's and referenced object's primary
         key values from m-n relationship's database link relation.
-
-        Method is used as C{delPair} method with many-to-many associations
-        when updating relationship.
 
         @see: L{addPairWithDB} L{update}
         """
         self.broker.convertor.delPair(self, pairs)
 
 
-    def addPairWithDB(self, pairs):
+    def addPair(self, pairs):
         """
         Add pair of application object's and referenced object's primary
         key values into m-n relationship's database link relation.
-
-        Method is used as C{addPair} method with many-to-many associations
-        when updating relationship.
 
         @see: L{delPairWithDB} L{update}
         """
         self.broker.convertor.addPair(self, pairs)
 
 
-    def getObjectPair(self, obj, value):
-        """
-        Return pair of application object and referenced object.
-
-        Method is used as c{updatePair} method to update one-to-many
-        association.
-
-        @see: L{update}
-        """
-        return (obj, value)
-
-
-    def getKeyPair(self, obj, value):
+    def updateablePair(self, obj, value):
         """
         Return pair of application object's and referenced object's primary
         key values.
-
-        Method is used as c{updatePair} method to update many-to-many
-        association.
 
         @see: L{update}
         """
@@ -845,7 +763,7 @@ class List(AssociationReferenceProxy):
         def getPairs(set):
             if obj in set:
                 for value in set[obj]:
-                    yield self.getUpdatePair(obj, value)
+                    yield self.updateablePair(obj, value)
                 set[obj].clear()
 
         self.delPair(getPairs(self.removed))
@@ -1013,6 +931,23 @@ class BiDirManyToMany(BiDirList):
 
 
 class OneToMany(BiDirList):
+    def __init__(self, col):
+        """
+        Create descriptor for one-to-many associations.
+
+        @param col: Referenced application object's class column.
+
+        @see: L{bazaar.assoc.AssociationReferenceProxy.__init__}
+        """
+        super(OneToMany, self).__init__(col)
+        if self.col.update:
+            self.addPair = self.updateReferencedObjects
+            self.delPair = self.updateReferencedObjects
+        else:
+            self.addPair = self.addReferencedObjects
+            self.delPair = self.delReferencedObjects
+
+
     def append(self, obj, value):
         """
         Append referenced object to association and integrate association
@@ -1054,3 +989,51 @@ class OneToMany(BiDirList):
         """
         super(OneToMany, self).reloadData(now)
         self.vbroker.reloadObjects(False)
+
+
+    def addReferencedObjects(self, pairs):
+        """
+        Add referenced objects into database.
+
+        The method is used as C{addPair} method with one-to-many
+        associations when updating relationship.
+
+        @see: L{delReferencedObjects} L{updateReferencedObjects} L{update}
+        """
+        for obj, value in pairs:
+            self.vbroker.add(value)
+
+
+    def delReferencedObjects(self, pairs):
+        """
+        Delete referenced objects from database.
+
+        The method is used as C{delPair} method with one-to-many
+        associations when updating relationship.
+
+        @see: L{addReferencedObjects} L{updateReferencedObjects} L{update}
+        """
+        for obj, value in pairs:
+            self.vbroker.delete(value)
+
+
+    def updateReferencedObjects(self, pairs):
+        """
+        Update referenced objects in database.
+
+        The method is used as C{addPair} and as C{delPair} with one-to-many
+        associations when updating relationship.
+
+        @see: L{addReferencedObjects} L{delReferencedObjects} L{update}
+        """
+        for obj, value in pairs:
+            self.vbroker.update(value)
+
+
+    def updateablePair(self, obj, value):
+        """
+        Return pair of application object and referenced object.
+
+        @see: L{update}
+        """
+        return (obj, value)
