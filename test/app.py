@@ -1,10 +1,9 @@
-# $Id: app.py,v 1.4 2003/08/07 17:49:49 wrobell Exp $
+# $Id: app.py,v 1.5 2003/08/27 15:02:47 wrobell Exp $
 
 """
-<s>Sample test application for Bazaar layer testing purposes.</s>
-<p>
-    File sql/init.sql contains relations definitions.
-</p>
+Sample test application for Bazaar layer testing purposes.
+
+File sql/init.sql contains relations definitions.
 """
 
 import bazaar.conf
