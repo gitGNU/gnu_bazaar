@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.13 2003/09/25 11:35:06 wrobell Exp $
+# $Id: core.py,v 1.14 2003/10/01 14:29:00 wrobell Exp $
 
 import unittest
 
@@ -112,7 +112,7 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
 
         # add and check order item object
         order_item = app.OrderItem()
-        order_item.order_fkey = 1
+        order_item.order = order
         order_item.pos = 0
         order_item.quantity = 2.123
         order_item.article = article
