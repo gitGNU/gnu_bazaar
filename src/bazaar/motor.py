@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.11 2003/09/07 11:45:00 wrobell Exp $
+# $Id: motor.py,v 1.12 2003/09/12 13:26:40 wrobell Exp $
 """
 Data convertor and database access objects.
 """
@@ -88,6 +88,7 @@ class Convertor:
         # get one-to-one association foreign key values
         for col in self.one_to_one_associations:
             value = getattr(obj, col.attr)
+            # fixme: does not work when len(value.key) == 2
             if value is not None:
                 data[col.name] = value.key
             data.update(dict(zip(col.fkey_columns, col.association.convertKey(data[col.name]))))
