@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.23 2003/11/23 23:39:18 wrobell Exp $
+# $Id: core.py,v 1.24 2003/11/24 16:42:17 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -66,7 +66,10 @@ class Broker:
         self.reload = True
         self.cls = cls
         
-        self.cache = bazaar.cache.Cache()
+        log.info('class "%s" using cache "%s"' \
+            % (self.cls, self.cls.cache))
+        self.cache = self.cls.cache(self)
+
         self.convertor = bazaar.motor.Convertor(cls, mtr)
 
         log.info('class "%s" broker initialized' % cls)
@@ -79,7 +82,7 @@ class Broker:
         @see: L{bazaar.core.Broker.getObjects} L{bazaar.core.Broker.reloadObjects}
         """
         for obj in self.convertor.getObjects():
-            self.cache.append(obj)
+            self.cache[obj.__key__] = obj
 
         self.reload = False
 
@@ -96,7 +99,7 @@ class Broker:
         if self.reload:
             self.loadObjects()
 
-        return self.cache.getObjects()
+        return self.cache.values()
 
 
     def reloadObjects(self, now = False):
@@ -156,7 +159,7 @@ class Broker:
         @param obj: Object to add.
         """
         self.convertor.add(obj)
-        self.cache.append(obj)
+        self.cache[obj.__key__] = obj
 
 
     def update(self, obj):
@@ -176,7 +179,7 @@ class Broker:
         @param obj: Object to delete.
         """
         self.convertor.delete(obj)
-        self.cache.remove(obj)
+        del self.cache[obj.__key__]
 #        obj.__key__ = None
 
 

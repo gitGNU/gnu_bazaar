@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.27 2003/11/24 15:25:03 wrobell Exp $
+# $Id: conf.py,v 1.28 2003/11/24 16:42:17 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -36,6 +36,7 @@ Of course, both ideas can be mixed::
 import logging
 
 import bazaar.core
+import bazaar.cache
 import bazaar.exc
 
 log = logging.getLogger('bazaar.conf')
@@ -160,6 +161,9 @@ class Persistence(type):
 
         if 'columns' not in data:
             data['columns'] = {}
+
+        if 'cache' not in data:
+            data['cache'] = bazaar.cache.FullObject
 
         c = type.__new__(self, name, bases, data)
 
