@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.6 2003/08/07 17:42:53 wrobell Exp $
+# $Id: core.py,v 1.7 2003/08/09 03:18:34 wrobell Exp $
 
 import logging
 
@@ -38,6 +38,8 @@ class PersistentObject(object):
     <s>Parent class of an application class.</s>
     <p>
     </p>
+
+    <attr name = 'key'>Object's key.</attr>
     """
     def __init__(self, data = {}):
         """
@@ -47,13 +49,16 @@ class PersistentObject(object):
         <attr name = 'data'></attr>
         """
         # set object attributes
+        for col_name in self.__class__.columns:
+            if col_name in data:
+                self.__dict__[col_name] = data[col_name]
+            else:
+                self.__dict__[col_name] = None
 
-        self.__dict__.update(data)
+        # set key
+        self.key = None
 
-        # create object key, if possible
-        self.key = self.__class__.getKey(self)
-
-        if __debug__: log.debug('object created (key = "%s"): %s' % (self.key, data))
+#        if __debug__: log.debug('object created (key = "%s"): %s' % (self.key, data))
 
 
 
@@ -146,7 +151,11 @@ class Broker:
 
         <attr name = 'obj'>Object to update.</s>
         """
+        old_key = obj.key
         self.convertor.update(obj)
+        if old_key != obj.key:
+            del self.cache[old_key]
+            self.cache.append(obj)
 
 
     def delete(self, obj):
