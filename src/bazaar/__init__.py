@@ -1,11 +1,12 @@
-# $Id: __init__.py,v 1.6 2003/10/03 16:13:54 wrobell Exp $
+# $Id: __init__.py,v 1.7 2003/11/07 17:19:36 wrobell Exp $
 """
 Bazaar is an easy to use and powerful abstraction layer between
 relational database and object oriented application.
 
 Features:
     - easy to use: define classes and programmer is ready to get and modify
-      application data in object-oriented way
+      application data in object-oriented way (no additional steps such as
+      code generation is required)
     - application class relationships:
         - one-to-one
         - one-to-many
@@ -20,8 +21,10 @@ Requirements:
       style support (tested with U{psycopg 1.1.9<http://initd.org/software/psycopg>})
     - RDBMS (tested with U{PostgreSQL 7.3.4<http://www.postgresql.org>})
 
-This is free software and is distributed under U{GNU Lesser General Public
-License<http://www.fsf.org/licenses/lgpl.html>}.
+This is free software distributed under U{GNU Lesser General Public
+License<http://www.fsf.org/licenses/lgpl.html>}. Download it from
+U{project's page<http://savannah.nongnu.org/projects/bazaar/>}
+on U{Savannah<http://savannah.nongnu.org>}.
 
 Bazaar is easy to use, but is designed for people who know both
 object-oriented and relational technologies, their advantages,
