@@ -1,8 +1,9 @@
--- $Id: init.sql,v 1.2 2003/08/03 13:52:43 wrobell Exp $
+-- $Id: init.sql,v 1.3 2003/09/03 22:52:23 wrobell Exp $
 
 create table "order" (
     no           integer,
-    finished     boolean,
+    finished     boolean not null,
+    created      timestamp not null default current_timestamp,
     primary key (no)
 );
 
@@ -22,11 +23,11 @@ create table article (
 create table order_item (
     "order"      integer,
     pos          integer,
-    article      varchar(20) not null,
+    article_fkey varchar(20) not null,
     quantity     numeric(10,3) not null,
     primary key ("order", pos),
     foreign key ("order") references "order"(no),
-    foreign key (article) references article(name)
+    foreign key (article_fkey) references article(name)
 );
 
 create table employee_orders (
