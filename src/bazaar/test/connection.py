@@ -1,7 +1,7 @@
-# $Id: connection.py,v 1.1 2004/05/21 18:12:39 wrobell Exp $
+# $Id: connection.py,v 1.2 2004/12/20 07:39:52 wrobell Exp $
 #
-# Bazaar - an easy to use and powerful abstraction layer between relational
-# database and object oriented application.
+# Bazaar ORM - an easy to use and powerful abstraction layer between
+# relational database and object oriented application.
 #
 # Copyright (C) 2000-2004 by Artur Wroblewski <wrobell@pld-linux.org>
 # 

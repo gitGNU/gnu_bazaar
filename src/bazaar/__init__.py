@@ -1,6 +1,6 @@
-# $Id: __init__.py,v 1.12 2004/02/09 09:08:47 wrobell Exp $
+# $Id: __init__.py,v 1.13 2004/12/20 07:39:52 wrobell Exp $
 #
-# Bazaar - an easy to use and powerful abstraction layer between relational
+# Bazaar ORM - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
 #
 # Copyright (C) 2000-2004 by Artur Wroblewski <wrobell@pld-linux.org>
@@ -21,7 +21,7 @@
 #
 
 """
-Bazaar is an easy to use and powerful abstraction layer between
+Bazaar ORM is an easy to use and powerful abstraction layer between
 relational database and object oriented application.
 
 Features:
@@ -61,7 +61,7 @@ License<http://www.gnu.org/licenses/lgpl.html>}. Download it from
 U{project's page<http://savannah.nongnu.org/projects/bazaar/>}
 on U{Savannah<http://savannah.nongnu.org>}.
 
-Bazaar is easy to use, but is designed for people who know both
+Bazaar ORM is easy to use, but is designed for people who know both
 object-oriented and relational technologies, their advantages,
 disadvantages and differences between them (U{``The Object-Relational
 Impedance Mismatch''<http://www.agiledata.org/essays/impedancemismatch.html>} reading
@@ -170,7 +170,7 @@ Now, SQL schema can be created::
 Application code
 ----------------
 
-Application must import Bazaar core module::
+Application must import Bazaar ORM core module::
 
     import bazaar.core
     import psycopg
@@ -179,7 +179,7 @@ DB API module is imported, too. However, it is not obligatory because it can
 be specified in config file, see L{bazaar.config} module documentation for
 details.
 
-Create Bazaar layer instance. There are several parameters
+Create Bazaar ORM layer instance. There are several parameters
 (L{bazaar.core.Bazaar}), but now in this example only list of application
 classes and DB API module are specified::
 

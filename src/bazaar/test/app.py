@@ -1,7 +1,7 @@
-# $Id: app.py,v 1.1 2004/05/21 18:12:38 wrobell Exp $
+# $Id: app.py,v 1.2 2004/12/20 07:39:52 wrobell Exp $
 #
-# Bazaar - an easy to use and powerful abstraction layer between relational
-# database and object oriented application.
+# Bazaar ORM - an easy to use and powerful abstraction layer between
+# relational database and object oriented application.
 #
 # Copyright (C) 2000-2004 by Artur Wroblewski <wrobell@pld-linux.org>
 # 
@@ -21,7 +21,7 @@
 #
 
 """
-Sample test application for Bazaar layer testing purposes.
+Sample test application for Bazaar ORM layer testing purposes.
 
 File sql/init.sql contains relations definitions.
 """

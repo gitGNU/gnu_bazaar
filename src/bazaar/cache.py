@@ -1,7 +1,7 @@
-# $Id: cache.py,v 1.15 2004/05/22 23:29:09 wrobell Exp $
+# $Id: cache.py,v 1.16 2004/12/20 07:39:52 wrobell Exp $
 #
-# Bazaar - an easy to use and powerful abstraction layer between relational
-# database and object oriented application.
+# Bazaar ORM - an easy to use and powerful abstraction layer between
+# relational database and object oriented application.
 #
 # Copyright (C) 2000-2004 by Artur Wroblewski <wrobell@pld-linux.org>
 # 

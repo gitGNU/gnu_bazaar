@@ -1,7 +1,7 @@
-# $Id: motor.py,v 1.31 2004/03/29 19:04:14 wrobell Exp $
+# $Id: motor.py,v 1.32 2004/12/20 07:39:52 wrobell Exp $
 #
-# Bazaar - an easy to use and powerful abstraction layer between relational
-# database and object oriented application.
+# Bazaar ORM - an easy to use and powerful abstraction layer between
+# relational database and object oriented application.
 #
 # Copyright (C) 2000-2004 by Artur Wroblewski <wrobell@pld-linux.org>
 # 

@@ -1,6 +1,6 @@
-# $Id: conf.py,v 1.3 2004/05/28 16:42:44 wrobell Exp $
+# $Id: conf.py,v 1.4 2004/12/20 07:39:52 wrobell Exp $
 #
-# Bazaar - an easy to use and powerful abstraction layer between relational
+# Bazaar ORM - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
 #
 # Copyright (C) 2000-2004 by Artur Wroblewski <wrobell@pld-linux.org>

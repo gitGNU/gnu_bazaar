@@ -1,7 +1,7 @@
-# $Id: __init__.py,v 1.4 2004/05/23 12:24:40 wrobell Exp $
+# $Id: __init__.py,v 1.5 2004/12/20 07:39:52 wrobell Exp $
 #
-# Bazaar - an easy to use and powerful abstraction layer between relational
-# database and object oriented application.
+# Bazaar ORM - an easy to use and powerful abstraction layer between
+# relational database and object oriented application.
 #
 # Copyright (C) 2000-2004 by Artur Wroblewski <wrobell@pld-linux.org>
 # 
@@ -91,17 +91,17 @@ import bazaar.test.app
 
 class TestCase(unittest.TestCase):
     """
-    Base class for Bazaar layer tests.
+    Base class for Bazaar ORM layer tests.
 
     List of application classes should be set in modules, which use
     this class.
 
-    @ivar bazaar: Bazaar layer object.
+    @ivar bazaar: Bazaar ORM layer object.
     @ivar cls_list: List of test application classes.
     """
     def setUp(self):
         """
-        Create Bazaar layer object.
+        Create Bazaar ORM layer object.
         """
         from ConfigParser import ConfigParser
         import bazaar.config
@@ -113,11 +113,11 @@ class TestCase(unittest.TestCase):
 
 class DBTestCase(TestCase):
     """
-    Base class for Bazaar layer tests with database connection.
+    Base class for Bazaar ORM layer tests with database connection.
     """
     def setUp(self):
         """
-        Create Bazaar layer instance and connect with database.
+        Create Bazaar ORM layer instance and connect with database.
         """
         TestCase.setUp(self)
         self.bazaar.connectDB()

@@ -1,7 +1,7 @@
-# $Id: core.py,v 1.36 2004/05/23 00:24:32 wrobell Exp $
+# $Id: core.py,v 1.37 2004/12/20 07:39:52 wrobell Exp $
 #
-# Bazaar - an easy to use and powerful abstraction layer between relational
-# database and object oriented application.
+# Bazaar ORM - an easy to use and powerful abstraction layer between
+# relational database and object oriented application.
 #
 # Copyright (C) 2000-2004 by Artur Wroblewski <wrobell@pld-linux.org>
 # 
@@ -21,7 +21,7 @@
 #
 
 """
-This module contains basic Bazaar implementation.
+This module contains basic Bazaar ORM implementation.
 
 Every application object should derive from L{PersistentObject} class.
 
@@ -234,7 +234,7 @@ class Bazaar:
 
     def __init__(self, cls_list, config = None, dsn = '', dbmod = None, seqpattern = None):
         """
-        Start the Bazaar layer.
+        Start the Bazaar ORM layer.
 
         If database source name is not empty, then database connection is
         created.
@@ -269,7 +269,7 @@ class Bazaar:
 
     def init(self):
         """
-        Initialize the Bazaar layer.
+        Initialize the Bazaar ORM layer.
         """
         self.motor = bazaar.motor.Motor(self.dbmod)
         self.brokers = {}
@@ -360,9 +360,9 @@ class Bazaar:
 
     def parseConfig(self, config): #fixme: debug messages
         """
-        Parse Bazaar configuration.
+        Parse Bazaar ORM configuration.
 
-        @param config: Bazaar configuration.
+        @param config: Bazaar ORM configuration.
 
         @see: L{setConfig} L{bazaar.config.Config} L{bazaar.config.CPConfig}
         """
@@ -429,7 +429,7 @@ class Bazaar:
 
     def setConfig(self, config):
         """
-        Set Bazaar configuration.
+        Set Bazaar ORM configuration.
 
         @see: L{parseConfig} L{init} L{bazaar.config.Config} L{bazaar.config.CPConfig}
         """

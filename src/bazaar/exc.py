@@ -1,7 +1,7 @@
-# $Id: exc.py,v 1.4 2004/01/22 23:21:40 wrobell Exp $
+# $Id: exc.py,v 1.5 2004/12/20 07:39:52 wrobell Exp $
 #
-# Bazaar - an easy to use and powerful abstraction layer between relational
-# database and object oriented application.
+# Bazaar ORM - an easy to use and powerful abstraction layer between
+# relational database and object oriented application.
 #
 # Copyright (C) 2000-2004 by Artur Wroblewski <wrobell@pld-linux.org>
 # 
@@ -21,12 +21,12 @@
 #
 
 """
-Bazaar exceptions.
+Bazaar ORM exceptions.
 """
 
 class BazaarError(Exception):
     """
-    Abstract, basic class for all Bazaar exceptions.
+    Abstract, basic class for all Bazaar ORM exceptions.
     """
     pass
 

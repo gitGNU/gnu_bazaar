@@ -1,7 +1,7 @@
-# $Id: assoc.py,v 1.48 2004/03/29 23:14:15 wrobell Exp $
+# $Id: assoc.py,v 1.49 2004/12/20 07:39:52 wrobell Exp $
 #
-# Bazaar - an easy to use and powerful abstraction layer between relational
-# database and object oriented application.
+# Bazaar ORM - an easy to use and powerful abstraction layer between
+# relational database and object oriented application.
 #
 # Copyright (C) 2000-2004 by Artur Wroblewski <wrobell@pld-linux.org>
 # 
@@ -281,7 +281,7 @@ class AssociationReferenceProxy(object):
         Create association reference proxy.
 
         Brokers are not initialized with the constructor. Instead, they are
-        set when Bazaar layer is started up.
+        set when Bazaar ORM layer is started up.
 
         @param col: Application object's class attribute.
 

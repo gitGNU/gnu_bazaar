@@ -1,7 +1,7 @@
-# $Id: config.py,v 1.3 2004/01/22 23:21:40 wrobell Exp $
+# $Id: config.py,v 1.4 2004/12/20 07:39:52 wrobell Exp $
 #
-# Bazaar - an easy to use and powerful abstraction layer between relational
-# database and object oriented application.
+# Bazaar ORM - an easy to use and powerful abstraction layer between
+# relational database and object oriented application.
 #
 # Copyright (C) 2000-2004 by Artur Wroblewski <wrobell@pld-linux.org>
 # 
@@ -21,9 +21,9 @@
 #
 
 """
-Module contains basic classes for Bazaar layer configuration.
+Module contains basic classes for Bazaar ORM layer configuration.
 
-Bazaar layer is configurable. It is possible to specify several parameters
+Bazaar ORM layer is configurable. It is possible to specify several parameters
 in configuration file such as DB-API module, database connection string,
 cache classes, relations, etc.
 
@@ -63,7 +63,7 @@ Sample configuration file using L{bazaar.config.CPConfig} class::
 
 It is possible to implement different configuration classes. This module
 contains abstract config class L{bazaar.config.Config}. Class
-L{bazaar.config.CPConfig} loads Bazaar configuration with C{ConfigParser}
+L{bazaar.config.CPConfig} loads Bazaar ORM configuration with C{ConfigParser}
 class (ini files). Every configuration class method returns an option
 or C{None} if specified parameter is not found in config source.
 
@@ -139,7 +139,7 @@ class Config(object):
 
 class CPConfig(Config):
     """
-    Bazaar configuration using C{ConfigParser} module.
+    Bazaar ORM configuration using C{ConfigParser} module.
 
     @ivar cfg: C{ConfigParser} object.
     """
