@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.20 2003/11/23 23:39:18 wrobell Exp $
+# $Id: assoc.py,v 1.21 2003/11/26 00:16:48 wrobell Exp $
 
 import app
 import btest
@@ -62,11 +62,6 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
     """
     Test many-to-many associations.
     """
-    def checkEmpAsc(self):
-        self.checkListAsc(app.Employee, 'orders', \
-            'select employee, "order" from employee_orders order by employee, "order"')
-
-
     def testLoading(self):
         """Test many-to-many association loading
         """
@@ -234,11 +229,6 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
     """
     Test one-to-many associations.
     """
-    def checkOrdAsc(self):
-        self.checkListAsc(app.Order, 'items', \
-            'select order_fkey, __key__  from order_item where order_fkey is not null order by order_fkey, __key__')
-
-
     def testLoading(self):
         """Test one-to-many association loading
         """

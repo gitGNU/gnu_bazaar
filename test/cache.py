@@ -1,4 +1,4 @@
-# $Id: cache.py,v 1.1 2003/11/25 16:27:49 wrobell Exp $
+# $Id: cache.py,v 1.2 2003/11/26 00:16:48 wrobell Exp $
 
 import unittest
 import gc
@@ -45,3 +45,24 @@ class LazyTestCase(btest.DBBazaarTestCase):
         gc.collect()
         # ... now cache should be empty
         self.assertEqual(len(abroker.cache), 0)
+
+
+
+class FullTestCase(btest.DBBazaarTestCase):
+    """
+    Test full cache.
+    """
+    def testObjectLoading(self):
+        """Test object full cache"""
+        # get one object...
+        abroker = self.bazaar.brokers[app.Article]
+        abroker.get(1)
+
+        # ... and check if all are loaded
+        self.checkObjects(app.Article, len(abroker.cache))
+
+
+    def testAscLoading(self):
+        """Test association full cache"""
+        order = self.bazaar.getObjects(app.Order)[0]
+        self.checkOrdAsc()

@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.41 2003/11/22 11:42:25 wrobell Exp $
+# $Id: assoc.py,v 1.42 2003/11/26 00:16:48 wrobell Exp $
 """
 Association classes.
 """
@@ -500,7 +500,8 @@ class List(AssociationReferenceProxy):
     """
     Basic descriptor for one-to-many and many-to-many associations.
 
-    @ivar value_keys: Sets of referenced objects's primary key values per application object.
+    @ivar cache: Association data cache - sets of referenced objects's
+                 primary key values per application object.
     @ivar reload: If true, then association data will be loaded from
         database.
     @ivar appended: Sets of referenced objects appended to association.
@@ -561,7 +562,7 @@ class List(AssociationReferenceProxy):
             L{bazaar.conf.Column}
         """
         super(List, self).__init__(col, ListReferenceBuffer())
-        self.value_keys = {}
+        self.cache = self.col.cache(self)
         self.appended = {}
         self.removed = {}
         self.reload = True
@@ -579,7 +580,7 @@ class List(AssociationReferenceProxy):
         @param vkey: Referenced object's primary key value.
         """
         if vkey is not None:
-            self.getValueKeys(obj).add(vkey)
+            self.cache[obj].add(vkey)
 
 
     def __get__(self, obj, cls):
@@ -601,8 +602,6 @@ class List(AssociationReferenceProxy):
         @see: L{bazaar.assoc.ObjectIterator}
         """
         if obj:
-            if self.reload:
-                self.loadData()
             return ObjectIterator(obj, self)   
         else:
             return self
@@ -615,22 +614,6 @@ class List(AssociationReferenceProxy):
         raise NotImplementedError
 
 
-    def getValueKeys(self, obj):
-        """
-        Get referenced objects' primary key values set.
-
-        If the set does not exist, then it will be created.
-
-        @param obj: Application object.
-        """
-        assert obj is not None
-
-        # if set of referenced objects does not exist, then create it
-        if obj not in self.value_keys:
-            self.value_keys[obj] = sets.Set()
-        return self.value_keys[obj]
-
-
     def reloadData(self, now = False):
         """
         Request reloading association relational data.
@@ -641,7 +624,7 @@ class List(AssociationReferenceProxy):
         @param now: Reload relationship data immediately.
         """
         self.reload = True
-        self.value_keys.clear()
+        self.cache.clear()
         self.ref_buf.clear()
         self.appended.clear()
         self.removed.clear()
@@ -650,7 +633,7 @@ class List(AssociationReferenceProxy):
 
 
 
-    def getPair(self):
+    def getAllKeys(self):
         """
         Return tuple of application object's and referenced object's
         primary key values.
@@ -660,7 +643,7 @@ class List(AssociationReferenceProxy):
         
         @see: L{getPairFromBroker} L{bazaar.motor.Convertor.getPair}
         """
-        for item in self.broker.convertor.getPair(self):
+        for item in self.broker.convertor.getAscData(self):
             yield item
 
 
@@ -672,8 +655,13 @@ class List(AssociationReferenceProxy):
         @param vkey: Referenced object's primary key value.
         """
         obj = self.broker.get(okey)
-        if obj is not None:
-            self.getValueKeys(obj).add(vkey)
+        if obj not in self.cache:
+            keys = sets.Set()
+            self.cache[obj] = keys
+        else:
+            keys = self.cache.dicttype.__getitem__(self.cache, obj)
+        assert isinstance(keys, sets.Set)
+        keys.add(vkey)
 
 
     def loadData(self):
@@ -684,14 +672,14 @@ class List(AssociationReferenceProxy):
         """
         log.info('load association %s.%s' % (self.broker.cls, self.col.attr))
 
-        assert len(self.value_keys) == 0 and len(self.appended) == 0 \
+        assert len(self.cache) == 0 and len(self.appended) == 0 \
             and len(self.removed) == 0
 
-        for okey, vkey in self.getPair():
+        for okey, vkey in self.getAllKeys():
             self.appendKey(okey, vkey)
 
         log.info('application objects of %s.%s = %d' % \
-            (self.broker.cls, self.col.attr, len(self.value_keys)))
+            (self.broker.cls, self.col.attr, len(self.cache)))
 
         self.reload = False
 
@@ -706,9 +694,8 @@ class List(AssociationReferenceProxy):
         """
         # return all objects with defined primary key values
         def getObjects():
-            if obj in self.value_keys:
-                for vkey in list(self.value_keys[obj]):
-                    yield self.vbroker.get(vkey)
+            for vkey in list(self.cache[obj]):
+                yield self.vbroker.get(vkey)
         
 
         assert None not in getObjects(), '%s.%s -> %s.%s (obj: %s) iterated objects: %s' % \
@@ -793,7 +780,7 @@ class List(AssociationReferenceProxy):
         if (obj, value) in self.ref_buf:
             del self.ref_buf[(obj, value)]
         else:
-            self.value_keys[obj].discard(value.__key__)
+            self.cache[obj].discard(value.__key__)
 
 
     def remove(self, obj, value):
@@ -804,7 +791,7 @@ class List(AssociationReferenceProxy):
         @param obj: Application object.
         @param value: Referenced object.
         """
-        assert obj in self.value_keys
+        #assert obj in self.cache
         juggle(obj, value, self.removed, self.appended)
         self.justRemove(obj, value)
 
@@ -814,8 +801,7 @@ class List(AssociationReferenceProxy):
         Return amount of all referenced objects by application object.
         """
         size = 0
-        if obj in self.value_keys:            # amount of objects with defined primary key value
-            size += len(self.value_keys[obj])
+        size += len(self.cache[obj])  # amount of objects with defined primary key value
         if obj in self.ref_buf:       # amount of objects with undefined primary key value
             size += len(self.ref_buf[obj])
         return size
@@ -833,8 +819,9 @@ class List(AssociationReferenceProxy):
         assert isinstance(obj, self.broker.cls)
         assert value is not None and isinstance(value, self.col.vcls)
 
-        if obj in self.value_keys:
-            return value.__key__ in self.value_keys[obj] or (obj, value) in self.ref_buf
+        keys = self.cache[obj]
+        if value.__key__ in keys:
+            return True
         else:
             return (obj, value) in self.ref_buf
 
@@ -965,7 +952,7 @@ class OneToMany(BiDirList):
         super(OneToMany, self).append(obj, value)
 
 
-    def getPair(self):
+    def getAllKeys(self):
         """
         Return tuple of application object's and referenced object's
         primary key values.

@@ -1,10 +1,11 @@
-# $Id: cache.py,v 1.6 2003/11/25 16:27:48 wrobell Exp $
+# $Id: cache.py,v 1.7 2003/11/26 00:16:48 wrobell Exp $
 """
 Cache classes for application objects.
 """
 
 import weakref
 from UserDict import UserDict # weakref inherits from UserDict :-\
+import sets
 
 import logging
 
@@ -46,6 +47,12 @@ class Full(Cache, dict):
     """
     Abstract, basic cache class for loading all objects and association data.
     """
+    def __init__(self, param):
+        Cache.__init__(self, param)
+        dict.__init__(self)
+        self.dicttype = dict
+
+
     def __getitem__(self, param):
         """
         Return referenced object or association data.
@@ -54,14 +61,16 @@ class Full(Cache, dict):
         """
         if self.owner.reload:
             self.load(param)
-        return dict.__getitem__(self, param)
+        if param in self:
+            return dict.__getitem__(self, param)
+        else:
+            return self.empty
 
 
 
 class FullObject(Full):
-    """
-    Cache for loading all application class objects from database.
-    """
+    empty = None
+
     def load(self, key):
         """
         Load all application class objects from database.
@@ -74,6 +83,7 @@ class FullObject(Full):
 
 
 class FullAssociation(Full):
+    empty = sets.Set()
     """
     Cache for loading all association data from database.
     """
@@ -104,9 +114,8 @@ class Lazy(Cache):
         if param not in self:
             data = self.load(param)
         else:
-            data = self.weak.__getitem__(self, param)
+            data = self.dicttype.__getitem__(self, param)
         return data
-
 
 
 
@@ -121,8 +130,8 @@ class LazyObject(Lazy, weakref.WeakValueDictionary):
         @param owner: Owner of the cache - object broker or association object.
         """
         Lazy.__init__(self, owner)
-        self.weak = weakref.WeakValueDictionary # to know weak dictionary superclass
         weakref.WeakValueDictionary.__init__(self)
+        self.dicttype = weakref.WeakValueDictionary # to know weak dictionary superclass
 
 
     def load(self, key):
@@ -143,3 +152,4 @@ class LazyAssociation(Lazy, weakref.WeakKeyDictionary):
     def load(self, key):
         assert self.owner is not None
         pass # fixme
+        # return empty set, too

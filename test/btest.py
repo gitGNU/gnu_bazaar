@@ -1,4 +1,4 @@
-# $Id: btest.py,v 1.14 2003/11/23 23:39:18 wrobell Exp $
+# $Id: btest.py,v 1.15 2003/11/26 00:16:48 wrobell Exp $
 
 import unittest
 
@@ -161,7 +161,6 @@ class DBBazaarTestCase(BazaarTestCase):
         return None
 
 
-
     def checkListAsc(self, cls, attr, query):
         mem_data = []
         for obj in self.bazaar.getObjects(cls):
@@ -176,3 +175,13 @@ class DBBazaarTestCase(BazaarTestCase):
         db_data = dbc.fetchall()
         db_data.sort()
         self.assertEqual(db_data, mem_data, 'database data are different than memory data')
+
+
+    def checkOrdAsc(self):
+        self.checkListAsc(app.Order, 'items', \
+            'select order_fkey, __key__  from order_item where order_fkey is not null order by order_fkey, __key__')
+
+
+    def checkEmpAsc(self):
+        self.checkListAsc(app.Employee, 'orders', \
+            'select employee, "order" from employee_orders order by employee, "order"')

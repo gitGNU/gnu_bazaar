@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.24 2003/11/25 16:27:48 wrobell Exp $
+# $Id: motor.py,v 1.25 2003/11/26 00:16:48 wrobell Exp $
 """
 Data convertor and database access classes.
 """
@@ -87,12 +87,12 @@ class Convertor:
             self.queries[asc][self.delPair] = 'delete from "%s" where %s' % \
                 (relation, ' and '.join(['"%s" = %%s' % c for c in self.asc_cols[asc]]))
 
-            self.queries[asc][self.getPair] = 'select %s from "%s"' % \
+            self.queries[asc][self.getAscData] = 'select %s from "%s"' % \
                 (', '.join(['"%s"' % c for c in self.asc_cols[asc]]), relation)
 
             if __debug__:
                 log.debug('association load query: "%s"' % \
-                        self.queries[asc][self.getPair])
+                        self.queries[asc][self.getAscData])
             if __debug__:
                 log.debug('association insert query: "%s"' % \
                         self.queries[asc][self.addPair])
@@ -178,12 +178,12 @@ class Convertor:
         if __debug__: log.debug('association %s.%s->%s: pairs deleted' % (asc.broker.cls, asc.col.attr, asc.col.vcls))
 
 
-    def getPair(self, asc):
+    def getAscData(self, asc):
         """
         fixme
         """
         okey, vkey = self.asc_cols[asc] # fixme: is this still required
-        for data in self.motor.getData(self.queries[asc][self.getPair]):
+        for data in self.motor.getData(self.queries[asc][self.getAscData]):
             yield data[0], data[1]
 
 
