@@ -1,21 +1,22 @@
--- $Id: init.sql,v 1.7 2003/09/29 18:36:53 wrobell Exp $
+-- $Id: init.sql,v 1.8 2003/10/15 15:46:40 wrobell Exp $
 
 create sequence order_seq;
 create table "order" (
     __key__      integer,
-    no           integer,
+-- --     __key__      integer default nextval('order_seq'),
+    no           integer not null unique,
     finished     boolean not null,
     created      timestamp not null default current_timestamp,
-    unique (no),
     primary key (__key__)
 );
 
 create sequence employee_seq;
 create table employee (
     __key__      integer,
-    name         varchar(10),
-    surname      varchar(20),
-    phone        varchar(12),
+-- --     __key__      integer default nextval('employee_seq'),
+    name         varchar(10) not null,
+    surname      varchar(20) not null,
+    phone        varchar(12) not null,
     unique (name, surname),
     primary key (__key__)
 );
@@ -23,7 +24,8 @@ create table employee (
 create sequence article_seq;
 create table article (
     __key__      integer,
-    name         varchar(20),
+-- --     __key__      integer default nextval('article_seq'),
+    name         varchar(20) not null,
     price        numeric(10,2) not null,
     unique (name),
     primary key (__key__)
@@ -32,8 +34,9 @@ create table article (
 create sequence order_item_seq;
 create table order_item (
     __key__      integer,
-    order_fkey   integer,
-    pos          integer,
+-- --     __key__      integer default nextval('order_item_seq'),
+    order_fkey   integer not null,
+    pos          integer not null,
     article_fkey integer not null,
     quantity     numeric(10,3) not null,
     primary key (__key__),
@@ -50,20 +53,24 @@ create table employee_orders (
     foreign key ("order") references "order"(__key__)
 );
 
+create sequence boss_seq;
 create table boss (
     __key__     integer,
-    dep_key     integer,
+-- --     __key__     integer default nextval('boss_seq'),
+    dep_fkey     integer,
     primary key (__key__)
 --  see below
---    foreign key (dep_key) references department(__key__) initially deferred
+--    foreign key (dep_fkey) references department(__key__) initially deferred
 );
 
 
+create sequence department_seq;
 create table department (
     __key__     integer,
-    boss_key    integer,
+-- --     __key__     integer default nextval('department_seq'),
+    boss_fkey    integer,
     primary key (__key__),
-    foreign key (boss_key) references boss(__key__) initially deferred
+    foreign key (boss_fkey) references boss(__key__) initially deferred
 );
 
-alter table boss add foreign key (dep_key) references department(__key__) initially deferred;
+alter table boss add foreign key (dep_fkey) references department(__key__) initially deferred;

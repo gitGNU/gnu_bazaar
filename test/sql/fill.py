@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# $Id: fill.py,v 1.9 2003/10/01 14:26:52 wrobell Exp $
+# $Id: fill.py,v 1.10 2003/10/15 15:46:39 wrobell Exp $
 
 import sys
 import random
@@ -130,10 +130,10 @@ insert(db, ObjectRow('article', {'__key__': 1000, 'name': 'article', 'price': ra
 insert(db, ObjectRow('order', {'__key__': 1000, 'no': 1001, 'finished': 'false' }))
 insert(db, ObjectRow('employee', {'__key__': 1000, 'name': 'n1001', 'surname': 's1001', 'phone': '1001'}))
 
-insert(db, ObjectRow('boss', {'__key__': 1000, 'dep_key': 1000}))
-insert(db, ObjectRow('boss', {'__key__': 1001, 'dep_key': 1001}))
-insert(db, ObjectRow('department', {'__key__': 1000, 'boss_key': 1000}))
-insert(db, ObjectRow('department', {'__key__': 1001, 'boss_key': 1001}))
+insert(db, ObjectRow('boss', {'__key__': 1000, 'dep_fkey': 1000}))
+insert(db, ObjectRow('boss', {'__key__': 1001, 'dep_fkey': 1001}))
+insert(db, ObjectRow('department', {'__key__': 1000, 'boss_fkey': 1000}))
+insert(db, ObjectRow('department', {'__key__': 1001, 'boss_fkey': 1001}))
 
 for rel in ['order', 'employee', 'article', 'order_item', 'boss', 'department']:
     db.cursor().execute('select setval(\'%s_seq\', max(__key__)) from "%s"' % (rel, rel))

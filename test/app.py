@@ -1,4 +1,4 @@
-# $Id: app.py,v 1.9 2003/09/29 18:36:52 wrobell Exp $
+# $Id: app.py,v 1.10 2003/10/15 15:46:39 wrobell Exp $
 
 """
 Sample test application for Bazaar layer testing purposes.
@@ -17,11 +17,11 @@ dsn = ''
 #   .addColumn('price', 'price_col')
 #
 #   # 1-1 uni-dir
-#   .addColumn('boss', 'boss_key', Boss)
+#   .addColumn('boss', 'boss_fkey', Boss)
 #
 #   # 1-1 bi-dir
-#   .addColumn('boss', 'boss_key', Boss, vattr = 'department')
-#   .addColumn('department', 'dep_key', Department, vattr = 'boss')
+#   .addColumn('boss', 'boss_fkey', Boss, vattr = 'department')
+#   .addColumn('department', 'dep_fkey', Department, vattr = 'boss')
 #
 #   # 1-n, bi-dir
 #   addColumn('items', vcls = OrderItem, vcol = 'order_fkey', vattr = 'order')
@@ -65,5 +65,5 @@ Employee.addColumn('orders', 'employee', Order, 'employee_orders', 'order')
 Department = bazaar.conf.Persistence('Department', relation = 'department')
 Boss = bazaar.conf.Persistence('Boss', relation = 'boss')
 
-Boss.addColumn('department', 'dep_key', Department, vattr = 'boss')
-Department.addColumn('boss', 'boss_key', Boss, vattr = 'department')
+Boss.addColumn('department', 'dep_fkey', Department, vattr = 'boss')
+Department.addColumn('boss', 'boss_fkey', Boss, vattr = 'department')

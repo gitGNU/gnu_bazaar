@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.18 2003/10/02 16:24:17 wrobell Exp $
+# $Id: assoc.py,v 1.19 2003/10/15 15:46:39 wrobell Exp $
 
 import app
 import btest
@@ -13,15 +13,15 @@ class OneToOneAssociationTestCase(btest.DBBazaarTestCase):
     def testLoading(self):
         """Test one-to-one association loading"""
         for boss in self.bazaar.getObjects(app.Boss):
-            self.assertEqual(boss.dep_key, boss.department.__key__, 'one-to-one association data mismatch')
+            self.assertEqual(boss.dep_fkey, boss.department.__key__, 'one-to-one association data mismatch')
             self.assertEqual(boss.department, \
-                self.getCache(app.Department)[boss.dep_key], \
+                self.getCache(app.Department)[boss.dep_fkey], \
                 'one-to-one association data mismatch')
 
         for dep in self.bazaar.getObjects(app.Department):
-            self.assertEqual(dep.boss_key, dep.boss.__key__, 'one-to-one association data mismatch')
+            self.assertEqual(dep.boss_fkey, dep.boss.__key__, 'one-to-one association data mismatch')
             self.assertEqual(dep.boss, \
-                self.getCache(app.Boss)[dep.boss_key], \
+                self.getCache(app.Boss)[dep.boss_fkey], \
                 'one-to-one association data mismatch')
 
 
@@ -41,20 +41,20 @@ class OneToOneAssociationTestCase(btest.DBBazaarTestCase):
         b1.department = d2
         self.assertEqual(b1.department, d2, 'one-to-one associations data mismatch')
         self.assertEqual(d2.boss, b1, 'one-to-one associations data mismatch')
-        self.assertEqual(d2.boss_key, b1.__key__, 'one-to-one association data mismatch')
-        self.assertEqual(b1.dep_key, d2.__key__, 'one-to-one association data mismatch')
+        self.assertEqual(d2.boss_fkey, b1.__key__, 'one-to-one association data mismatch')
+        self.assertEqual(b1.dep_fkey, d2.__key__, 'one-to-one association data mismatch')
 
         d1.boss = b2
         self.assertEqual(b2.department, d1, 'one-to-one associations data mismatch')
         self.assertEqual(d1.boss, b2, 'one-to-one associations data mismatch')
-        self.assertEqual(d1.boss_key, b2.__key__, 'one-to-one association data mismatch')
-        self.assertEqual(b2.dep_key, d1.__key__, 'one-to-one association data mismatch')
+        self.assertEqual(d1.boss_fkey, b2.__key__, 'one-to-one association data mismatch')
+        self.assertEqual(b2.dep_fkey, d1.__key__, 'one-to-one association data mismatch')
 
         d1.boss = None
         self.assertEqual(d1.boss, None, 'one-to-one associations data mismatch')
-        self.assertEqual(d1.boss_key, None, 'one-to-one associations data mismatch')
+        self.assertEqual(d1.boss_fkey, None, 'one-to-one associations data mismatch')
         self.assertEqual(b2.department, None, 'one-to-one associations data mismatch')
-        self.assertEqual(b2.dep_key, None, 'one-to-one associations data mismatch')
+        self.assertEqual(b2.dep_fkey, None, 'one-to-one associations data mismatch')
 
 
 

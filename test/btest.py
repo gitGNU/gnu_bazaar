@@ -1,4 +1,4 @@
-# $Id: btest.py,v 1.11 2003/09/29 18:36:53 wrobell Exp $
+# $Id: btest.py,v 1.12 2003/10/15 15:46:39 wrobell Exp $
 
 import unittest
 
@@ -69,12 +69,12 @@ class DBBazaarTestCase(BazaarTestCase):
             },
             app.Boss: {
                 'relation': 'boss',
-                'cols'    : ('dep_key',),
+                'cols'    : ('dep_fkey',),
                 'test'    : self.checkBoss
             },
             app.Department: {
                 'relation': 'department',
-                'cols'    : ('boss_key',),
+                'cols'    : ('boss_fkey',),
                 'test'    : self.checkDepartment
             }
         }
@@ -136,7 +136,7 @@ class DBBazaarTestCase(BazaarTestCase):
         Boss class data integrity test function.
         """
         boss = self.bazaar.brokers[app.Boss].cache[key]
-        return boss.dep_key == row[0]
+        return boss.dep_fkey == row[0]
 
 
     def checkDepartment(self, key, row):
@@ -144,7 +144,7 @@ class DBBazaarTestCase(BazaarTestCase):
         Department class data integrity test function.
         """
         dep = self.bazaar.brokers[app.Department].cache[key]
-        return dep.boss_key == row[0]
+        return dep.boss_fkey == row[0]
 
 
     def getCache(self, cls):
