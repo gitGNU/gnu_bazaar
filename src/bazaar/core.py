@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.12 2003/09/22 00:23:26 wrobell Exp $
+# $Id: core.py,v 1.13 2003/09/22 22:48:33 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -135,11 +135,10 @@ class Broker:
         if self.reload:
             self.loadObjects()
 
-        if key is None: return None
-
-        # fixme: throw exception when no object?
-
-        return self.cache[key]
+        if key is None:
+            return None
+        else:
+            return self.cache[key]
 
 
     def add(self, obj):
