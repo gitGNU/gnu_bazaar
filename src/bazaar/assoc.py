@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.13 2003/09/23 16:20:54 wrobell Exp $
+# $Id: assoc.py,v 1.14 2003/09/24 00:22:49 wrobell Exp $
 """
 Association classes.
 """
@@ -379,7 +379,6 @@ class ListAssociation(AssociationReferenceProxy):
         for okey, vkey in self.broker.convertor.getPair(self.col):
             obj = self.broker.get(okey)
             if obj is not None:
-                value = self.vbroker.get(vkey)
                 list.append(self.getList(obj), vkey)
 
         log.info('len(%s.%s) = %d' % (self.broker.cls, self.col.attr, len(self.obj_lists)))
