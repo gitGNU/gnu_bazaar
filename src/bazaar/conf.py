@@ -1,24 +1,29 @@
-# $Id: conf.py,v 1.26 2003/11/07 17:22:52 wrobell Exp $
+# $Id: conf.py,v 1.27 2003/11/24 15:25:03 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
 Application class can be defined by standard Python class definition::
-    class Order(bazaar.core.PersitentObject):
+
+    import bazaar.conf
+
+    class Order(bazaar.core.PersistentObject):
         __metaclass__ = bazaar.conf.Persistence
         relation      = 'order'
         columns       = {
-            'no'        : Column('no'),
-            'finished'  : Column('finished'),
-            'birthdate' : Column('birthdate'),
+            'no'        : bazaar.conf.Column('no'),
+            'finished'  : bazaar.conf.Column('finished'),
+            'birthdate' : bazaar.conf.Column('birthdate'),
         }
 
 It is possible to create application class by class instantiation::
+
     Order = bazaar.conf.Persistence('order')
     Order.addColumn('no')
     Order.addColumn('finished')
 
 Of course, both ideas can be mixed::
-    class Order(bazaar.core.PersitentObject):
+
+    class Order(bazaar.core.PersistentObject):
         __metaclass__ = bazaar.conf.Persistence
         relation      = 'order'
 
@@ -128,7 +133,7 @@ class Persistence(type):
     @ivar columns: List of application class attribute descriptions.
     """
 
-    def __new__(self, name, bases = (bazaar.core.PersistentObject, ), data = None, relation = None, sequencer = None):
+    def __new__(self, name, bases = (bazaar.core.PersistentObject, ), data = None, relation = None, sequencer = None, modname = __name__):
         """
         Create application class.
 
@@ -137,6 +142,9 @@ class Persistence(type):
         """
         if data is None:
             data = {}
+
+        if modname != __name__:
+            data['__module__'] = modname
 
         if relation is None:
             relation = name

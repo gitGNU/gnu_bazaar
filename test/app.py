@@ -1,4 +1,4 @@
-# $Id: app.py,v 1.11 2003/11/23 23:39:18 wrobell Exp $
+# $Id: app.py,v 1.12 2003/11/24 15:25:03 wrobell Exp $
 
 """
 Sample test application for Bazaar layer testing purposes.
@@ -40,12 +40,12 @@ dsn = ''
 #   addColumn('emploeyees', 'order', Employee, 'employee_orders', 'employee', 'orders')
 #
 # define test application classes
-Article = bazaar.conf.Persistence('Article', relation = 'article')
+Article = bazaar.conf.Persistence('Article', relation = 'article', modname = 'app')
 Article.addColumn('name')
 Article.addColumn('price')
 
-Order = bazaar.conf.Persistence('Order', relation = 'order')
-OrderItem = bazaar.conf.Persistence('OrderItem', relation = 'order_item')
+Order = bazaar.conf.Persistence('Order', relation = 'order', modname = 'app')
+OrderItem = bazaar.conf.Persistence('OrderItem', relation = 'order_item', modname = 'app')
 OrderItem.addColumn('pos')
 OrderItem.addColumn('quantity')
 OrderItem.addColumn('article', 'article_fkey', Article)
@@ -56,14 +56,14 @@ Order.addColumn('finished')
 Order.addColumn('items', vcls = OrderItem, vcol = 'order_fkey', vattr = 'order', update = False)
 #Order.addColumn('employees')
 
-Employee = bazaar.conf.Persistence('Employee', relation = 'employee')
+Employee = bazaar.conf.Persistence('Employee', relation = 'employee', modname = 'app')
 Employee.addColumn('name')
 Employee.addColumn('surname')
 Employee.addColumn('phone')
 Employee.addColumn('orders', 'employee', Order, 'employee_orders', 'order')
 
-Department = bazaar.conf.Persistence('Department', relation = 'department')
-Boss = bazaar.conf.Persistence('Boss', relation = 'boss')
+Department = bazaar.conf.Persistence('Department', relation = 'department', modname = 'app')
+Boss = bazaar.conf.Persistence('Boss', relation = 'boss', modname = 'app')
 
 Boss.addColumn('department', 'dep_fkey', Department, vattr = 'boss')
 Department.addColumn('boss', 'boss_fkey', Boss, vattr = 'department')
