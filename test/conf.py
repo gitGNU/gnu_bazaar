@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.14 2003/11/23 23:39:18 wrobell Exp $
+# $Id: conf.py,v 1.15 2003/11/24 14:56:53 wrobell Exp $
 
 import unittest
 
@@ -131,27 +131,27 @@ class AssociationTestCase(unittest.TestCase):
         cls_list = (A, B, C)
 
         A.addColumn('a3', 'a3_fkey', B)
-        bzr = bazaar.core.Bazaar(cls_list, app.dbmod)
+        bzr = bazaar.core.Bazaar(cls_list, dbmod = app.dbmod)
         check(A, 'a3', bazaar.assoc.OneToOne, 'uni-directional one-to-one')
 
         A.addColumn('a5', 'a5_fkey', B, vattr = 'b5')
         B.addColumn('b5', 'b5_fkey', A, vattr = 'a5')
-        bzr = bazaar.core.Bazaar(cls_list, app.dbmod)
+        bzr = bazaar.core.Bazaar(cls_list, dbmod = app.dbmod)
         check(A, 'a5', bazaar.assoc.BiDirOneToOne, 'bi-directional one-to-one')
         check(B, 'b5', bazaar.assoc.BiDirOneToOne, 'bi-directional one-to-one')
 
         A.addColumn('a6', 'a61', B, 'a__b', 'b61')
-        bzr = bazaar.core.Bazaar(cls_list, app.dbmod)
+        bzr = bazaar.core.Bazaar(cls_list, dbmod = app.dbmod)
         check(A, 'a6', bazaar.assoc.List, 'uni-directional many-to-many')
 
         A.addColumn('a7', vcls = B, vcol = 'b71', vattr = 'b7')
         B.addColumn('b7', 'b71', A, vattr = 'a7')
-        bzr = bazaar.core.Bazaar(cls_list, app.dbmod)
+        bzr = bazaar.core.Bazaar(cls_list, dbmod = app.dbmod)
         check(A, 'a7', bazaar.assoc.OneToMany, 'many side bi-dir one-to-many')
         check(B, 'b7', bazaar.assoc.BiDirOneToOne, 'one side bi-dir one-to-many')
 
         A.addColumn('a8', vcls = B, vcol = 'b81', vattr = 'b8')
         B.addColumn('b8', 'b81', A, vattr = 'a8')
-        bzr = bazaar.core.Bazaar((C, B, A), app.dbmod)
+        bzr = bazaar.core.Bazaar((C, B, A), dbmod = app.dbmod)
         check(A, 'a8', bazaar.assoc.OneToMany, 'many side bi-dir one-to-many')
         check(B, 'b8', bazaar.assoc.BiDirOneToOne, 'one side bi-dir one-to-many')
