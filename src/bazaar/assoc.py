@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.38 2003/10/06 14:57:24 wrobell Exp $
+# $Id: assoc.py,v 1.39 2003/10/06 16:29:49 wrobell Exp $
 """
 Association classes.
 """
@@ -664,8 +664,6 @@ class List(AssociationReferenceProxy):
         self.ref_buf.clear()
         self.appended.clear()
         self.removed.clear()
-        if self.col.is_one_to_many:
-            self.vbroker.reloadObjects(now)
         if now:
             self.loadData()
 
@@ -704,7 +702,7 @@ class List(AssociationReferenceProxy):
         """
         Load association data from database.
 
-        @see: L{reloadData} L{getPairFromDB} L{getPairFromBroker}
+        @see: L{reloadData} L{getPair} L{appendKey}
         """
         log.info('load association %s.%s' % (self.broker.cls, self.col.attr))
 
@@ -989,6 +987,30 @@ class BiDirManyToMany(BiDirList):
         super(BiDirManyToMany, self.association).appendKey(okey, vkey)
 
 
+    def loadData(self):
+        """
+        Load association data from database.
+
+        @see: L{reloadData} L{getPair} L{appendKey}
+        """
+        super(BiDirManyToMany, self).loadData()
+        self.association.reload = False
+
+
+    def reloadData(self, now = False):
+        """
+        Request reloading association relational data. Referenced class'
+        association data are reloaded, too.
+
+        Association data are removed from memory. If C{now} is set to true, then
+        relationship data are loaded from database immediately.
+
+        @param now: Reload relationship data immediately.
+        """
+        super(BiDirManyToMany, self).reloadData(now)
+        super(BiDirManyToMany, self.association).reloadData(False)
+
+
 
 class OneToMany(BiDirList):
     def append(self, obj, value):
@@ -1018,3 +1040,17 @@ class OneToMany(BiDirList):
         """
         for value in self.vbroker.getObjects():
             yield getattr(value, self.col.vcol), value.__key__
+
+
+    def reloadData(self, now = False):
+        """
+        Request reloading association relational data. Referenced objects
+        are reloaded, too.
+
+        Association data are removed from memory. If C{now} is set to true, then
+        relationship data are loaded from database immediately.
+
+        @param now: Reload relationship data immediately.
+        """
+        super(OneToMany, self).reloadData(now)
+        self.vbroker.reloadObjects(False)
