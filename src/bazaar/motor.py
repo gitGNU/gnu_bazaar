@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.25 2003/11/26 00:16:48 wrobell Exp $
+# $Id: motor.py,v 1.26 2003/11/26 02:34:32 wrobell Exp $
 """
 Data convertor and database access classes.
 """
@@ -33,7 +33,7 @@ class Convertor:
 
         if __debug__: log.debug('class %s columns: %s' % (self.cls, self.columns))
 
-        self.mtm_ascs = [col for col in cls_columns if col.is_many_to_many]
+        self.masc = [col for col in cls_columns if col.is_many]
 
         self.load_cols = ['__key__'] + self.columns
 
@@ -69,15 +69,31 @@ class Convertor:
         if __debug__: log.debug('get primary key value query: "%s"' % self.queries[self.motor.getKey])
 
         self.asc_cols = {}
-        for col in self.mtm_ascs:
+        for col in self.masc:
 
             assert col.association.col.vcls == col.vcls
 
             asc = col.association
             self.queries[asc] = {}
 
-            self.asc_cols[asc] = (col.col, col.vcol)
-            relation = col.link
+            if col.is_many_to_many:
+                self.asc_cols[asc] = (col.col, col.vcol)
+                relation = col.link
+
+                self.queries[asc][self.getAscData] = \
+                    'select "%s" from "%s" where "%s" = %%(key)s' % \
+                    (self.asc_cols[asc][1], relation, \
+                    self.asc_cols[asc][0])
+            elif col.is_one_to_many:
+                self.asc_cols[asc] = ('__key__', col.vcol)
+                relation = col.vcls.relation
+
+                self.queries[asc][self.getAscData] = \
+                    'select "%s" from "%s" where "%s" = %%(key)s' % \
+                    (self.asc_cols[asc][0], relation, \
+                    self.asc_cols[asc][1])
+            else:
+                assert False
 
             self.queries[asc][self.addPair] = 'insert into "%s" (%s) values(%s)' % \
                 (relation,
@@ -87,12 +103,17 @@ class Convertor:
             self.queries[asc][self.delPair] = 'delete from "%s" where %s' % \
                 (relation, ' and '.join(['"%s" = %%s' % c for c in self.asc_cols[asc]]))
 
-            self.queries[asc][self.getAscData] = 'select %s from "%s"' % \
+            self.queries[asc][self.getAllAscData] = 'select %s from "%s"' % \
                 (', '.join(['"%s"' % c for c in self.asc_cols[asc]]), relation)
 
             if __debug__:
                 log.debug('association load query: "%s"' % \
+                        self.queries[asc][self.getAllAscData])
+
+            if __debug__:
+                log.debug('association load query: "%s"' % \
                         self.queries[asc][self.getAscData])
+
             if __debug__:
                 log.debug('association insert query: "%s"' % \
                         self.queries[asc][self.addPair])
@@ -178,13 +199,21 @@ class Convertor:
         if __debug__: log.debug('association %s.%s->%s: pairs deleted' % (asc.broker.cls, asc.col.attr, asc.col.vcls))
 
 
-    def getAscData(self, asc):
+    def getAllAscData(self, asc):
         """
         fixme
         """
         okey, vkey = self.asc_cols[asc] # fixme: is this still required
-        for data in self.motor.getData(self.queries[asc][self.getAscData]):
+        for data in self.motor.getData(self.queries[asc][self.getAllAscData]):
             yield data[0], data[1]
+
+
+    def getAscData(self, asc, obj):
+        """
+        fixme
+        """
+        for data in self.motor.getData(self.queries[asc][self.getAscData], { 'key': obj.__key__ }):
+            yield data[0]
 
 
     def find(self, query, param = None, field = 0):

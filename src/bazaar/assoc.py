@@ -1,10 +1,11 @@
-# $Id: assoc.py,v 1.42 2003/11/26 00:16:48 wrobell Exp $
+# $Id: assoc.py,v 1.43 2003/11/26 02:34:31 wrobell Exp $
 """
 Association classes.
 """
 
 import sets
 import itertools
+import weakref
 
 import logging
 
@@ -34,118 +35,6 @@ def juggle(obj, value, app, rem):
 
     assert value in app[obj]
     assert obj not in rem or value not in rem[obj]
-
-
-
-class ReferenceBuffer(dict):
-    """
-    Simple reference buffer class.
-
-    The class is used to save referenced objects, which has no primary key
-    value.
-
-    It is dictionary with application objects as keys and referenced
-    objects as values.
-    @see: l{bazaar.assoc.ListReferenceBuffer}
-    """
-    def __contains__(self, item):
-        """
-        Check if application object is stored in reference buffer.
-
-        @param item: Tuple of application object and referenced object.
-
-        @return: Returns true if application object is in reference buffer.
-        """
-        if isinstance(item, tuple):
-            return super(ReferenceBuffer, self).__contains__(item[0])
-        else:
-            return super(ReferenceBuffer, self).__contains__(item)
-
-
-
-    def __delitem__(self, (obj, value)):
-        """
-        Remove application object from reference buffer. 
-        """
-        super(ReferenceBuffer, self).__delitem__(obj)
-
-
-
-class ListReferenceBuffer(ReferenceBuffer):
-    """
-    Reference buffer for set of objects.
-
-    It is dictionary with application objects as keys and set of referenced
-    objects as value.
-
-    @see: L{bazaar.assoc.ReferenceBuffer}
-    """
-    def __contains__(self, item):
-        """
-        Check if application object referenced objects are in reference
-        buffer. Operator ``in'' can be used in two ways::
-
-            # buffer contains minimum one referenced value by application
-            # object obj (len(ref_buf[obj]) > 0):
-            obj in ref_buf
-            (obj, None) in ref_buf
-
-            # referenced object value is referenced by obj and exists in
-            # buffer:
-            (obj, value) in ref_buf
-
-        @param item: Application object or pair of application object and referenced object.
-        """
-        ref_buf = super(ReferenceBuffer, self) # we check in dictionary not in ReferenceBuffer
-        if isinstance(item, tuple):
-            obj, value = item
-            if value is None:
-                return ref_buf.__contains__(obj)
-            else:
-                return ref_buf.__contains__(obj) and value in self[obj]
-        else:
-            return ref_buf.__contains__(item)
-
-
-    def __setitem__(self, obj, value):
-        """
-        Add referenced object to the aplication object's set of referenced
-        objects.
-
-        The set is created if it does not exist.
-
-        @param obj: Application object.
-        @param value: Referenced object.
-        """
-        assert obj is not None and value is not None
-
-        if obj not in self:
-            ref_buf = super(ListReferenceBuffer, self).__setitem__(obj, sets.Set())
-        key_set = self[obj]
-
-        assert isinstance(key_set, sets.Set)
-        key_set.add(value)
-
-
-    def __delitem__(self, (obj, value)):
-        """
-        Remove referenced object from application object's set of
-        referenced objects.
-
-        If the set contains no more referenced objects, it is removed from
-        dictionary.
-
-        @param obj: Application object.
-        @param value: Referenced object.
-        """
-        assert obj is not None and value is not None
-
-        self[obj].remove(value)
-        if len(self[obj]) == 0:
-            super(ListReferenceBuffer, self).__delitem__((obj, None))
-
-        assert (obj not in self or len(self[obj]) > 0) \
-            and (obj, value) not in self
 
 
 
@@ -297,7 +186,7 @@ class AssociationReferenceProxy(object):
     @ivar vbroker: Broker of referenced application objects' class.
     @ivar association: Referenced class' association object of bi-directional association.
 
-    @see: L{bazaar.assoc.ReferenceBuffer} L{bazaar.assoc.ListReferenceBuffer}
+    @see: L{bazaar.cache.ReferenceBuffer} L{bazaar.cache.ListReferenceBuffer}
         L{bazaar.conf.Persistence} L{bazaar.conf.Column}
     """
     def __init__(self, col, ref_buf = None):
@@ -318,7 +207,7 @@ class AssociationReferenceProxy(object):
         self.vbroker = None
         self.association = None
         if ref_buf is None:
-            self.ref_buf = ReferenceBuffer()
+            self.ref_buf = bazaar.cache.ReferenceBuffer()
         else:
             self.ref_buf = ref_buf
 
@@ -334,8 +223,8 @@ class AssociationReferenceProxy(object):
         @param obj: Application object.
         @param value: Referenced object.
 
-        @see: L{saveForeignKey} L{bazaar.assoc.ReferenceBuffer}
-            L{bazaar.assoc.ListReferenceBuffer}
+        @see: L{saveForeignKey} L{bazaar.cache.ReferenceBuffer}
+            L{bazaar.cache.ListReferenceBuffer}
         """
         assert obj is not None and value is not None
 
@@ -561,12 +450,12 @@ class List(AssociationReferenceProxy):
             L{bazaar.core.Bazaar.__init__} L{bazaar.conf.Persistence}
             L{bazaar.conf.Column}
         """
-        super(List, self).__init__(col, ListReferenceBuffer())
+        super(List, self).__init__(col, bazaar.cache.ListReferenceBuffer())
         self.cache = self.col.cache(self)
-        self.appended = {}
-        self.removed = {}
+        self.appended = weakref.WeakKeyDictionary()
+        self.removed = weakref.WeakKeyDictionary()
         self.reload = True
-        assert isinstance(self.ref_buf, ListReferenceBuffer)
+        assert isinstance(self.ref_buf, bazaar.cache.ListReferenceBuffer)
 
 
     def saveForeignKey(self, obj, vkey):
@@ -643,7 +532,7 @@ class List(AssociationReferenceProxy):
         
         @see: L{getPairFromBroker} L{bazaar.motor.Convertor.getPair}
         """
-        for item in self.broker.convertor.getAscData(self):
+        for item in self.broker.convertor.getAllAscData(self):
             yield item
 
 
