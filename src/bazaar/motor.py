@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.3 2003/07/17 23:51:03 wrobell Exp $
+# $Id: motor.py,v 1.4 2003/07/19 09:57:52 wrobell Exp $
 
 from __future__ import generators
 import logging
@@ -28,7 +28,7 @@ class Convertor:
 
         # prepare quries
         self.queries[self.getObjects] = 'select %s from "%s"' \
-            % (', '.join(self.columns), self.cls.relation)
+            % (', '.join(['"%s"' % col for col in self.columns]), self.cls.relation)
 
 
     def getObjects(self):
