@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.11 2003/09/29 16:51:35 wrobell Exp $
+# $Id: assoc.py,v 1.12 2003/09/29 16:57:54 wrobell Exp $
 
 import app
 import btest
@@ -261,6 +261,18 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
         ord.items.update()
         self.checkOrdAsc()
 
+        oi3 = app.OrderItem()
+        oi3.pos = 1005
+        oi3.quantity = 10.4
+        oi3.article = art
+        oi3.order = ord
+        self.assert_(oi3 in ord.items, \
+            'appended referenced object not found in association %s -> %s' % \
+            (ord, oi3))
+        self.bazaar.add(oi3)
+        ord.items.update()
+        self.checkOrdAsc()
+
         self.assertRaises(bazaar.exc.AssociationError, ord.items.append, None)
         self.assertRaises(bazaar.exc.AssociationError, ord.items.append, object())
         self.assertRaises(bazaar.exc.AssociationError, ord.items.append, oi1)
@@ -270,7 +282,7 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
         """Test removing objects from one-to-many association
         """
         ord = self.bazaar.getObjects(app.Order)[0]
-        assert len(ord.items) > 0
+        assert len(ord.items) > 1
         items = list(ord.items)
         oi = items[0]
         del ord.items[oi]
@@ -278,6 +290,14 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
             'removed referenced object found in association')
         ord.items.update()
         self.checkOrdAsc()
+
+        oi = items[1]
+        oi.order = None
+        self.assert_(oi not in ord.items, \
+            'removed referenced object found in association')
+        ord.items.update()
+        self.checkOrdAsc()
+
         self.assertRaises(bazaar.exc.AssociationError, ord.items.remove, None)
         self.assertRaises(bazaar.exc.AssociationError, ord.items.remove, object())
         self.assertRaises(bazaar.exc.AssociationError, ord.items.remove, oi)
