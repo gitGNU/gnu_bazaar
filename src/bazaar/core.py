@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.21 2003/11/22 14:27:17 wrobell Exp $
+# $Id: core.py,v 1.22 2003/11/23 20:33:00 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -187,13 +187,15 @@ class Bazaar:
     application objects.
 
     @ivar motor: Database access object.
-    @ivar brokers: Dictionary of brokers. Brokers are mapped with its
-        class application.
+    @ivar brokers: Dictionary of brokers. Brokers are mapped with its class application.
+    @ivar dsn: Python DB API database source name.
+    @ivar cls_list: List of application classes.
+    @ivar db_module: Python DB API module.
 
     @see: L{Broker} L{bazaar.motor.Motor}
     """
 
-    def __init__(self, cls_list, db_module, dsn = ''):
+    def __init__(self, cls_list, config = None, dsn = '', db_module = None):
         """
         Start the Bazaar layer.
 
@@ -206,16 +208,36 @@ class Bazaar:
 
         @see: L{bazaar.core.Bazaar.connectDB}
         """
-        self.motor = bazaar.motor.Motor(db_module)
+        self.cls_list = cls_list
+        self.config = config
+        self.dsn = dsn
+        self.db_module = db_module
+
+        if config is not None:
+            self.parseConfig(config)
+
+        self.init()
+
+        if dsn:
+            self.connectDB(dsn)
+
+        log.info('bazaar started')
+
+
+    def init(self):
+        """
+        Initialize the Bazaar layer.
+        """
+        self.motor = bazaar.motor.Motor(self.db_module)
         self.brokers = {}
 
         # first, kill existing associations
-        for c in cls_list:
+        for c in self.cls_list:
             for col in c.columns.values():
                 col.association = None
 
         # create association objects
-        for c in cls_list:
+        for c in self.cls_list:
             for col in c.columns.values():
                 if col.vcls is None: continue
 
@@ -282,23 +304,56 @@ class Bazaar:
                     if __debug__: log.debug('uni-directional (%s) association %s.%s -> %s' \
                                     % (asc_cls, c, col.attr, col.vcls))
 
-        for c in cls_list:
+        for c in self.cls_list:
             self.brokers[c] = Broker(c, self.motor)
 
         # again to assign brokers for associations
-        for c in cls_list:
+        for c in self.cls_list:
             for col in c.columns.values():
                 if col.association is not None:
                     col.association.broker = self.brokers[c]
                     col.association.vbroker = self.brokers[col.vcls]
 
-        if dsn:
-            self.connectDB(dsn)
 
-        log.info('bazaar started')
+    def parseConfig(self, config):
+        """
+        Parse Bazaar configuration.
+
+        @param config: Bazaar configuration.
+
+        @see: L{setConfig} L{bazaar.config.Config} L{bazaar.config.CPConfig}
+        """
+        dbmod = config.getDBModule()
+        if dbmod is not None:
+            self.db_module = __import__(dbmod)
+
+        dsn = config.getDSN()
+        if dsn is not None: self.dsn = dsn
+
+        seqpattern = config.getSeqPattern()
+        if seqpattern is not None: self.seqpattern = seqpattern
+
+        for c in self.cls_list:
+            fname = c.__module__ + '.' + c.__name__ # get full name of class
+            relation = config.getClassRelation(fname)
+            if relation: c.relation = relation
+
+            sequencer = config.getClassSequencer(fname)
+            if sequencer: c.sequencer = sequencer
+#fixme            c.cache = bazaar.cache....
 
 
-    def connectDB(self, dsn):
+    def setConfig(self, config):
+        """
+        Set Bazaar configuration.
+
+        @see: L{parseConfig} L{init} L{bazaar.config.Config} L{bazaar.config.CPConfig}
+        """
+        self.parseConfig(config)
+        self.init()
+
+
+    def connectDB(self, dsn = None):
         """
         Make new database connection.
 
@@ -307,11 +362,20 @@ class Bazaar:
 
             bazaar.connectDB('dbname=addressbook host=localhost port=5432 user=bird')
 
+        It is possible to reconnect with previous database source name, too::
+            
+            bazaar.connectDB()
+
         @param dsn: Database source name.
 
         @see: L{bazaar.core.Bazaar.closeDBConn}
         """
-        self.motor.connectDB(dsn)
+        if dsn is not None:
+            self.dsn = dsn
+
+        # fixme: raise exception when dsn is none?
+
+        self.motor.connectDB(self.dsn)
         # fixme: what about password visibility?
         if __debug__: log.debug('connected to database "%s"' % dsn)
 

@@ -1,4 +1,4 @@
-# $Id: btest.py,v 1.12 2003/10/15 15:46:39 wrobell Exp $
+# $Id: btest.py,v 1.13 2003/11/23 20:33:00 wrobell Exp $
 
 import unittest
 
@@ -18,7 +18,7 @@ class BazaarTestCase(unittest.TestCase):
         Create Bazaar layer object.
         """
         self.cls_list = (app.Order, app.Employee, app.Article, app.OrderItem, app.Boss, app.Department)
-        self.bazaar = bazaar.core.Bazaar(self.cls_list, app.db_module)
+        self.bazaar = bazaar.core.Bazaar(self.cls_list, db_module = app.db_module)
 
 
 class DBBazaarTestCase(BazaarTestCase):
