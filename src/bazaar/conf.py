@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.13 2003/09/07 11:39:58 wrobell Exp $
+# $Id: conf.py,v 1.14 2003/09/12 13:24:32 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -50,13 +50,13 @@ def getConvertKeyMethod(key_columns):
         # convert single column key value
         key = 'John'
         convert_key = getConvertKeyMethod(('name',))()
-        get_key(data)
+        convert_key(key)
         ('John', )
 
         # get multi column key value
         key = ('John', 'Smith')
-        get_key = getConvertKeyMethod(('name', 'surname'))()
-        get_key(data)
+        convert_key = getConvertKeyMethod(('name', 'surname'))()
+        convert_key(key)
         ('John', 'Smith')
 
 
