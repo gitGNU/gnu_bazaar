@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.30 2004/03/29 18:11:17 wrobell Exp $
+# $Id: motor.py,v 1.31 2004/03/29 19:04:14 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -191,7 +191,7 @@ class Convertor:
         cond = []
         for attr in param:
             if attr in cols:
-                col = cols[attr]
+                col = cols[attr].col
             else:
                 col = attr
             cond.append('"%s" = %%(%s)s' % (col, attr))
