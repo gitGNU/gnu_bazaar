@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.5 2003/07/10 23:16:01 wrobell Exp $
+# $Id: conf.py,v 1.6 2003/07/19 10:00:29 wrobell Exp $
 
 import logging
 
@@ -28,7 +28,7 @@ log = logging.getLogger('bazaar.conf')
         Person.addColumn('name')
         Person.addColumn('surname')
         Person.addColumn('birthdate')
-        Person.setKey('name', 'surname')
+        Person.setKey(('name', 'surname'))
     </code>
 
     Of course, both ideas can be mixed.
@@ -40,7 +40,7 @@ log = logging.getLogger('bazaar.conf')
         Person.addColumn('name')
         Person.addColumn('surname')
         Person.addColumn('birthdate')
-        Person.setKey('name', 'surname')
+        Person.setKey(('name', 'surname'))
     </code>
 </p>
 """
@@ -154,16 +154,22 @@ class Persitence(type):
 
         # get multi column key value from object
         def getMKey(cls, obj):
-            tuple([obj.__dict__[c] for c in cls.key_columns])
+#            if __debug__: log.debug('class "%s" object key value: "%s"' \
+#                % (cls,  tuple([obj.__dict__[c] for c in cls.key_columns])))
+            return tuple([obj.__dict__[c] for c in cls.key_columns])
 
         # get one column key value from object
         def getKey(cls, obj):
+#            if __debug__: log.debug('class "%s" object key value: "%s"' \
+#                % (cls,  obj.__dict__[cls.key_columns[0]]))
             return obj.__dict__[cls.key_columns[0]]
 
         # create class methods for object key extraction 
         if len(cls.key_columns) == 1:
-            cls.getKey = classmethod(getMKey)
-        else:
             cls.getKey = classmethod(getKey)
+            if __debug__: log.debug('class "%s" single column key extraction method' % cls)
+        else:
+            cls.getKey = classmethod(getMKey)
+            if __debug__: log.debug('class "%s" multi column key extraction method' % cls)
 
         if __debug__: log.debug('class "%s" key: %s' % (cls.__name__, cls.key_columns))
