@@ -1,4 +1,4 @@
-# $Id: btest.py,v 1.9 2003/09/25 11:35:06 wrobell Exp $
+# $Id: btest.py,v 1.10 2003/09/29 16:51:35 wrobell Exp $
 
 import unittest
 
@@ -133,3 +133,20 @@ class DBBazaarTestCase(BazaarTestCase):
             if obj_val == data_val:
                 return obj
         return None
+
+
+
+    def checkListAsc(self, cls, attr, query):
+        mem_data = []
+        for obj in self.bazaar.getObjects(cls):
+            for val in getattr(obj, attr):
+                self.assert_(val is not None, \
+                    'referenced object cannot be None (application object key: %d)' % obj.__key__)
+                mem_data.append((obj.__key__, val.__key__))
+        mem_data.sort()
+
+        dbc = self.bazaar.motor.db_conn.cursor()
+        dbc.execute(query)
+        db_data = dbc.fetchall()
+        db_data.sort()
+        self.assertEqual(db_data, mem_data, 'database data are different than memory data')
