@@ -1,4 +1,4 @@
--- $Id: init.sql,v 1.8 2003/10/15 15:46:40 wrobell Exp $
+-- $Id: init.sql,v 1.9 2003/10/16 17:59:38 wrobell Exp $
 
 create sequence order_seq;
 create table "order" (
@@ -35,7 +35,7 @@ create sequence order_item_seq;
 create table order_item (
     __key__      integer,
 -- --     __key__      integer default nextval('order_item_seq'),
-    order_fkey   integer not null,
+    order_fkey   integer,
     pos          integer not null,
     article_fkey integer not null,
     quantity     numeric(10,3) not null,
