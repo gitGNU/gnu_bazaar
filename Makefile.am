@@ -16,5 +16,5 @@ doc/html: $(DOCSOURCES)
 
 doc: doc/html doc/pdf/api.pdf
 
-EXTRA_DIST = doc/pdf/api.pdf doc/html
+EXTRA_DIST = doc/pdf/api.pdf doc/html TESTING
 MAINTAINERCLEANFILES = -r doc
