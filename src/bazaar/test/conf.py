@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.1 2004/05/21 18:12:39 wrobell Exp $
+# $Id: conf.py,v 1.2 2004/05/23 00:44:02 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -95,9 +95,9 @@ class ConfTestCase(unittest.TestCase):
 
         self.assertEqual(list(B.__bases__), [A])
 
-        d_bases = list(D.__bases__)
-        d_bases.sort()
-        self.assertEqual(d_bases, [B, C])
+        d_bases = [c.__name__ for c in D.__bases__]
+        
+        self.assertEqual(d_bases, ['B', 'C'])
 
         a_cols = A.getColumns().keys()
         a_cols.sort()
