@@ -1,4 +1,10 @@
-# $Id: core.py,v 1.7 2003/08/09 03:18:34 wrobell Exp $
+# $Id: core.py,v 1.8 2003/08/25 19:01:06 wrobell Exp $
+"""
+This module contains basic Bazaar implementation.
+
+Class L{Bazaar} must be used to get,
+modify, find and perform other tasks on application objects.
+"""
 
 import logging
 
@@ -7,47 +13,20 @@ import cache
 
 log = logging.getLogger('bazaar.core')
 
-"""
-<s>
-    Bazaar is an easy to use and powerful abstraction layer between
-    relational database and object oriented application.
-</s>
-<p>
-    Bazaar maps tables into classes, table rows into class objects and
-    creates one-to-one, one-to-many and many-to-many associations between
-    objects. Several tasks on objects can be performed, such as filtering
-    (querying) and sorting objects using database query language.
-</p>
-<p>
-    Bazaar supports GUI development with set of powerful widgets designed
-    to simplify development of objects presentation, manipulation and
-    searching.
-</p>
-<p>
-    This module contains basic Bazaar implementation.
-</p>
-<p>
-    Class <r class = "Bazaar"/> must be used to get,
-    modify, find and perform other tasks on application objects.
-</p>
-"""
-
-
 class PersistentObject(object):
     """
-    <s>Parent class of an application class.</s>
-    <p>
-    </p>
+    Parent class of an application class.
 
-    <attr name = 'key'>Object's key.</attr>
+    @ivar key: Object's key.
     """
-    def __init__(self, data = {}):
+    def __init__(self, data = None):
         """
-        <s>Create persistent object.</s>
-        <p>
-        </p>
-        <attr name = 'data'></attr>
+        Create persistent object with initial data.
+
+        @param data: Dictionary with initial values of object attributes.
         """
+        if data is None: data = {}
+
         # set object attributes
         for col_name in self.__class__.columns:
             if col_name in data:
@@ -64,24 +43,24 @@ class PersistentObject(object):
 
 class Broker:
     """
-    <s></s>
+    Application class broker.
+
+    Application class broker is responsible for taking decision on getting
+    objects from database or cache, loading application objects from
+    database with convertor and manipulating application objects with
+    cache.
+
+    @see: L{bazaar.motor.Motor} L{bazaar.motor.Convertor}
+          L{bazaar.cache}
     """
     def __init__(self, cls, mtr):
         """
-        <s>Create application class broker.</s>
+        Create application class broker.
 
-        <p>
-            Method initializes object cache and database data convertor.
-        </p>
+        Method initializes object cache and database data convertor.
 
-        <attr name = 'cls'>Application class.</s>
-        <attr name = 'mtr'>Database access object.</s>
-
-        <see>
-            <r class = 'Motor'/>
-            <r class = 'Convertor'/>
-            <r class = 'Bazaar'/>
-        </see>
+        @param cls: Application class.
+        @param mtr: Database access object.
         """
 
         self.reload = True
@@ -95,15 +74,13 @@ class Broker:
 
     def getObjects(self):
         """
-        <s>Get list of application objects.</s>
-        <p>
-            Objects are returned from object cache. If objects are not
-            loaded from database, then database access is performed and
-            objects are put into cache, then returned by the method.
-        </p>
-        <see>
-            <r method = 'reload'/>
-        </see>
+        Get list of application objects.
+
+        Objects are returned from object cache. If objects are not loaded
+        from database, then database access is performed and objects are
+        put into cache, then returned by the method.
+
+        @see: L{reloadObjects}
         """
         if self.reload:
             # clear the cache
@@ -120,15 +97,12 @@ class Broker:
 
     def reloadObjects(self, now = False):
         """
-        <s>Reload objects from database.</s>
+        Reload objects from database.
 
-        <p>
-            Objects are loaded when <r method = 'getObjects'/> is invoked.
-            This behaviour can be changed with <r attr = 'now'/> method
-            parameter.
-        </p>
+fixme:  This behaviour can be changed with C{now} method
+        parameter.
         
-        <attr name = 'now'>Reload objects immediately.</attr>
+        @param now: Reload objects immediately.
         """
         self.reload = True
         if now:
@@ -137,9 +111,9 @@ class Broker:
 
     def add(self, obj):
         """
-        <s>Add object into database.</s>
+        Add object into database.
 
-        <attr name = 'obj'>Object to add.</s>
+        @param obj: Object to add.
         """
         self.convertor.add(obj)
         self.cache.append(obj)
@@ -147,9 +121,9 @@ class Broker:
 
     def update(self, obj):
         """
-        <s>Update object in database.</s>
+        Update object in database.
 
-        <attr name = 'obj'>Object to update.</s>
+        @param obj: Object to update.
         """
         old_key = obj.key
         self.convertor.update(obj)
@@ -160,9 +134,9 @@ class Broker:
 
     def delete(self, obj):
         """
-        <s>Delete object from database.</s>
+        Delete object from database.
 
-        <attr name = 'obj'>Object to delete.</s>
+        @param obj: Object to delete.
         """
         self.convertor.delete(obj)
         self.cache.remove(obj)
@@ -171,34 +145,28 @@ class Broker:
 
 class Bazaar:
     """
-    <s>
     The interface to get, modify, find and perform other tasks on
     application objects.
-    </s>
 
-    <attr name = 'motor'>Database access object.</attr>
-    <attr name = 'brokers'>List of brokers.</attr>
+    @ivar motor: Database access object.
+    @ivar brokers: Dictionary of brokers. Brokers are mapped with its
+        class application.
 
-    <see>
-        <r class = 'Broker'/>
-        <r class = 'Motor'/>
-    </see>
+    @see: L{Broker} L{bazaar.motor.Motor}
     """
 
     def __init__(self, cls_list, db_module, dsn = ''):
         """
-        <s>Start the Bazaar layer.</s>
+        Start the Bazaar layer.
 
-        <p>
         If database source name is not empty, then database connection is
         created.
-        </p>
 
-        <attr name = 'cls_list'>List of application classes.</attr>
-        <attr name = 'db_module'>Python DB API module.</attr>
-        <attr name = 'dsn'>Database source name.</attr>
+        @param cls_list: List of application classes.
+        @param db_module: Python DB API module.
+        @param dsn: Database source name.
 
-        <see><r class = 'Bazaar' method = 'connectDB'/></see>
+        @see: L{bazaar.core.Bazaar.connectDB}
         """
         if len(cls_list) < 1:
             raise ValueError('list of application classes should not be empty')
@@ -219,19 +187,16 @@ class Bazaar:
 
     def connectDB(self, dsn):
         """
-        <s>Make new database connection.</s>
+        Make new database connection.
 
-        <p>
-            New database connection is created with specified database
-            source name, which must conform to Python DB API Specification, i.e.
-            <code>
-                bazaar.connectDB('dbname=addressbook host=localhost port=5432 user=bird')
-            </code>
-        </p>
+        New database connection is created with specified database source
+        name, which must conform to Python DB API Specification, i.e.::
 
-        <attr name = 'dsn'>Database source name.</attr>
+            bazaar.connectDB('dbname=addressbook host=localhost port=5432 user=bird')
 
-        <see><r method = 'closeDBConn'/></see>
+        @param dsn: Database source name.
+
+        @see: L{bazaar.core.Bazaar.closeDBConn}
         """
         self.motor.connectDB(dsn)
         # fixme: what about password visibility?
@@ -240,8 +205,9 @@ class Bazaar:
 
     def closeDBConn(self):
         """
-        <s>Close database connection.</s>
-        <see><r method = 'connectDB'/></see>
+        Close database connection.
+
+        @see: L{bazaar.core.Bazaar.connectDB}
         """
         self.motor.closeDBConn()
         if __debug__: log.debug('database connection is closed')
@@ -249,65 +215,62 @@ class Bazaar:
 
     def getObjects(self, cls):
         """
-        <s>Get list of application objects.</s>
+        Get list of application objects.
 
-        <p>Only objects of specified class are returned.</p>
+        Only objects of specified class are returned.
 
-        <attr name = 'cls'>Application object class.</attr>
+        @param cls: Application object class.
 
-        <see>
-            <r method = 'reload'/>
-            <r class = 'Broker' method = 'getObjects'/>
-        </see>
+        @see: L{bazaar.core.Bazaar.reloadObjects} L{bazaar.core.Broker.getObjects}
         """
         return self.brokers[cls].getObjects()
 
 
     def reloadObjects(self, cls, now = False):
         """
-        <s>Reload objects from database.</s>
+        Reload objects from database.
 
-        <attr name = 'now'>Reload objects immediately.</attr>
+        @param now: Reload objects immediately.
         """
         self.brokers[cls].reloadObjects(now)
 
 
     def add(self, obj):
         """
-        <s>Add object to database.</s>
+        Add object to database.
 
-        <attr name = 'obj'>Object to add.</attr>
+        @param obj: Object to add.
         """
         self.brokers[obj.__class__].add(obj)
 
 
     def update(self, obj):
         """
-        <s>Update object in database.</s>
+        Update object in database.
 
-        <attr name = 'obj'>Object to update.</attr>
+        @param obj: Object to update.
         """
         self.brokers[obj.__class__].update(obj)
 
 
     def delete(self, obj):
         """
-        <s>Delete object from database.</s>
+        Delete object from database.
 
-        <attr name = 'obj'>Object to delete.</attr>
+        @param obj: Object to delete.
         """
         self.brokers[obj.__class__].delete(obj)
 
 
     def commit(self):
         """
-        <s>Commit pending database transactions.</s>
+        Commit pending database transactions.
         """
         self.motor.commit()
 
 
     def rollback(self):
         """
-        <s>Rollback database transactions.</s>
+        Rollback database transactions.
         """
         self.motor.rollback()

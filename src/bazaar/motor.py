@@ -1,26 +1,24 @@
-# $Id: motor.py,v 1.8 2003/08/09 03:19:42 wrobell Exp $
+# $Id: motor.py,v 1.9 2003/08/25 19:01:06 wrobell Exp $
+"""
+Data convertor and database access objects.
+"""
 
 import logging
 
 log = logging.getLogger('bazaar.motor')
 
-"""
-<s>Database access objects.</s>
-<p>
-</p>
-"""
-
 class Convertor:
     """
-    <s>Database data convertor.</s>
+    Data convertor.
 
-    <attr name = 'queries'>Queries to modify data in database.</attr>
-    <attr name = 'cls'>Application class, which objects are converted.</attr>
-    <attr name = 'motor'>Database access object.</attr>
-    <attr name = 'columns'>List of columns used with database queries.</attr>
+    @ivar queries: Queries to modify data in database.
+    @ivar cls: Application class, which objects are converted.
+    @ivar motor: Database access object.
+    @ivar columns: List of columns used with database queries.
     """
     def __init__(self, cls, mtr):
         """
+        Create data convert object.
         """
         self.queries = {}
         self.cls = cls
@@ -33,11 +31,11 @@ class Convertor:
         # convert key methods creates tupple from object key data
         #
 
-        # multicolumn key
+        # multicolumn key method
         def getMKey(key):
             return key
 
-        # single column key
+        # single column key method
         def getKey(key):
             return (key, )
 
@@ -78,7 +76,7 @@ class Convertor:
 
     def getObjects(self):
         """
-        <s>Load objects from database.</s>
+        Load objects from database.
         """
         for data in self.motor.getData(self.queries[self.getObjects], self.columns):
             obj = self.cls(data)   # create object instance
@@ -89,9 +87,9 @@ class Convertor:
 
     def add(self, obj):
         """
-        <s>Add object to database.</s>
+        Add object to database.
 
-        <attr name = 'obj'>Object to add.</attr>
+        @param obj: Object to add.
         """
         self.motor.add(self.queries[self.add], obj.__dict__)
         obj.key = obj.__class__.getKey(obj)
@@ -99,9 +97,9 @@ class Convertor:
 
     def update(self, obj):
         """
-        <s>Update object in database.</s>
+        Update object in database.
 
-        <attr name = 'obj'>Object to update.</attr>
+        @param obj: Object to update.
         """
         self.motor.update(self.queries[self.update], \
             [obj.__dict__[col] for col in self.columns], self.convertKey(obj.key))
@@ -110,9 +108,9 @@ class Convertor:
 
     def delete(self, obj):
         """
-        <s>Delete object from database.</s>
+        Delete object from database.
 
-        <attr name = 'obj'>Object to delete.</attr>
+        @param obj: Object to delete.
         """
         self.motor.delete(self.queries[self.delete], self.convertKey(obj.key))
 
@@ -120,15 +118,15 @@ class Convertor:
 
 class Motor:
     """
-    <s>Database access object.</s>
+    Database access object.
 
-    <attr name = 'db_module'></attr>
-    <attr name = 'db_conn'></attr>
-    <attr name = 'dbc'></attr>
+    @ivar db_module: Python DB API module.
+    @ivar db_conn: Python DB API connection object.
+    @ivar dbc: Python DB API cursor object.
     """
     def __init__(self, db_module):
         """
-        <s>Initialize database access object.</s>
+        Initialize database access object.
         """
         self.db_module = db_module
         self.db_conn = None
@@ -138,13 +136,11 @@ class Motor:
 
     def connectDB(self, dsn):
         """
-        <s>Connect with database.</s>
+        Connect with database.
         
-        <attr name = 'dsn'>Data source name.</attr>
+        @param dsn: Data source name.
 
-        <see>
-            <r method = 'closeDBConn'>
-        </see>
+        @see: L{bazaar.motor.Motor.closeDBConn}
         """
         self.db_conn = self.db_module.connect(dsn)
         self.dbc = self.db_conn.cursor()
@@ -153,11 +149,9 @@ class Motor:
 
     def closeDBConn(self):
         """
-        <s>Close database connection.</s>
+        Close database connection.
 
-        <see>
-            <r method = 'connectDB'>
-        </see>
+        @see: L{bazaar.motor.Motor.connectDB}
         """
         self.db_conn.close()
         self.db_conn = None
@@ -167,15 +161,14 @@ class Motor:
 
     def getData(self, query, cols):
         """
-        <s>Get list of rows from database.</s>
-        <p>
-            Method returns dictionary per databse relation row. The
-            dictionary keys are relation column names and dictionary values
-            are column values for the relation row.
-        </p>
+        Get list of rows from database.
 
-        <attr name = 'query'>Database SQL query.</s>
-        <attr name = 'cols'>List of relation columns.</s>
+        Method returns dictionary per databse relation row. The
+        dictionary keys are relation column names and dictionary values
+        are column values for the relation row.
+
+        @param query: Database SQL query.
+        @param cols: List of relation columns.
         """
         if __debug__: log.debug('query "%s": executing' % query)
 
@@ -198,10 +191,10 @@ class Motor:
 
     def add(self, query, data):
         """
-        <s>Insert row into database relation.</s>
+        Insert row into database relation.
 
-        <attr name = 'query'>SQL query.</attr>
-        <attr name = 'data'>Row data to insert.</attr>
+        @param query: SQL query.
+        @param data: Row data to insert.
         """
         if __debug__: log.debug('query "%s", data = %s: executing' % (query, data))
         self.dbc.execute(query, data)
@@ -210,11 +203,11 @@ class Motor:
 
     def update(self, query, data, key):
         """
-        <s>Update row in database relation.</s>
+        Update row in database relation.
 
-        <attr name = 'query'>SQL query.</attr>
-        <attr name = 'data'>Tuple of new values for the row.</attr>
-        <attr name = 'key'>Key of the row to update.</attr>
+        @param query: SQL query.
+        @param data: Tuple of new values for the row.
+        @param key: Key of the row to update.
         """
         if __debug__: log.debug('query "%s", data = %s, key = %s: executing' % (query, data, key))
         self.dbc.execute(query, tuple(data) + tuple(key))
@@ -223,10 +216,10 @@ class Motor:
 
     def delete(self, query, key):
         """
-        <s>Delete row from database relation.</s>
+        Delete row from database relation.
 
-        <attr name = 'query'>SQL query.</attr>
-        <attr name = 'key'>Key of the row to delete.</attr>
+        @param query: SQL query.
+        @param key: Key of the row to delete.
         """
         if __debug__: log.debug('query "%s", key = %s: executing' % (query, key))
         self.dbc.execute(query, key)
@@ -235,13 +228,13 @@ class Motor:
 
     def commit(self):
         """
-        <s>Commit pending database transactions.</s>
+        Commit pending database transactions.
         """
         self.db_conn.commit()
 
 
     def rollback(self):
         """
-        <s>Rollback database transactions.</s>
+        Rollback database transactions.
         """
         self.db_conn.rollback()

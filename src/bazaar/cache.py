@@ -1,22 +1,19 @@
-# $Id: cache.py,v 1.2 2003/07/10 23:14:15 wrobell Exp $
+# $Id: cache.py,v 1.3 2003/08/25 19:01:06 wrobell Exp $
+"""
+Cache classes for application objects.
+"""
 
 import logging
 
 log = logging.getLogger('bazaar.cache')
 
-"""
-<s></s>
-<p>
-</p>
-"""
-
 class Cache(dict):
     """
-    <s>Abstract, basic class for different object caches.</s>
+    Abstract, basic class for different object caches.
     """
     def __init__(self):
         """
-        <s>Create object cache.</s>
+        Create object cache.
         """
         dict.__init__(self)
         self.getObjects = self.values
@@ -24,13 +21,13 @@ class Cache(dict):
 
     def append(self, obj):
         """
-        <s>Append object to cache.</s>
+        Append object to cache.
         """
         self[obj.key] = obj
 
 
     def remove(self, obj):
         """
-        <s>Remove object from cache.</s>
+        Remove object from cache.
         """
         del self[obj.key]
