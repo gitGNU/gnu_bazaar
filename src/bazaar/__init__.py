@@ -1,14 +1,60 @@
-# $Id: __init__.py,v 1.2 2003/08/25 19:01:06 wrobell Exp $
+# $Id: __init__.py,v 1.3 2003/10/03 14:06:54 wrobell Exp $
 """
 Bazaar is an easy to use and powerful abstraction layer between
 relational database and object oriented application.
 
-Bazaar maps tables into classes, table rows into class objects and
-creates one-to-one, one-to-many and many-to-many associations between
-objects. Several tasks on objects can be performed, such as filtering
-(querying) and sorting objects using database query language.
+Features:
+    - easy to use: define classes and programmer is ready to get and modify
+      application data in object-oriented way
+    - application class relationships:
+        - one-to-one
+        - one-to-many
+        - many-to-many
+        - uni-directional
+        - bi-directional
+    - application objects cache
 
+Requirements:
+    - Python 2.3
+    - Python DB-API 2.0 module with ,,format'' and ,,pyformat'' parameter
+      style support (tested with U{psycopg 1.1.9<http://initd.org/software/psycopg>})
+    - RDBMS (tested with U{PostgreSQL 7.3.4<http://www.postgresql.org>})
+
+Bazaar is easy to use, but is designed for people who know both
+object-oriented and relational technologies, their advantages,
+disadvantages and differences between them (U{,,The Object-Relational
+Impedance Mismatch''<http://www.agiledata.org/essays/impedancemismatch.html>} reading
+is recommended).
+
+Using the layer
+===============
+Diagram::
+
+    Order | 1 ---- * > OrderItems | * ---- 1 > Article
+
+First, define classes (more about class and relationships defining in
+L{bazaar.conf} module documentation)::
+
+    Article = bazaar.conf.Persistence('Article', relation = 'article')
+    Article.addColumn('name')
+    Article.addColumn('price')
+
+    Order = bazaar.conf.Persistence('Order', relation = 'order')
+    Order.addColumn('no')
+    Order.addColumn('items')
+
+    OrderItem = bazaar.conf.Persistence('OrderItem', relation = 'order_item')
+    OrderItems.addColumn('pos')
+    OrderItems.addColumn('article')
+
+
+@todo:
 Bazaar supports GUI development with set of powerful widgets designed
-to simplify development of objects presentation, manipulation and
-searching.
+to simplify development of presentation, manipulation and
+data searching.
+
+More features:
+    - differenct cache strategies: lazy, etc.
+    - object search
+    - security: sql injection, passwords
 """
