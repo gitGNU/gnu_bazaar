@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.11 2003/09/07 11:38:10 wrobell Exp $
+# $Id: core.py,v 1.12 2003/09/22 00:23:26 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -8,8 +8,10 @@ modify, find and perform other tasks on application objects.
 
 import logging
 
-import motor
+import assoc
 import cache
+import conf
+import motor
 
 log = logging.getLogger('bazaar.core')
 
@@ -28,14 +30,14 @@ class PersistentObject(object):
         if data is None: data = {}
 
         # set object attributes
-        for col_name in self.__class__.columns:
-            if col_name in data:
-                self.__dict__[col_name] = data[col_name]
+        for col in self.__class__.columns.values():
+            if col.col in data:
+                self.__dict__[col.col] = data[col.col]
             else:
-                self.__dict__[col_name] = None
+                self.__dict__[col.col] = None
 
         # set key
-        self.key = None
+        self.__key__ = None
 
 #        if __debug__: log.debug('object created (key = "%s"): %s' % (self.key, data))
 
@@ -79,9 +81,6 @@ class Broker:
 
         @see: L{bazaar.core.Broker.getObjects} L{bazaar.core.Broker.reloadObjects}
         """
-        assert len(self.cache) == 0
-
-        # load objects from database
         for obj in self.convertor.getObjects():
             self.cache.append(obj)
 
@@ -129,10 +128,14 @@ class Broker:
 
         @param key: key of object to load
 
+        @return: fixme
+
         @see: L{bazaar.core.Broker.loadObjects} L{bazaar.core.Broker.reloadObjects}
         """
         if self.reload:
             self.loadObjects()
+
+        if key is None: return None
 
         # fixme: throw exception when no object?
 
@@ -147,7 +150,6 @@ class Broker:
         """
         self.convertor.add(obj)
         self.cache.append(obj)
-        self.reload = False
 
 
     def update(self, obj):
@@ -156,11 +158,8 @@ class Broker:
 
         @param obj: Object to update.
         """
-        old_key = obj.key
+        old_key = obj.__key__
         self.convertor.update(obj)
-        if old_key != obj.key:
-            del self.cache[old_key]
-            self.cache.append(obj)
 
 
     def delete(self, obj):
@@ -205,15 +204,76 @@ class Bazaar:
         self.motor = motor.Motor(db_module)
         self.brokers = {}
 
+        # first, kill existing associations
+        for c in cls_list:
+            for col in c.columns.values():
+                col.association = None
+
+        for c in cls_list:
+            for col in c.columns.values():
+                if col.vcls is None: continue
+
+                if col.association is not None: continue
+
+                if col.is_one_to_one:
+                    asc_cls = assoc.OneToOne
+                elif col.is_one_to_many:
+                    asc_cls = assoc.OneToMany
+                elif col.is_many_to_many:
+                    asc_cls = assoc.UniDirManyToMany
+                else:
+                    assert False
+
+                assert issubclass(asc_cls, assoc.AssociationReferenceProxy)
+
+                def setAssociation(cls, col, asc_cls):
+                    col.association = asc_cls(col)
+                    setattr(cls, col.attr, col.association)
+
+                if col.is_bidir:
+                    if col.vattr not in col.vcls.columns:
+                        assert False # fixme: MappingError
+                    vcol = col.vcls.columns[col.vattr]
+                    if issubclass(asc_cls, assoc.OneToOne):
+                        asc_cls = assoc.BiDirOneToOne
+                        if vcol.is_one_to_one:
+                            asc_vcls = asc_cls
+                        elif vcol.is_one_to_many:   
+                            asc_vcls = assoc.OneToMany
+                    elif issubclass(asc_cls, assoc.OneToMany):
+                        asc_vcls = assoc.BiDirOneToOne
+
+                    assert issubclass(asc_vcls, assoc.AssociationReferenceProxy)
+
+                    setAssociation(c, col, asc_cls)
+                    setAssociation(col.vcls, vcol, asc_vcls)
+                    col.association.association = vcol.association
+                    vcol.association.association = col.association
+
+                    assert col.association is not None
+                    assert col.is_bidir and hasattr(col.association, 'association')
+                    assert hasattr(col.association, 'col')
+                    assert isinstance(col.association, assoc.AssociationReferenceProxy)
+                    assert isinstance(vcol.association, assoc.AssociationReferenceProxy)
+
+                    if __debug__: log.info('bi-directional association %s.%s <-> %s.%s' \
+                                % (c, col.attr, col.vcls, col.vattr))
+                else:
+                    setAssociation(c, col, asc_cls)
+                    col.association.association = None
+
+                    if __debug__: log.debug('uni-directional (%s) association %s.%s -> %s' \
+                                    % (asc_cls, c, col.attr, col.vcls))
+
         for c in cls_list:
             self.brokers[c] = Broker(c, self.motor)
-#            if len(c.key_columns) < 1:
-#                raise bazaar.exc.MappingError('class "%s" key is not defined')
+
         # again to assign brokers for associations
         for c in cls_list:
             for col in c.columns.values():
-                if col.one_to_one:
-                    col.association.broker = self.brokers[col.cls]
+                if col.association is not None:
+                    col.association.broker = self.brokers[c]
+                    col.association.vbroker = self.brokers[col.vcls]
 
         if dsn:
             self.connectDB(dsn)
