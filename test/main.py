@@ -1,4 +1,4 @@
-# $Id: main.py,v 1.8 2003/09/12 14:55:56 wrobell Exp $
+# $Id: main.py,v 1.9 2003/09/22 00:45:27 wrobell Exp $
 
 import unittest
 import logging.config
@@ -41,7 +41,7 @@ examples:
 
     # import all test modules into global scope and find all test cases
     all_tests = unittest.TestSuite()
-    for mod_name in ('conf', 'connection', 'init', 'core', 'assoc', 'keys'):
+    for mod_name in ('conf', 'connection', 'init', 'core', 'assoc'):
         mod = __import__(mod_name)
         all_tests.addTest(unittest.findTestCases(mod))
         globals()[mod_name] = mod 
