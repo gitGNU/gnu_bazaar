@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.1 2003/06/18 23:38:38 wrobell Exp $
+# $Id: conf.py,v 1.2 2003/06/19 16:39:59 wrobell Exp $
 
 import logging
 
@@ -94,6 +94,8 @@ class Persitence(type):
         if __debug__:
             log.debug('new class "%s" for relation "%s"' % (c.__name__, cls_data['relation']))
 
+        assert c, 'class relation should not be empty'
+
         return c
 
 
@@ -119,12 +121,13 @@ class Persitence(type):
         """
         if __debug__: log.debug('key columns "%s"' % (columns, ))
 
-        assert len(columns) > 0, 'key columns list should not be empty'
+        if len(columns) < 1:
+            raise AttributeError , 'key columns list should not be empty'
 
         # check if given columns exist in list of relation columns
         for c in columns: 
             if c not in cls.columns:
-                raise AttributeError('key column "%s" not found on column list' % f)
+                raise AttributeError('key column "%s" not found on column list' % c)
 
         cls.key_columns = columns
         if __debug__: log.debug('class "%s" key: %s' % (cls.__name__, cls.key_columns))
