@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.4 2003/07/22 15:11:26 wrobell Exp $
+# $Id: core.py,v 1.5 2003/08/02 15:51:07 wrobell Exp $
 
 import logging
 
@@ -130,6 +130,16 @@ class Broker:
             self.getObjects()
 
 
+    def add(self, obj):
+        """
+        <s>Add object into database.</s>
+
+        <attr name = 'obj'>Object to add.</s>
+        """
+        self.convertor.add(obj)
+        self.cache.append(obj)
+
+
 
 class Bazaar:
     """
@@ -170,6 +180,8 @@ class Bazaar:
 
         for c in cls_list:
             self.brokers[c] = Broker(c, self.motor)
+#            if len(c.key_columns) < 1:
+#                raise bazaar.exc.MappingError('class "%s" key is not defined')
 
         if dsn:
             self.connectDB(dsn)
@@ -230,3 +242,12 @@ class Bazaar:
         <attr name = 'now'>Reload objects immediately.</attr>
         """
         self.brokers[cls].reloadObjects(now)
+
+
+    def add(self, obj):
+        """
+        <s>Add object to database.</s>
+
+        <attr name = 'obj'>Object to add.</attr>
+        """
+        self.brokers[obj.__class__].add(obj)
