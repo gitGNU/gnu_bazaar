@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.16 2004/01/22 23:21:40 wrobell Exp $
+# $Id: conf.py,v 1.17 2004/03/22 15:58:21 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -118,8 +118,11 @@ class AssociationTestCase(unittest.TestCase):
 
     def testAssociationDef(self):
         """Test association defining"""
+        class Abase:
+            __metaclass__ = bazaar.conf.Persistence
+            relation = 'abase'
 
-        class A:
+        class A(Abase):
             __metaclass__ = bazaar.conf.Persistence
             relation = 'a'
             columns       = {
@@ -143,9 +146,9 @@ class AssociationTestCase(unittest.TestCase):
             }
 
         def check(cls, attr, descriptor, msg):
-            self.assertEqual(type(cls.columns[attr].association), descriptor, \
-                'it should be %s association' % msg)
-            self.assertEqual(cls.columns[attr].association, getattr(cls, attr), \
+            self.assertEqual(type(cls.getColumns()[attr].association), \
+                descriptor, 'it should be %s association' % msg)
+            self.assertEqual(cls.getColumns()[attr].association, getattr(cls, attr), \
                 'application class association descriptor mismatch')
 
         cls_list = (A, B, C)
@@ -175,3 +178,8 @@ class AssociationTestCase(unittest.TestCase):
         bzr = bazaar.core.Bazaar((C, B, A), dbmod = app.dbmod)
         check(A, 'a8', bazaar.assoc.OneToMany, 'many side bi-dir one-to-many')
         check(B, 'b8', bazaar.assoc.BiDirOneToOne, 'one side bi-dir one-to-many')
+
+        # test associations inherited from base classes
+        Abase.addColumn('a9', 'a9_fkey', B)
+        bzr = bazaar.core.Bazaar(cls_list, dbmod = app.dbmod)
+        check(A, 'a9', bazaar.assoc.OneToOne, 'uni-directional one-to-one')

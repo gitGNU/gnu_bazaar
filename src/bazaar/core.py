@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.32 2004/03/12 15:24:40 wrobell Exp $
+# $Id: core.py,v 1.33 2004/03/22 15:58:20 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -268,12 +268,12 @@ class Bazaar:
 
         # first, kill existing associations
         for c in self.cls_list:
-            for col in c.columns.values():
+            for col in c.getColumns().values():
                 col.association = None
 
         # create association objects
         for c in self.cls_list:
-            for col in c.columns.values():
+            for col in c.getColumns().values():
                 if col.vcls is None: continue
 
                 if col.association is not None: continue
@@ -344,7 +344,7 @@ class Bazaar:
 
         # again to assign brokers for associations
         for c in self.cls_list:
-            for col in c.columns.values():
+            for col in c.getColumns().values():
                 if col.association is not None:
                     col.association.broker = self.brokers[c]
                     col.association.vbroker = self.brokers[col.vcls]
@@ -402,7 +402,7 @@ class Bazaar:
                 log.info('%s cache: %s' % (c, c.cache))
             
             # check configuration for every attribute
-            for col in c.columns.values():
+            for col in c.getColumns().values():
                 aname = fname + '.' + col.attr
                 if __debug__:
                     log.debug('get association %s cache' % aname)
