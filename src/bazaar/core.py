@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.29 2004/01/22 23:21:40 wrobell Exp $
+# $Id: core.py,v 1.30 2004/02/10 23:44:40 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -54,8 +54,9 @@ class PersistentObject(object):
         @param data: Initial values of object attributes.
         """
         if data != {}:
-            # set object attributes
-            self.__dict__.update(data)
+            for attr in data:
+                # set object attributes
+                setattr(self, attr, data[attr])
 
 #        if __debug__: log.debug('object created (key = "%s"): %s' % (self.key, data))
 

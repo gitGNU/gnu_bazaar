@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.18 2004/01/22 23:21:41 wrobell Exp $
+# $Id: core.py,v 1.19 2004/02/10 23:44:40 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -92,6 +92,34 @@ class ObjectLoadTestCase(btest.DBBazaarTestCase):
         # (they should be loaded at this moment)
         for cls in self.cls_list:
             self.checkObjects(cls, len(self.bazaar.brokers[cls].cache))
+
+
+
+class CreateObjectTestCase(btest.DBBazaarTestCase):
+    """
+    Test application object creation.
+    """
+    def testObjectCreation(self):
+        """Test object creation"""
+        apple = app.Article()
+        apple.name = 'apple'
+        apple.price = 2.33
+        self.assertEqual(apple.name, 'apple')
+        self.assertEqual(apple.price, 2.33)
+
+        apple = app.Article(name = 'apple', price = 3)
+        self.assertEqual(apple.name, 'apple')
+        self.assertEqual(apple.price, 3)
+
+        # load all articles, so they will not be reloaded when checking
+        # order item article below
+        self.bazaar.getObjects(app.Article)
+
+        self.bazaar.add(apple)
+
+        oi = app.OrderItem(pos = 1, quantity = 100, article = apple)
+        self.assertEqual(oi.article, apple)
+        self.assertEqual(oi.article_fkey, apple.__key__)
 
 
 
