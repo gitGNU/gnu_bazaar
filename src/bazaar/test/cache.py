@@ -1,4 +1,4 @@
-# $Id: cache.py,v 1.1 2004/05/21 18:12:39 wrobell Exp $
+# $Id: cache.py,v 1.2 2004/05/22 21:17:59 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -64,6 +64,9 @@ class LazyTestCase(bazaar.test.TestCase):
         gc.collect()
         # ... now cache should be empty
         self.assertEqual(len(abroker.cache), 0)
+
+        # test objects integrity
+        self.checkObjects(bazaar.test.app.Article, len(self.bazaar.getObjects(bazaar.test.app.Article)))
 
 
     def testAscLoading(self):
