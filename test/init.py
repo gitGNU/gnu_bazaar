@@ -1,4 +1,4 @@
-# $Id: init.py,v 1.6 2003/11/23 23:39:18 wrobell Exp $
+# $Id: init.py,v 1.7 2003/11/24 14:58:21 wrobell Exp $
 
 import unittest
 
@@ -23,7 +23,7 @@ class InitTestCase(unittest.TestCase):
 
         cls_list = (app.Order, app.Employee, app.Article, app.OrderItem)
 
-        b = bazaar.core.Bazaar(cls_list, app.dbmod)
+        b = bazaar.core.Bazaar(cls_list, dbmod = app.dbmod)
 
         self.assertNotEqual(b.motor, None, 'Motor object does not exist')
         self.assert_(isinstance(b.motor, bazaar.motor.Motor), 'Motor object class mismatch')
