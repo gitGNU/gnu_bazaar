@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.21 2003/09/29 16:08:54 wrobell Exp $
+# $Id: conf.py,v 1.22 2003/09/29 16:09:54 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -164,12 +164,15 @@ class Persistence(type):
         This way the application class attributes and relationships between
         application classes are defined.
 
-        @ivar attr: Application class attribute name.
-        @ivar col: Relation column name (equal to C{attr} by default).
-        @ivar vcls: Class of referenced object(s).
-        @ivar link:  Many-to-many link relation name.
-        @ivar vcol: Relation column name of referenced object(s).
-        @ivar vattr: Attribute name of referenced object(s). 
+        @param attr: Application class attribute name.
+        @param col: Relation column name (equal to C{attr} by default).
+        @param vcls: Class of referenced object(s).
+        @param link:  Many-to-many link relation name.
+        @param vcol: Relation column name of referenced object(s).
+        @param vattr: Attribute name of referenced object(s). 
+        @param update: Used with 1-n associations. If true, then update
+            referenced objects on relationship update, otherwise add appended
+            objects and delete removed objects.
 
         @see: bazaar.conf.Column
         """
@@ -178,7 +181,6 @@ class Persistence(type):
         col.link = link
         col.vcol = vcol
         col.vattr = vattr
-
         self.update = update
 
         if not attr:
