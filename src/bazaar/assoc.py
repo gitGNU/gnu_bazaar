@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.33 2003/10/02 14:32:23 wrobell Exp $
+# $Id: assoc.py,v 1.34 2003/10/02 14:44:16 wrobell Exp $
 """
 Association classes.
 """
@@ -927,7 +927,7 @@ class BiDirList(List):
         @param obj: Application object.
         @param value: Referenced object.
         """
-        assert value is not None
+        assert value is not None and isinstance(self.association, AssociationReferenceProxy)
         super(BiDirList, self).append(obj, value)
         self.association.integrateSave(value, obj)
 
@@ -940,6 +940,7 @@ class BiDirList(List):
         @param obj: Application object.
         @param value: Referenced object.
         """
+        assert isinstance(self.association, AssociationReferenceProxy)
         super(BiDirList, self).remove(obj, value)
         self.association.integrateRemove(value, obj)
 
