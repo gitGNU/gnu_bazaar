@@ -1,4 +1,4 @@
--- $Id: init.sql,v 1.3 2003/09/03 22:52:23 wrobell Exp $
+-- $Id: init.sql,v 1.4 2003/09/12 14:55:56 wrobell Exp $
 
 create table "order" (
     no           integer,
@@ -37,4 +37,32 @@ create table employee_orders (
     primary key (employee_name, employee_surname, "order"),
     foreign key (employee_name, employee_surname) references employee(name, surname),
     foreign key ("order") references "order"(no)
+);
+
+
+-- association keys testing
+
+create schema keys;
+
+create table bsingle (
+    b integer,
+    primary key(b)
+);
+
+create table bmulti (
+    b1 integer,
+    b2 integer,
+    b3 integer,
+    primary key(b1, b2, b3)
+);
+
+create table a (
+    a integer,
+    bs_fkey integer,
+    bm1 integer,
+    bm2 integer,
+    bm3 integer,
+    primary key (a),
+    foreign key (bs_fkey) references bsingle(b),
+    foreign key (bm1, bm2, bm3) references bmulti(b1, b2, b3)
 );
