@@ -1,4 +1,4 @@
-# $Id: main.py,v 1.3 2003/07/10 23:03:07 wrobell Exp $
+# $Id: main.py,v 1.4 2003/08/27 13:10:51 wrobell Exp $
 
 import unittest
 import logging
@@ -19,12 +19,21 @@ log = logging.getLogger('bazaar.test')
 if __name__ == '__main__':
     import sys
 
-    if len(sys.argv) != 3:
+    if len(sys.argv) < 3:
         print """\
-Bazaar main test.
+All test suites for Bazaar module.
 
-usage:
-    main.py db_module dsn [test modules...]
+usage: main.py db_module dsn [tests...]
+
+options:
+    db_module   Python DB API 2.0 module
+    dsn         database connection parameters
+
+examples:
+    main.py psycopg 'dbname = testdb'
+    main.py psycopg 'dbname = testdb' core
+    main.py psycopg 'dbname = testdb' core.ObjectLoadTestCase
+    main.py psycopg 'dbname = testdb' core.ObjectLoadTestCase.testObjectReload
 """
         sys.exit(1)
 
@@ -37,12 +46,18 @@ usage:
 
     del sys.argv[1:3]
 
-    # import all test modules
+    # import all test modules into global scope and find all test cases
+    all_tests = unittest.TestSuite()
+    for mod_name in ('conf', 'connection', 'init', 'core'):
+        mod = __import__(mod_name)
+        all_tests.addTest(unittest.findTestCases(mod))
+        globals()[mod_name] = mod 
+
+
     def suite():
-        suite = unittest.TestSuite()
-        for mod_name in ('conf', 'connection', 'init', 'core'):
-            mod = __import__(mod_name)
-            suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(mod))
-        return suite
-        
+        """
+        Return all test cases.
+        """
+        return all_tests
+
     unittest.main(defaultTest = 'suite')
