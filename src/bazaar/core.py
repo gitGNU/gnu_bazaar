@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.5 2003/08/02 15:51:07 wrobell Exp $
+# $Id: core.py,v 1.6 2003/08/07 17:42:53 wrobell Exp $
 
 import logging
 
@@ -140,6 +140,25 @@ class Broker:
         self.cache.append(obj)
 
 
+    def update(self, obj):
+        """
+        <s>Update object in database.</s>
+
+        <attr name = 'obj'>Object to update.</s>
+        """
+        self.convertor.update(obj)
+
+
+    def delete(self, obj):
+        """
+        <s>Delete object from database.</s>
+
+        <attr name = 'obj'>Object to delete.</s>
+        """
+        self.convertor.delete(obj)
+        self.cache.remove(obj)
+
+
 
 class Bazaar:
     """
@@ -251,3 +270,35 @@ class Bazaar:
         <attr name = 'obj'>Object to add.</attr>
         """
         self.brokers[obj.__class__].add(obj)
+
+
+    def update(self, obj):
+        """
+        <s>Update object in database.</s>
+
+        <attr name = 'obj'>Object to update.</attr>
+        """
+        self.brokers[obj.__class__].update(obj)
+
+
+    def delete(self, obj):
+        """
+        <s>Delete object from database.</s>
+
+        <attr name = 'obj'>Object to delete.</attr>
+        """
+        self.brokers[obj.__class__].delete(obj)
+
+
+    def commit(self):
+        """
+        <s>Commit pending database transactions.</s>
+        """
+        self.motor.commit()
+
+
+    def rollback(self):
+        """
+        <s>Rollback database transactions.</s>
+        """
+        self.motor.rollback()
