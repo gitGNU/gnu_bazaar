@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.9 2003/09/22 00:39:53 wrobell Exp $
+# $Id: core.py,v 1.10 2003/09/22 10:30:17 wrobell Exp $
 
 import unittest
 
@@ -275,7 +275,6 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
 #            'article object found in cache <- error, it is deleted')
 
         emp = self.bazaar.getObjects(app.Employee)[-1]
-        print 'eeee', emp.__key__
         self.bazaar.delete(emp)
         self.assert_(emp.__key__ not in self.bazaar.brokers[app.Employee].cache, \
             'employee object found in cache <- error, it is deleted')
