@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.17 2003/09/20 22:17:12 wrobell Exp $
+# $Id: conf.py,v 1.18 2003/09/26 01:29:18 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -30,8 +30,7 @@ Of course, both ideas can be mixed::
 
 import logging
 
-import bazaar.core
-import bazaar.assoc
+import core
 
 log = logging.getLogger('bazaar.conf')
 
@@ -122,7 +121,7 @@ class Persistence(type):
     @ivar columns: List of application class attribute descriptions.
     """
 
-    def __new__(self, name, bases = (bazaar.core.PersistentObject, ), data = None, relation = ''):
+    def __new__(self, name, bases = (core.PersistentObject, ), data = None, relation = ''):
         """
         Create application class.
 
