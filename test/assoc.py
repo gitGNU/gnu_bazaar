@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.21 2003/11/26 00:16:48 wrobell Exp $
+# $Id: assoc.py,v 1.22 2003/12/01 17:46:59 wrobell Exp $
 
 import app
 import btest
@@ -416,4 +416,36 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
         self.assert_(oi2 not in ord.items, \
             'removed referenced object found in association')
 
+        self.checkOrdAsc()
+
+
+    def testEmptyList(self):
+        """Test empty list of referenced objects (1-n)
+        """
+        # find order with amount of items equal to zero
+        ord = self.bazaar.find(app.Order, {'__key__': 1000}).next()
+
+        art = self.bazaar.getObjects(app.Article)[0]
+
+        oi1 = app.OrderItem()
+        oi1.pos = 1000
+        oi1.quantity = 10.3
+        oi1.article = art
+
+        oi2 = app.OrderItem()
+        oi2.pos = 1001
+        oi2.quantity = 10.4
+        oi2.article = art
+
+        ord.items.append(oi1)
+        ord.items.append(oi2)
+        ord.items.remove(oi1)
+        ord.items.remove(oi2)
+        ord.items.update()
+        self.checkOrdAsc()
+
+        ord.items.append(oi1)
+        ord.items.append(oi2)
+
+        ord.items.update()
         self.checkOrdAsc()
