@@ -1,4 +1,4 @@
-# $Id: app.py,v 1.15 2004/03/24 23:21:24 wrobell Exp $
+# $Id: app.py,v 1.1 2004/05/21 18:12:38 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -27,9 +27,6 @@ File sql/init.sql contains relations definitions.
 """
 
 import bazaar.conf
-
-dbmod = None
-dsn = ''
 
 ####
 #   # simple
@@ -60,13 +57,13 @@ dsn = ''
 #   addColumn('employees', 'order', Employee, 'employee_orders', 'employee', 'orders')
 #
 # define test application classes
-Article = bazaar.conf.Persistence('Article', relation = 'article', modname = 'app')
+Article = bazaar.conf.Persistence('Article', relation = 'article', modname = 'bazaar.test.app')
 Article.addColumn('name')
 Article.addColumn('price')
 
-Order = bazaar.conf.Persistence('Order', relation = 'order', modname = 'app')
-OrderItem = bazaar.conf.Persistence('OrderItem', relation = 'order_item', modname = 'app')
-Employee = bazaar.conf.Persistence('Employee', relation = 'employee', modname = 'app')
+Order = bazaar.conf.Persistence('Order', relation = 'order', modname = 'bazaar.test.app')
+OrderItem = bazaar.conf.Persistence('OrderItem', relation = 'order_item', modname = 'bazaar.test.app')
+Employee = bazaar.conf.Persistence('Employee', relation = 'employee', modname = 'bazaar.test.app')
 
 OrderItem.addColumn('pos')
 OrderItem.addColumn('quantity')
@@ -83,8 +80,12 @@ Employee.addColumn('surname')
 Employee.addColumn('phone')
 Employee.addColumn('orders', 'employee', Order, 'employee_orders', 'order')
 
-Department = bazaar.conf.Persistence('Department', relation = 'department', modname = 'app')
-Boss = bazaar.conf.Persistence('Boss', relation = 'boss', modname = 'app')
+Department = bazaar.conf.Persistence('Department', relation = 'department', modname = 'bazaar.test.app')
+Boss = bazaar.conf.Persistence('Boss', relation = 'boss', modname = 'bazaar.test.app')
 
 Boss.addColumn('department', 'dep_fkey', Department, vattr = 'boss')
 Department.addColumn('boss', 'boss_fkey', Boss, vattr = 'department')
+
+
+
+cls_list = (Order, Employee, Article, OrderItem, Boss, Department)

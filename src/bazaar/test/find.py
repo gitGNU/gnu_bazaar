@@ -1,4 +1,4 @@
-# $Id: find.py,v 1.5 2004/03/29 18:11:17 wrobell Exp $
+# $Id: find.py,v 1.1 2004/05/21 18:12:39 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -20,16 +20,14 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-import unittest
-
-import app
-import btest
+import bazaar.test.app
+import bazaar.test.bzr
 
 """
 Test searching objects in database.
 """
 
-class FindTestCase(btest.DBBazaarTestCase):
+class FindTestCase(bazaar.test.bzr.TestCase):
     """
     Test aplication objects searching in database.
     """
@@ -59,14 +57,14 @@ class FindTestCase(btest.DBBazaarTestCase):
 
     def testOOFind(self):
         """Test object oriented searching"""
-        articles = list(self.bazaar.find(app.Article, {
+        articles = list(self.bazaar.find(bazaar.test.app.Article, {
             'name': 'art 00',
         }))
         art = articles[0]
         self.checkObjectList(articles, \
             "select __key__ from article where name = 'art 00' order by 1")
 
-        articles = list(self.bazaar.find(app.Article, {
+        articles = list(self.bazaar.find(bazaar.test.app.Article, {
             'name' : 'art 01',
             'price': '1.12',
         }))
@@ -74,7 +72,7 @@ class FindTestCase(btest.DBBazaarTestCase):
             "select __key__ from article where name = 'art 01'"
             " and price = 1.12 order by 1")
 
-        orders = list(self.bazaar.find(app.Order, {
+        orders = list(self.bazaar.find(bazaar.test.app.Order, {
             'no'      : 1,
             'finished': False,
         }))
@@ -84,7 +82,7 @@ class FindTestCase(btest.DBBazaarTestCase):
 
         ord = orders[0]
 
-        ois = list(self.bazaar.find(app.OrderItem, {
+        ois = list(self.bazaar.find(bazaar.test.app.OrderItem, {
             'article': art,
             'order'  : ord,
         }))
@@ -95,7 +93,7 @@ class FindTestCase(btest.DBBazaarTestCase):
 
     def testSQLFind(self):
         """Test SQL searching"""
-        orders = list(self.bazaar.find(app.Order,
+        orders = list(self.bazaar.find(bazaar.test.app.Order,
             "select __key__ from \"order\""
             " where no = %(no)s and finished = %(finished)s", {
                 'no'      : 1,
@@ -110,7 +108,7 @@ class FindTestCase(btest.DBBazaarTestCase):
 
         ord = orders[0]
 
-        ois = list(self.bazaar.find(app.OrderItem,
+        ois = list(self.bazaar.find(bazaar.test.app.OrderItem,
             "select quantity, __key__ from order_item"
             " where quantity > %(quantity)s ", {
                 'quantity': 5,
@@ -122,7 +120,7 @@ class FindTestCase(btest.DBBazaarTestCase):
                 'quantity': 5,
             })
 
-        ois = list(self.bazaar.find(app.OrderItem,
+        ois = list(self.bazaar.find(bazaar.test.app.OrderItem,
             "select __key__ from order_item"
             " where order_fkey = %(order)s order by 1", {
                 'order': ord,
@@ -135,5 +133,10 @@ class FindTestCase(btest.DBBazaarTestCase):
             })
 
         # now, just try to find some articles without specyfing parameters
-        list(self.bazaar.find(app.Article, \
+        list(self.bazaar.find(bazaar.test.app.Article, \
             "select __key__ from article where name = 'art 00'"))
+
+
+
+if __name__ == '__main__':
+    bazaar.test.main()

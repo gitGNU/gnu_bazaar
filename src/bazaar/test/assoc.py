@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.28 2004/03/29 23:14:15 wrobell Exp $
+# $Id: assoc.py,v 1.1 2004/05/21 18:12:38 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -20,39 +20,39 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-import app
-import btest
+import bazaar.test.app
+import bazaar.test.bzr
 
 import bazaar.exc
 
-class OneToOneAssociationTestCase(btest.DBBazaarTestCase):
+class OneToOneAssociationTestCase(bazaar.test.bzr.TestCase):
     """
     Test one-to-one associations.
     """
 
     def testLoading(self):
         """Test one-to-one association loading"""
-        for boss in self.bazaar.getObjects(app.Boss):
+        for boss in self.bazaar.getObjects(bazaar.test.app.Boss):
             self.assertEqual(boss.dep_fkey, boss.department.__key__, 'one-to-one association data mismatch')
             self.assertEqual(boss.department, \
-                self.getCache(app.Department)[boss.dep_fkey], \
+                self.getCache(bazaar.test.app.Department)[boss.dep_fkey], \
                 'one-to-one association data mismatch')
 
-        for dep in self.bazaar.getObjects(app.Department):
+        for dep in self.bazaar.getObjects(bazaar.test.app.Department):
             self.assertEqual(dep.boss_fkey, dep.boss.__key__, 'one-to-one association data mismatch')
             self.assertEqual(dep.boss, \
-                self.getCache(app.Boss)[dep.boss_fkey], \
+                self.getCache(bazaar.test.app.Boss)[dep.boss_fkey], \
                 'one-to-one association data mismatch')
 
 
     def testUpdating(self):
         """Test one-to-one association updating"""
-        self.bazaar.getObjects(app.Boss)
-        self.bazaar.getObjects(app.Department)
-        b1 = self.getCache(app.Boss)[1001]
-        b2 = self.getCache(app.Boss)[1002]
-        d1 = self.getCache(app.Department)[1001]
-        d2 = self.getCache(app.Department)[1002]
+        self.bazaar.getObjects(bazaar.test.app.Boss)
+        self.bazaar.getObjects(bazaar.test.app.Department)
+        b1 = self.getCache(bazaar.test.app.Boss)[1001]
+        b2 = self.getCache(bazaar.test.app.Boss)[1002]
+        d1 = self.getCache(bazaar.test.app.Department)[1001]
+        d2 = self.getCache(bazaar.test.app.Department)[1002]
         self.assertEqual(b1.department, d1, 'one-to-one associations data mismatch')
         self.assertEqual(d1.boss, b1, 'one-to-one associations data mismatch')
         self.assertEqual(b2.department, d2, 'one-to-one associations data mismatch')
@@ -78,7 +78,7 @@ class OneToOneAssociationTestCase(btest.DBBazaarTestCase):
 
 
 
-class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
+class ManyToManyAssociationTestCase(bazaar.test.bzr.TestCase):
     """
     Test many-to-many associations.
     """
@@ -91,7 +91,7 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
     def testReloading(self):
         """Test many-to-many association loading
         """
-        for emp in self.bazaar.getObjects(app.Employee):
+        for emp in self.bazaar.getObjects(bazaar.test.app.Employee):
             if len(emp.orders) > 0:
                 break
 
@@ -103,20 +103,20 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
         assert len(emp.orders) == 0
 
         # reload data and check if they are reloaded
-        app.Employee.orders.reloadData()
+        bazaar.test.app.Employee.orders.reloadData()
         self.checkEmpAsc()
 
 
     def testAppending(self):
         """Test appending objects to many-to-many association
         """
-        emp = self.bazaar.getObjects(app.Employee)[0]
+        emp = self.bazaar.getObjects(bazaar.test.app.Employee)[0]
 
-        ord1 = app.Order()
+        ord1 = bazaar.test.app.Order()
         ord1.no = 1002
         ord1.finished = False
 
-        ord2 = app.Order()
+        ord2 = bazaar.test.app.Order()
         ord2.no = 1003
         ord2.finished = False
 
@@ -137,11 +137,11 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
         self.checkEmpAsc()
 
         # append object with undefined primary key value
-        ord1 = app.Order()
+        ord1 = bazaar.test.app.Order()
         ord1.no = 1002
         ord1.finished = False
         emp.orders.append(ord1)
-        self.assertRaises(app.dbmod.IntegrityError, emp.orders.update)
+        self.assertRaises(self.bazaar.dbmod.IntegrityError, emp.orders.update)
         self.bazaar.rollback()
 
         self.assertRaises(bazaar.exc.AssociationError, emp.orders.append, None)
@@ -152,7 +152,7 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
     def testRemoving(self):
         """Test removing objects from many-to-many association
         """
-        for emp in self.bazaar.getObjects(app.Employee):
+        for emp in self.bazaar.getObjects(bazaar.test.app.Employee):
             if len(emp.orders) > 0:
                 break
 
@@ -173,17 +173,17 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
     def testMixedUpdate(self):
         """Test appending and removing objects to/from many-to-many association
         """
-        ord1 = app.Order()
+        ord1 = bazaar.test.app.Order()
         ord1.no = 1002
         ord1.finished = False
 
-        ord2 = app.Order()
+        ord2 = bazaar.test.app.Order()
         ord2.no = 1003
         ord2.finished = False
 
         # first, get order object to remove, this way we are sure that we
         # will not remove object appended as ord1
-        for emp in self.bazaar.getObjects(app.Employee):
+        for emp in self.bazaar.getObjects(bazaar.test.app.Employee):
             if len(emp.orders) > 0:
                 break
         orders = list(emp.orders)
@@ -245,7 +245,7 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
 
 
 
-class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
+class OneToManyAssociationTestCase(bazaar.test.bzr.TestCase):
     """
     Test one-to-many associations.
     """
@@ -260,7 +260,7 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
         """
         # find order with amount of items greater than zero, so it is
         # possible to remove a item
-        for ord in self.bazaar.getObjects(app.Order):
+        for ord in self.bazaar.getObjects(bazaar.test.app.Order):
             if len(ord.items) > 0:
                 break
 
@@ -271,22 +271,22 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
         assert len(ord.items) == 0
 
         # reload data and check if they are reloaded
-        app.Order.items.reloadData()
+        bazaar.test.app.Order.items.reloadData()
         self.checkOrdAsc()
 
 
     def testAppending(self):
         """Test appending objects to one-to-many association
         """
-        ord = self.bazaar.getObjects(app.Order)[0]
-        art = self.bazaar.getObjects(app.Article)[0]
+        ord = self.bazaar.getObjects(bazaar.test.app.Order)[0]
+        art = self.bazaar.getObjects(bazaar.test.app.Article)[0]
 
-        oi1 = app.OrderItem()
+        oi1 = bazaar.test.app.OrderItem()
         oi1.pos = 1000
         oi1.quantity = 10.3
         oi1.article = art
 
-        oi2 = app.OrderItem()
+        oi2 = bazaar.test.app.OrderItem()
         oi2.pos = 1001
         oi2.quantity = 10.4
         oi2.article = art
@@ -307,7 +307,7 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
         ord.items.update()
         self.checkOrdAsc()
 
-        oi3 = app.OrderItem()
+        oi3 = bazaar.test.app.OrderItem()
         oi3.pos = 1005
         oi3.quantity = 10.4
         oi3.article = art
@@ -329,7 +329,7 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
         """
         # find order with amount of items greater than zero, so it is
         # possible to remove a item
-        for ord in self.bazaar.getObjects(app.Order):
+        for ord in self.bazaar.getObjects(bazaar.test.app.Order):
             if len(ord.items) > 0:
                 break
         assert len(ord.items) > 0
@@ -348,7 +348,7 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
         ord.items.update()
         self.checkOrdAsc()
 
-        ord = app.Order()
+        ord = bazaar.test.app.Order()
         ord.items.append(oi)
         del ord.items[oi]
 
@@ -362,18 +362,18 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
         """
         # find order with amount of items greater than zero, so it is
         # possible to remove a item
-        for ord in self.bazaar.getObjects(app.Order):
+        for ord in self.bazaar.getObjects(bazaar.test.app.Order):
             if len(ord.items) > 0:
                 break
 
-        art = self.bazaar.getObjects(app.Article)[0]
+        art = self.bazaar.getObjects(bazaar.test.app.Article)[0]
 
-        oi1 = app.OrderItem()
+        oi1 = bazaar.test.app.OrderItem()
         oi1.pos = 1000
         oi1.quantity = 10.3
         oi1.article = art
 
-        oi2 = app.OrderItem()
+        oi2 = bazaar.test.app.OrderItem()
         oi2.pos = 1001
         oi2.quantity = 10.4
         oi2.article = art
@@ -443,18 +443,18 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
         """Test empty list of referenced objects (1-n)
         """
         # find order with amount of items equal to zero
-        ord = self.bazaar.find(app.Order, {'__key__': 1000}).next()
+        ord = self.bazaar.find(bazaar.test.app.Order, {'__key__': 1000}).next()
 
         self.assertEqual(len(ord.items), 0)
 
-        art = self.bazaar.getObjects(app.Article)[0]
+        art = self.bazaar.getObjects(bazaar.test.app.Article)[0]
 
-        oi1 = app.OrderItem()
+        oi1 = bazaar.test.app.OrderItem()
         oi1.pos = 1000
         oi1.quantity = 10.3
         oi1.article = art
 
-        oi2 = app.OrderItem()
+        oi2 = bazaar.test.app.OrderItem()
         oi2.pos = 1001
         oi2.quantity = 10.4
         oi2.article = art
@@ -484,3 +484,7 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
         ord.items.remove(oi2)
         ord.items.update()
         self.checkOrdAsc()
+
+
+if __name__ == '__main__':
+    bazaar.test.main()

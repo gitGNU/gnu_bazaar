@@ -1,4 +1,4 @@
-# $Id: cache.py,v 1.4 2004/01/22 23:21:40 wrobell Exp $
+# $Id: cache.py,v 1.1 2004/05/21 18:12:39 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -20,35 +20,34 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-import unittest
 import gc
 from ConfigParser import ConfigParser
 
 import bazaar.core
 import bazaar.config
 
-import app
-import btest
+import bazaar.test.bzr
+import bazaar.test.app
 
 """
 Test object and association data cache.
 """
 
-class LazyTestCase(btest.DBBazaarTestCase):
+class LazyTestCase(bazaar.test.TestCase):
     """
     Test lazy cache.
     """
     def testObjectLoading(self):
         """Test object lazy cache"""
-        config = ConfigParser()
-        config.add_section('bazaar.cls')
-        config.set('bazaar.cls', 'app.Article.cache', 'bazaar.cache.LazyObject')
+        self.config.add_section('bazaar.cls')
+        self.config.set('bazaar.cls', 'bazaar.test.app.Article.cache', 'bazaar.cache.LazyObject')
 
-        self.bazaar.setConfig(bazaar.config.CPConfig(config))
+        self.bazaar.setConfig(bazaar.config.CPConfig(self.config))
         self.bazaar.connectDB()
+        self.config.remove_section('bazaar.cls')
 
         articles = []
-        abroker = self.bazaar.brokers[app.Article]
+        abroker = self.bazaar.brokers[bazaar.test.app.Article]
         for i in range(1, 4):
             articles.append(abroker.get(i))
 
@@ -69,19 +68,19 @@ class LazyTestCase(btest.DBBazaarTestCase):
 
     def testAscLoading(self):
         """Test association data lazy cache"""
-        config = ConfigParser()
 #        config.add_section('bazaar.cls')
-#        config.set('bazaar.cls', 'app.Order.cache', 'bazaar.cache.LazyObject')
-        config.add_section('bazaar.asc')
-        config.set('bazaar.asc', 'app.Order.items.cache', \
+#        config.set('bazaar.cls', 'bazaar.test.app.Order.cache', 'bazaar.cache.LazyObject')
+        self.config.add_section('bazaar.asc')
+        self.config.set('bazaar.asc', 'bazaar.test.app.Order.items.cache', \
             'bazaar.cache.LazyAssociation')
-        config.set('bazaar.asc', 'app.Employee.orders.cache', \
+        self.config.set('bazaar.asc', 'bazaar.test.app.Employee.orders.cache', \
             'bazaar.cache.LazyAssociation')
 
-        self.bazaar.setConfig(bazaar.config.CPConfig(config))
+        self.bazaar.setConfig(bazaar.config.CPConfig(self.config))
         self.bazaar.connectDB()
+        self.config.remove_section('bazaar.asc')
 
-        order = self.bazaar.getObjects(app.Order)[0]
+        order = self.bazaar.getObjects(bazaar.test.app.Order)[0]
         oikeys = [oi.__key__ for oi in order.items]
         oikeys.sort()
 
@@ -92,14 +91,14 @@ class LazyTestCase(btest.DBBazaarTestCase):
 
         self.assertEqual(oikeys, dbkeys)
 
-        art = self.bazaar.getObjects(app.Article)[0]
+        art = self.bazaar.getObjects(bazaar.test.app.Article)[0]
                                                                                                                                
-        oi1 = app.OrderItem()
+        oi1 = bazaar.test.app.OrderItem()
         oi1.pos = 1000
         oi1.quantity = 10.3
         oi1.article = art
                                                                                                                                
-        oi2 = app.OrderItem()
+        oi2 = bazaar.test.app.OrderItem()
         oi2.pos = 1001
         oi2.quantity = 10.4
         oi2.article = art
@@ -107,14 +106,14 @@ class LazyTestCase(btest.DBBazaarTestCase):
         order.items.append(oi1)
         order.items.append(oi2)
 
-        self.bazaar.reloadObjects(app.Order)
+        self.bazaar.reloadObjects(bazaar.test.app.Order)
         del order
         gc.collect()
-        self.assertEqual(len(app.Order.items.ref_buf), 0)
-        self.assertEqual(len(app.Order.items.cache), 0)
+        self.assertEqual(len(bazaar.test.app.Order.items.ref_buf), 0)
+        self.assertEqual(len(bazaar.test.app.Order.items.cache), 0)
 
 
-        emp = self.bazaar.getObjects(app.Employee)[0]
+        emp = self.bazaar.getObjects(bazaar.test.app.Employee)[0]
         ordkeys = [ord.__key__ for ord in emp.orders]
         ordkeys.sort()
 
@@ -125,42 +124,47 @@ class LazyTestCase(btest.DBBazaarTestCase):
 
         self.assertEqual(ordkeys, dbkeys)
 
-        art = self.bazaar.getObjects(app.Article)[0]
+        art = self.bazaar.getObjects(bazaar.test.app.Article)[0]
                                                                                                                                
-        ord1 = app.Order()
+        ord1 = bazaar.test.app.Order()
         ord1.no = 1000
         ord1.finished = False
                                                                                                                                
-        ord2 = app.Order()
+        ord2 = bazaar.test.app.Order()
         ord1.no = 1001
         ord1.finished = True
 
         emp.orders.append(ord1)
         emp.orders.append(ord2)
 
-        self.bazaar.reloadObjects(app.Employee)
+        self.bazaar.reloadObjects(bazaar.test.app.Employee)
         del emp
         gc.collect()
-        self.assertEqual(len(app.Employee.orders.ref_buf), 0)
-        self.assertEqual(len(app.Employee.orders.cache), 0)
+        self.assertEqual(len(bazaar.test.app.Employee.orders.ref_buf), 0)
+        self.assertEqual(len(bazaar.test.app.Employee.orders.cache), 0)
             
 
 
-class FullTestCase(btest.DBBazaarTestCase):
+class FullTestCase(bazaar.test.bzr.TestCase):
     """
     Test full cache.
     """
     def testObjectLoading(self):
         """Test object full cache"""
         # get one object...
-        abroker = self.bazaar.brokers[app.Article]
+        abroker = self.bazaar.brokers[bazaar.test.app.Article]
         abroker.get(1)
 
         # ... and check if all are loaded
-        self.checkObjects(app.Article, len(abroker.cache))
+        self.checkObjects(bazaar.test.app.Article, len(abroker.cache))
 
 
     def testAscLoading(self):
         """Test association full cache"""
-        order = self.bazaar.getObjects(app.Order)[0]
+        order = self.bazaar.getObjects(bazaar.test.app.Order)[0]
         self.checkOrdAsc()
+
+
+
+if __name__ == '__main__':
+    bazaar.test.main()

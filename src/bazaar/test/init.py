@@ -1,4 +1,4 @@
-# $Id: init.py,v 1.8 2004/01/22 23:21:41 wrobell Exp $
+# $Id: init.py,v 1.1 2004/05/21 18:12:39 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -20,19 +20,18 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-import unittest
-
 import bazaar.core
 import bazaar.motor
+import bazaar.config
 
-import btest
-import app
+import bazaar.test.app
+import bazaar.test.bzr
 
 """
 Test layer initialization.
 """
 
-class InitTestCase(unittest.TestCase):
+class InitTestCase(bazaar.test.bzr.TestCase):
     """
     Test layer initialization.
     """
@@ -41,9 +40,9 @@ class InitTestCase(unittest.TestCase):
         """Test layer initialization"""
 
 
-        cls_list = (app.Order, app.Employee, app.Article, app.OrderItem)
+        cls_list = (bazaar.test.app.Order, bazaar.test.app.Employee, bazaar.test.app.Article, bazaar.test.app.OrderItem)
 
-        b = bazaar.core.Bazaar(cls_list, dbmod = app.dbmod)
+        b = bazaar.core.Bazaar(cls_list, bazaar.config.CPConfig(self.config))
 
         self.assertNotEqual(b.motor, None, 'Motor object does not exist')
         self.assert_(isinstance(b.motor, bazaar.motor.Motor), 'Motor object class mismatch')
@@ -60,11 +59,17 @@ class InitTestCase(unittest.TestCase):
         """Test layer initialization and database connection"""
 
 
-        cls_list = (app.Order, app.Employee, app.Article, app.OrderItem)
+        cls_list = (bazaar.test.app.Order, bazaar.test.app.Employee, bazaar.test.app.Article, bazaar.test.app.OrderItem)
 
         # init bazaar layer with connection
-        b = bazaar.core.Bazaar(cls_list, dsn = app.dsn, dbmod = app.dbmod)
+        b = bazaar.core.Bazaar(cls_list, bazaar.config.CPConfig(self.config))
+        b.connectDB()
         self.assert_(b.motor.conn, 'db connection is missing')
         
         # simple query
         b.motor.conn.cursor().execute('begin; rollback')
+
+
+
+if __name__ == '__main__':
+    bazaar.test.main()

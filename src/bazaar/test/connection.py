@@ -1,4 +1,4 @@
-# $Id: connection.py,v 1.6 2004/01/22 23:21:41 wrobell Exp $
+# $Id: connection.py,v 1.1 2004/05/21 18:12:39 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -20,25 +20,25 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-import unittest
-
 import bazaar.core
+import bazaar.config
 
-import app
-import btest
+import bazaar.test.app
+import bazaar.test.bzr
 
 """
 Test layer database connection management.
 """
 
-class ConnTestCase(btest.BazaarTestCase):
+class ConnTestCase(bazaar.test.TestCase):
     """
     Test layer database connection managment.
     """
     def testConnection(self):
         """Test database connection initialization"""
 
-        self.bazaar.connectDB(app.dsn)
+        config = bazaar.config.CPConfig(self.config)
+        self.bazaar.connectDB(config.getDSN())
         self.assert_(self.bazaar.motor.conn, 'db connection is missing')
         # simple query
         self.bazaar.motor.conn.cursor().execute('begin; rollback')
@@ -47,7 +47,12 @@ class ConnTestCase(btest.BazaarTestCase):
     def testConnectionClosing(self):
         """Test database connection closing"""
 
-        self.bazaar.connectDB(app.dsn)
+        config = bazaar.config.CPConfig(self.config)
+        self.bazaar.connectDB(config.getDSN())
         self.bazaar.closeDBConn()
 
         self.assert_(not self.bazaar.motor.conn, 'db connection should not be set')
+
+
+if __name__ == '__main__':
+    bazaar.test.main()

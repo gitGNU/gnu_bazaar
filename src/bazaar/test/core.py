@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.20 2004/03/23 13:48:27 wrobell Exp $
+# $Id: core.py,v 1.1 2004/05/21 18:12:39 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -20,18 +20,16 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-import unittest
-
 import bazaar.core
 
-import app
-import btest
+import bazaar.test.app
+import bazaar.test.bzr
 
 """
 Test object loading and reloading from database.
 """
 
-class ObjectLoadTestCase(btest.DBBazaarTestCase):
+class ObjectLoadTestCase(bazaar.test.bzr.TestCase):
     """
     Test object loading and reloading from database.
 
@@ -95,7 +93,7 @@ class ObjectLoadTestCase(btest.DBBazaarTestCase):
 
 
 
-class CreateObjectTestCase(btest.DBBazaarTestCase):
+class CreateObjectTestCase(bazaar.test.bzr.TestCase):
     """
     Test application object creation.
     """
@@ -103,38 +101,38 @@ class CreateObjectTestCase(btest.DBBazaarTestCase):
         """Test object creation"""
         # check for attributes with no value assigned before attribute
         # access
-        apple = app.Article()
+        apple = bazaar.test.app.Article()
         self.assertEqual(apple.name, None)
         self.assertEqual(apple.price, None)
         self.assertEqual(apple.__dict__['name'], None)
         self.assertEqual(apple.__dict__['price'], None)
 
         # check attribute value assigning
-        apple = app.Article()
+        apple = bazaar.test.app.Article()
         apple.name = 'apple'
         apple.price = 2.33
         self.assertEqual(apple.name, 'apple')
         self.assertEqual(apple.price, 2.33)
 
         # check attribute value assigning via constructor
-        apple = app.Article(name = 'apple', price = 3)
+        apple = bazaar.test.app.Article(name = 'apple', price = 3)
         self.assertEqual(apple.name, 'apple')
         self.assertEqual(apple.price, 3)
 
         # load all articles, so they will not be reloaded when checking
         # order item article below
-        self.bazaar.getObjects(app.Article)
+        self.bazaar.getObjects(bazaar.test.app.Article)
 
         self.bazaar.add(apple)
 
         # check attribute value assigning when attribute is an reference
-        oi = app.OrderItem(pos = 1, quantity = 100, article = apple)
+        oi = bazaar.test.app.OrderItem(pos = 1, quantity = 100, article = apple)
         self.assertEqual(oi.article, apple)
         self.assertEqual(oi.article_fkey, apple.__key__)
 
 
 
-class ModifyObjectTestCase(btest.DBBazaarTestCase):
+class ModifyObjectTestCase(bazaar.test.bzr.TestCase):
     """
     Test application objects modification.
     """
@@ -150,79 +148,79 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
             self.bazaar.getObjects(cls)
 
         # add and check order object
-        order = app.Order()
+        order = bazaar.test.app.Order()
         order.no = 1000
         order.finished = True
         self.bazaar.add(order)
 
-        self.assert_(order.__key__ in self.bazaar.brokers[app.Order].cache, \
+        self.assert_(order.__key__ in self.bazaar.brokers[bazaar.test.app.Order].cache, \
             'order object not found in cache')
-        self.assertEqual(self.bazaar.brokers[app.Order].cache[order.__key__], order,
+        self.assertEqual(self.bazaar.brokers[bazaar.test.app.Order].cache[order.__key__], order,
             'cache object mismatch')
-        self.checkObjects(app.Order, key = order.__key__)
+        self.checkObjects(bazaar.test.app.Order, key = order.__key__)
 
         # add and check article object
-        article = app.Article()
+        article = bazaar.test.app.Article()
         article.name = 'apple'
         article.price = 1.23
 
         self.bazaar.add(article)
-        self.assert_(article.__key__ in self.bazaar.brokers[app.Article].cache, \
+        self.assert_(article.__key__ in self.bazaar.brokers[bazaar.test.app.Article].cache, \
             'article object not found in cache')
-        self.assertEqual(self.bazaar.brokers[app.Article].cache[article.__key__], article,
+        self.assertEqual(self.bazaar.brokers[bazaar.test.app.Article].cache[article.__key__], article,
             'cache object mismatch')
-        self.checkObjects(app.Article, key = article.__key__)
+        self.checkObjects(bazaar.test.app.Article, key = article.__key__)
 
         # add and check order item object
-        order_item = app.OrderItem()
+        order_item = bazaar.test.app.OrderItem()
         order_item.order = order
         order_item.pos = 0
         order_item.quantity = 2.123
         order_item.article = article
 
         self.bazaar.add(order_item)
-        self.assert_(order_item.__key__ in self.bazaar.brokers[app.OrderItem].cache, \
+        self.assert_(order_item.__key__ in self.bazaar.brokers[bazaar.test.app.OrderItem].cache, \
             'order item object not found in cache')
-        self.assertEqual(self.bazaar.brokers[app.OrderItem].cache[order_item.__key__], order_item,
+        self.assertEqual(self.bazaar.brokers[bazaar.test.app.OrderItem].cache[order_item.__key__], order_item,
             'cache object mismatch')
-        self.checkObjects(app.OrderItem, key = order_item.__key__)
+        self.checkObjects(bazaar.test.app.OrderItem, key = order_item.__key__)
 
         # add and check employee object
-        emp = app.Employee()
+        emp = bazaar.test.app.Employee()
         emp.name = 'name'
         emp.surname = 'surname'
         emp.phone = '0123456789'
 
         self.bazaar.add(emp)
-        self.assert_(emp.__key__ in self.bazaar.brokers[app.Employee].cache, \
+        self.assert_(emp.__key__ in self.bazaar.brokers[bazaar.test.app.Employee].cache, \
             'employee object not found in cache')
-        self.assertEqual(self.bazaar.brokers[app.Employee].cache[emp.__key__], emp,
+        self.assertEqual(self.bazaar.brokers[bazaar.test.app.Employee].cache[emp.__key__], emp,
             'cache object mismatch')
-        self.checkObjects(app.Employee, key = emp.__key__)
+        self.checkObjects(bazaar.test.app.Employee, key = emp.__key__)
 
 
     def testObjectUpdating(self):
         """Test updating objects in database"""
 
-        order = self.bazaar.getObjects(app.Order)[0]
+        order = self.bazaar.getObjects(bazaar.test.app.Order)[0]
         order.finished = True
         self.bazaar.update(order)
-        self.checkObjects(app.Order, key = order.__key__)
+        self.checkObjects(bazaar.test.app.Order, key = order.__key__)
 
-        article = self.bazaar.getObjects(app.Article)[0]
+        article = self.bazaar.getObjects(bazaar.test.app.Article)[0]
         article.price = 1.12
         self.bazaar.update(article)
-        self.checkObjects(app.Article, key = article.__key__)
+        self.checkObjects(bazaar.test.app.Article, key = article.__key__)
 
-        order_item = self.bazaar.getObjects(app.OrderItem)[0]
+        order_item = self.bazaar.getObjects(bazaar.test.app.OrderItem)[0]
         order_item.article = article
         self.bazaar.update(order_item)
-        self.checkObjects(app.OrderItem, key = order_item.__key__)
+        self.checkObjects(bazaar.test.app.OrderItem, key = order_item.__key__)
 
-        emp = self.bazaar.getObjects(app.Employee)[0]
+        emp = self.bazaar.getObjects(bazaar.test.app.Employee)[0]
         emp.phone = '00000'
         self.bazaar.update(emp)
-        self.checkObjects(app.Employee, key = emp.__key__)
+        self.checkObjects(bazaar.test.app.Employee, key = emp.__key__)
         
 
     def testObjectDeleting(self):
@@ -236,54 +234,59 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
             self.bazaar.delete(obj)
             self.assert_(key not in self.getCache(cls), '%s object found in cache <- error, it is deleted' % cls)
 
-        delete(app.Order, {'no': 1001})
-        delete(app.Article, {'name': 'article'})
-        delete(app.Employee, {'name': 'n1001', 'surname': 's1001'})
+        delete(bazaar.test.app.Order, {'no': 1001})
+        delete(bazaar.test.app.Article, {'name': 'article'})
+        delete(bazaar.test.app.Employee, {'name': 'n1001', 'surname': 's1001'})
 
 
 
-class TransactionsTestCase(btest.DBBazaarTestCase):
+class TransactionsTestCase(bazaar.test.bzr.TestCase):
     """
     Test database transaction commiting and rollbacking.
     """
     def testCommit(self):
         """Test database transaction commit"""
 
-        self.bazaar.getObjects(app.Employee)
-        emp = self.bazaar.find(app.Employee, \
+        self.bazaar.getObjects(bazaar.test.app.Employee)
+        emp = self.bazaar.find(bazaar.test.app.Employee, \
             {'name': 'n1001', 'surname': 's1001'}).next()
         key = emp.__key__
         self.bazaar.delete(emp)
         self.bazaar.commit()
-        self.bazaar.reloadObjects(app.Employee, now = True)
+        self.bazaar.reloadObjects(bazaar.test.app.Employee, now = True)
 
         # object is deleted, so it does not exist in cache due to objects
         # _immediate_ reload
-        self.assert_(key not in self.getCache(app.Employee), \
+        self.assert_(key not in self.getCache(bazaar.test.app.Employee), \
             'employee object found in cache <- error, it is deleted')
 
         # readd object and commit, it should reappear in cache
         self.bazaar.add(emp)
         self.bazaar.commit()
-        self.bazaar.reloadObjects(app.Employee, now = True)
-        emp = self.bazaar.find(app.Employee, \
+        self.bazaar.reloadObjects(bazaar.test.app.Employee, now = True)
+        emp = self.bazaar.find(bazaar.test.app.Employee, \
             {'name': 'n1001', 'surname': 's1001'}).next()
-        self.assert_(emp.__key__ in self.getCache(app.Employee), 'employee object not found in cache')
+        self.assert_(emp.__key__ in self.getCache(bazaar.test.app.Employee), 'employee object not found in cache')
 
 
     def testRollback(self):
         """Test database transaction rollback"""
 
-        self.bazaar.getObjects(app.Employee)
-        emp = self.bazaar.find(app.Employee, {'name': 'n1001', 'surname': 's1001'}).next()
+        self.bazaar.getObjects(bazaar.test.app.Employee)
+        emp = self.bazaar.find(bazaar.test.app.Employee, {'name': 'n1001', 'surname': 's1001'}).next()
         key = emp.__key__
         self.bazaar.delete(emp)
         self.bazaar.rollback()
 
         # reload objects immediately, so we can find them in cache
-        self.bazaar.reloadObjects(app.Employee, True)
+        self.bazaar.reloadObjects(bazaar.test.app.Employee, True)
 
         # objects is deleted, but it should exist in cache due to objects
         # reload
-        self.assert_(key in self.getCache(app.Employee), \
+        self.assert_(key in self.getCache(bazaar.test.app.Employee), \
             'employee object not found in cache')
+
+
+
+if __name__ == '__main__':
+    bazaar.test.main()
