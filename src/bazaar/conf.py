@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.3 2003/06/19 17:20:16 wrobell Exp $
+# $Id: conf.py,v 1.4 2003/06/20 16:45:26 wrobell Exp $
 
 import logging
 
@@ -101,7 +101,7 @@ class Persitence(type):
         if __debug__:
             log.debug('new class "%s" for relation "%s"' % (c.__name__, cls_data['relation']))
 
-        assert c, 'class relation should not be empty'
+        assert c.relation, 'class relation should not be empty'
 
         return c
 
