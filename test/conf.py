@@ -1,8 +1,9 @@
-# $Id: conf.py,v 1.6 2003/08/27 15:22:38 wrobell Exp $
+# $Id: conf.py,v 1.7 2003/09/03 22:42:31 wrobell Exp $
 
 import unittest
 
 import bazaar.conf
+import bazaar.assoc
 
 """
 Test mapping application classes to database relations.
@@ -17,13 +18,13 @@ class ConfTestCase(unittest.TestCase):
         """Test application class to database relation mapping"""
 
         relation = 'person'
-        Person = bazaar.conf.Persitence('Person', relation = 'person')
+        Person = bazaar.conf.Persistence('Person', relation = 'person')
         self.assertEqual(relation, Person.relation,
             'class relation mismatch: %s != %s ' % (relation, Person.relation))
 
         relation = 'address'
         class Address:
-            __metaclass__ = bazaar.conf.Persitence
+            __metaclass__ = bazaar.conf.Persistence
             relation  = 'address'
 
         self.assertEqual(relation, Address.relation,
@@ -35,7 +36,7 @@ class ConfTestCase(unittest.TestCase):
 
         cols = ('name', 'surname', 'birthdate')
 
-        Person = bazaar.conf.Persitence('Person', relation = 'person')
+        Person = bazaar.conf.Persistence('Person', relation = 'person')
         Person.addColumn('name')
         try:
             Person.addColumn('name')
@@ -54,7 +55,7 @@ class ConfTestCase(unittest.TestCase):
     def testKeyDef(self):
         """Test database relation key defining"""
 
-        Person = bazaar.conf.Persitence('Person', relation = 'person')
+        Person = bazaar.conf.Persistence('Person', relation = 'person')
         Person.addColumn('name')
         Person.addColumn('surname')
         Person.addColumn('birthdate')
@@ -85,3 +86,50 @@ class ConfTestCase(unittest.TestCase):
             self.assertEqual(str(exc), 'list of key\'s columns should not be empty')
         else:
             self.fail('setting empty key should fail')
+
+
+
+class AssociationTestCase(unittest.TestCase):
+    """
+    Test association defining.
+    """
+
+    def testAssociationDef(self):
+        """Test association defining"""
+
+        class A:
+            __metaclass__ = bazaar.conf.Persistence
+            relation = 'a'
+            columns       = {
+                'a1' : bazaar.conf.Column('a1'),
+                'a2' : bazaar.conf.Column('a2'),
+            }
+            key_columns = ('a1', )
+
+        class B:
+            __metaclass__ = bazaar.conf.Persistence
+            relation = 'b'
+            columns       = {
+                'b1' : bazaar.conf.Column('b1'),
+            }
+            key_columns = ('b1', )
+
+        class C:
+            __metaclass__ = bazaar.conf.Persistence
+            relation = 'b'
+            columns       = {
+                'c1' : bazaar.conf.Column('c1'),
+                'c2' : bazaar.conf.Column('c1'),
+            }
+            key_columns = ('c1', 'c2')
+        
+        A.addColumn('a3_fkey', 'a3', B, ('aa31',))
+        A.addColumn('a4_fkey', 'a4', C, ('aa41', 'aa42'))
+        self.assertEqual(type(A.columns['a3_fkey'].association), bazaar.assoc.OneToOneAssociation, \
+            'it should be one-to-one association')
+        self.assertEqual(type(A.columns['a4_fkey'].association), bazaar.assoc.OneToOneAssociation, \
+            'it should be one-to-one association')
+        self.assertEqual(A.columns['a3_fkey'].association, A.a3, \
+            'application class association descriptor mismatch')
+        self.assertEqual(A.columns['a4_fkey'].association, A.a4, \
+            'application class associaion descriptor mismatch')
