@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.21 2003/09/25 14:10:48 wrobell Exp $
+# $Id: assoc.py,v 1.22 2003/09/25 15:24:44 wrobell Exp $
 """
 Association classes.
 """
@@ -85,7 +85,10 @@ class ListReferenceBuffer(ReferenceBuffer):
         @param obj: Application object.
         @param value: Referenced object.
         """
-        return super(ListReferenceBuffer, self).__contains__((obj, value)) and value in self[obj]
+        if value is None:
+            return super(ListReferenceBuffer, self).__contains__((obj, value))
+        else:
+            return super(ListReferenceBuffer, self).__contains__((obj, value)) and value in self[obj]
 
 
     def __setitem__(self, obj, value):
@@ -175,7 +178,7 @@ class ObjectIterator(object):
 
         @return: Iterator of all referenced objects.
         """
-        return self.association.iterAllObjects(obj)
+        return self.association.iterObjects(self.obj)
 
 
     def append(self, value):
@@ -637,10 +640,10 @@ class List(AssociationReferenceProxy):
         # return all objects with defined primary key values
         def getObjects():
             if obj in self.value_keys:
-                for vkey in self.value_keys[obj]:
+                for vkey in list(self.value_keys[obj]):
                     yield self.vbroker.get(vkey)
 
-        if obj in self.ref_buf:
+        if (obj, None) in self.ref_buf:
             # return all objects
             return itertools.chain(getObjects(), self.ref_buf[obj])
         else:
@@ -693,7 +696,7 @@ class List(AssociationReferenceProxy):
         if (obj, value) in self.ref_buf:
             del self.ref_buf[(obj, value)]
         elif obj in self.value_keys:
-            self.value_keys.discard(value.__key__)
+            self.value_keys[obj].discard(value.__key__)
 
 
     def len(self, obj):
