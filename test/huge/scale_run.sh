@@ -16,5 +16,5 @@ set xlabel 'Ilosc obiektow'
 set ylabel 'Czas[s]'
 set terminal pdf
 set output 'scale.pdf'
-plot "scale.out" with points pointtype 3, 0.005*x+8
+plot "scale.out" with points pointtype 3, 0.00485*x
 END
