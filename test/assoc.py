@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.17 2003/10/02 14:32:24 wrobell Exp $
+# $Id: assoc.py,v 1.18 2003/10/02 16:24:17 wrobell Exp $
 
 import app
 import btest
@@ -214,7 +214,7 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
             'appended referenced object not found in association')
         self.assert_(ord1 not in emp.orders, \
             'removed referenced object found in association')
-        self.assert_(ord2 not  in emp.orders, \
+        self.assert_(ord2 not in emp.orders, \
             'removed referenced object found in association')
 
         emp.orders.update()
@@ -223,7 +223,7 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
             'appended referenced object not found in association')
         self.assert_(ord1 not in emp.orders, \
             'removed referenced object found in association')
-        self.assert_(ord2 not  in emp.orders, \
+        self.assert_(ord2 not in emp.orders, \
             'removed referenced object found in association')
 
         self.checkEmpAsc()
@@ -414,7 +414,7 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
             'appended referenced object not found in association')
         self.assert_(oi1 not in ord.items, \
             'removed referenced object found in association')
-        self.assert_(oi2 not  in ord.items, \
+        self.assert_(oi2 not in ord.items, \
             'removed referenced object found in association')
 
         ord.items.update()
@@ -423,7 +423,7 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
             'appended referenced object not found in association')
         self.assert_(oi1 not in ord.items, \
             'removed referenced object found in association')
-        self.assert_(oi2 not  in ord.items, \
+        self.assert_(oi2 not in ord.items, \
             'removed referenced object found in association')
 
         self.checkOrdAsc()
