@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.9 2003/09/03 22:39:47 wrobell Exp $
+# $Id: core.py,v 1.10 2003/09/06 12:26:12 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -58,6 +58,7 @@ class Broker:
         Create application class broker.
 
         Method initializes object cache and database data convertor.
+        Database objects loading is requested.
 
         @param cls: Application class.
         @param mtr: Database access object.
@@ -72,41 +73,51 @@ class Broker:
         log.info('class "%s" broker initialized' % cls)
 
 
+    def loadObjects(self):
+        """
+        Load application objects from database and put them into cache.
+
+        @see: L{bazaar.core.Broker.getObjects} L{bazaar.core.Broker.reloadObjects}
+        """
+        assert len(self.cache) == 0
+
+        # load objects from database
+        for obj in self.convertor.getObjects():
+            self.cache.append(obj)
+
+        self.reload = False
+
+
     def getObjects(self):
         """
         Get list of application objects.
 
-        Objects are returned from object cache. If objects are not loaded
-        from database, then database access is performed and objects are
-        put into cache, then returned by the method.
-
-        @see: L{reloadObjects}
+        If objects reload has been requested, then objects would be loaded
+        from database, before returning objects from the cache.
+        
+        @see: L{bazaar.core.Broker.loadObjects} L{bazaar.core.Broker.reloadObjects}
         """
         if self.reload:
-            # clear the cache
-            self.cache.clear()
-
-            # load objects from cache
-            for obj in self.convertor.getObjects():
-                self.cache.append(obj)
-
-            self.reload = False
+            self.loadObjects()
 
         return self.cache.getObjects()
 
 
     def reloadObjects(self, now = False):
         """
-        Reload objects from database.
+        Request reloading objects from database.
 
-fixme:  This behaviour can be changed with C{now} method
-        parameter.
+        All objects are removed from cache. If C{now} is set to true, then
+        objects are loaded from database immediately.
         
         @param now: Reload objects immediately.
+
+        @see: L{bazaar.core.Broker.loadObjects} L{bazaar.core.Broker.getObjects}
         """
         self.reload = True
+        self.cache.clear()
         if now:
-            self.getObjects()
+            self.loadObjects()
 
 
     def add(self, obj):
