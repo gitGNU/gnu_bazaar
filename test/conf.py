@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.1 2003/06/18 23:33:53 wrobell Exp $
+# $Id: conf.py,v 1.2 2003/06/19 16:40:58 wrobell Exp $
 
 import unittest
 import logging
@@ -53,6 +53,7 @@ class ConfTestCase(unittest.TestCase):
         try:
             Person.addColumn('name')
         except AttributeError, exc:
+            self.assertEqual(str(exc), 'column "name" is defined in class "Person"')
             log.info('adding the column twice failed <- it is ok!')
         else:
             self.fail('adding the column twice should fail')
@@ -89,6 +90,22 @@ class ConfTestCase(unittest.TestCase):
         Person.setKey(('name', 'surname'))
         self.assertEqual(len(Person.key_columns), 2, 'there should be two key columns')
         self.assertEqual(Person.key_columns, ('name', 'surname'), 'key column mismatch')
+
+        try:
+            Person.setKey(('foo', 'bar'))
+        except AttributeError, exc:
+            self.assertEqual(str(exc), 'key column "foo" not found on column list')
+            log.info('setting key with non-existing columns failed <- it is ok!')
+        else:
+            self.fail('setting key with non-existing columns should fail')
+
+        try:
+            Person.setKey(())
+        except AttributeError, exc:
+            self.assertEqual(str(exc), 'key columns list should not be empty')
+            log.info('setting empty key failed <- it is ok!')
+        else:
+            self.fail('setting empty key should fail')
 
         log.info('finished testing db relation key defining')
 
