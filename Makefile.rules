@@ -1,1 +1,4 @@
 SOURCES = $(top_srcdir)/src/bazaar/assoc.py $(top_srcdir)/src/bazaar/cache.py $(top_srcdir)/src/bazaar/config.py $(top_srcdir)/src/bazaar/conf.py $(top_srcdir)/src/bazaar/core.py $(top_srcdir)/src/bazaar/exc.py $(top_srcdir)/src/bazaar/__init__.py $(top_srcdir)/src/bazaar/motor.py
+
+DOCSOURCES = $(SOURCES) \
+	$(top_srcdir)/src/bazaar/test/__init__.py

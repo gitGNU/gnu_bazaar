@@ -1,4 +1,4 @@
-# $Id: __init__.py,v 1.3 2004/05/23 00:29:56 wrobell Exp $
+# $Id: __init__.py,v 1.4 2004/05/23 12:24:40 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -19,6 +19,68 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
+"""
+This module simplifies unit testing of applications and libraries, which use
+Bazaar ORM library.
+
+Let's suppose, that C{lib} library is going to be tested and there are
+created two modules C{lib.test.a} and C{lib.test.b} with unit tests for the
+library.
+
+To run unit tests, which use Bazaar ORM library, application classes should
+be specified. To specify application classes set C{bazaar.test.TestCase.cls_list} attribute,
+i.e.::
+
+    bazaar.test.TestCase.cls_list = (lib.Class1, lib.Class2)
+
+To run all unit tests C{lib.test.all} module can be created, C{lib/test/all.py}::
+
+    import bazaar.test
+
+    bazaar.test.TestCase.cls_list = (lib.Class1, lib.Class2) # set application classes
+
+    if __name__ = '__main__'
+        
+        # import all library test cases into lib.test.all module namespace,
+        # so the all tests will be run
+        from bazaar.test.a import *
+        from bazaar.test.b import *
+        
+        # run all tests
+        bazaar.test.main()
+
+
+Module C{lib.test.a} source code example::
+
+    import bazaar.test
+    import lib.test.all # this import sets application classes
+
+    class ATestCase(bazaar.test.DBTestCase):
+        pass
+
+    if __name__ == '__main__':
+        bazaar.test.main()
+
+Module C{lib.test.b} source code example::
+
+    import bazaar.test
+    import lib.test.all # this import sets application classes
+
+    class BTestCase(bazaar.test.DBTestCase):
+        pass
+
+    if __name__ == '__main__':
+        bazaar.test.main()
+
+
+To run all tests::
+
+    python lib/test/all.py bazaar.ini
+
+To run tests contained in C{lib.test.a} module::
+
+    python lib/test/a.py bazaar.ini
+"""
 
 
 import unittest
@@ -30,6 +92,9 @@ import bazaar.test.app
 class TestCase(unittest.TestCase):
     """
     Base class for Bazaar layer tests.
+
+    List of application classes should be set in modules, which use
+    this class.
 
     @ivar bazaar: Bazaar layer object.
     @ivar cls_list: List of test application classes.
@@ -48,7 +113,7 @@ class TestCase(unittest.TestCase):
 
 class DBTestCase(TestCase):
     """
-    Base class for Bazaar layer tests with enabled database connection.
+    Base class for Bazaar layer tests with database connection.
     """
     def setUp(self):
         """
@@ -67,6 +132,9 @@ class DBTestCase(TestCase):
 
 
 def main():
+    """
+    Set Bazaar ORM library configuration file and run all unit tests.
+    """
     import sys
 
     globals()['cfg_file'] = sys.argv[1] # get configuration filename
