@@ -1,4 +1,4 @@
-# $Id: __init__.py,v 1.2 2004/05/23 00:26:37 wrobell Exp $
+# $Id: __init__.py,v 1.3 2004/05/23 00:29:56 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -44,12 +44,6 @@ class TestCase(unittest.TestCase):
         self.config.read(cfg_file)
         self.bazaar = bazaar.core.Bazaar(self.cls_list, bazaar.config.CPConfig(self.config))
 
-        # bazaar.test.cache tests for lazy cache!
-        assert not self.config.has_section('bazaar.cls')
-        assert not self.config.has_section('bazaar.asc')
-        assert bazaar.test.app.Article.cache == bazaar.cache.FullObject
-        assert bazaar.test.app.Order.getColumns()['items'].cache == bazaar.cache.FullAssociation
-        assert bazaar.test.app.Employee.getColumns()['orders'].cache == bazaar.cache.FullAssociation
 
 
 class DBTestCase(TestCase):

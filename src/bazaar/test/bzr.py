@@ -1,4 +1,4 @@
-# $Id: bzr.py,v 1.1 2004/05/21 18:12:39 wrobell Exp $
+# $Id: bzr.py,v 1.2 2004/05/23 00:29:56 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -30,6 +30,17 @@ import bazaar.test.app
 bazaar.test.TestCase.cls_list = bazaar.test.app.cls_list
 
 class TestCase(bazaar.test.DBTestCase):
+    def setUp(self):
+        super(TestCase, self).setUp()
+
+        # bazaar.test.cache tests for lazy cache!
+        assert not self.config.has_section('bazaar.cls')
+        assert not self.config.has_section('bazaar.asc')
+        assert bazaar.test.app.Article.cache == bazaar.cache.FullObject
+        assert bazaar.test.app.Order.getColumns()['items'].cache == bazaar.cache.FullAssociation
+        assert bazaar.test.app.Employee.getColumns()['orders'].cache == bazaar.cache.FullAssociation
+
+
     def checkObjects(self, cls, amount = None, key = None):
         """
         Check all application objects data integrity.
