@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.2 2004/05/22 23:29:11 wrobell Exp $
+# $Id: core.py,v 1.3 2004/12/20 05:31:52 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -19,6 +19,8 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
+
+from decimal import Decimal
 
 import bazaar.core
 
@@ -112,9 +114,9 @@ class CreateObjectTestCase(bazaar.test.bzr.TestCase):
         # check attribute value assigning
         apple = bazaar.test.app.Article()
         apple.name = 'apple'
-        apple.price = 2.33
+        apple.price = Decimal('2.33')
         self.assertEqual(apple.name, 'apple')
-        self.assertEqual(apple.price, 2.33)
+        self.assertEqual(apple.price, Decimal('2.33'))
 
         # check attribute value assigning via constructor
         apple = bazaar.test.app.Article(name = 'apple', price = 3)
@@ -164,7 +166,7 @@ class ModifyObjectTestCase(bazaar.test.bzr.TestCase):
         # add and check article object
         article = bazaar.test.app.Article()
         article.name = 'apple'
-        article.price = 1.23
+        article.price = Decimal('1.23')
 
         self.bazaar.add(article)
         self.assert_(article.__key__ in self.bazaar.brokers[bazaar.test.app.Article].cache, \
@@ -177,7 +179,7 @@ class ModifyObjectTestCase(bazaar.test.bzr.TestCase):
         order_item = bazaar.test.app.OrderItem()
         order_item.order = order
         order_item.pos = 0
-        order_item.quantity = 2.123
+        order_item.quantity = Decimal('2.123')
         order_item.article = article
 
         self.bazaar.add(order_item)
@@ -210,7 +212,7 @@ class ModifyObjectTestCase(bazaar.test.bzr.TestCase):
         self.checkObjects(bazaar.test.app.Order, key = order.__key__)
 
         article = list(self.bazaar.getObjects(bazaar.test.app.Article))[0]
-        article.price = 1.12
+        article.price = Decimal('1.12')
         self.bazaar.update(article)
         self.checkObjects(bazaar.test.app.Article, key = article.__key__)
 
