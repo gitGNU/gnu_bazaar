@@ -1,8 +1,9 @@
-# $Id: assoc.py,v 1.12 2003/09/22 23:13:14 wrobell Exp $
+# $Id: assoc.py,v 1.13 2003/09/23 16:20:54 wrobell Exp $
 """
 Association classes.
 """
 
+import sets
 import logging
 
 log = logging.getLogger('bazaar.assoc')
@@ -206,7 +207,7 @@ class OneToOne(AssociationReferenceProxy):
         @param obj: Application object.
         @param value: Referenced object.
         """
-        assert value is None or value.__class__ == self.col.vcls, '%s != %s' % (value.__class__, self.col.vcls)
+        assert value is None or isinstance(value, self.col.vcls), '%s != %s' % (value.__class__, self.col.vcls) # fixme: AssociationError
         assert obj is not None
         self[obj] = value
 
@@ -227,7 +228,8 @@ class BiDirOneToOne(OneToOne):
         @param value: Referenced object.
         """
         super(BiDirOneToOne, self).__set__(obj, value)
-        self.association.integrate(value, obj)
+        if value is not None:
+            self.association.integrate(value, obj)
 
 
     def integrate(self, obj, value):
@@ -243,8 +245,8 @@ class BiDirOneToOne(OneToOne):
         @param obj: Application object.
         @param value: Referenced object.
         """
-        if obj is not None:
-            super(BiDirOneToOne, self).__set__(obj, value)
+        assert obj is not None
+        super(BiDirOneToOne, self).__set__(obj, value)
 
 
 
@@ -282,7 +284,7 @@ class ListAssociation(AssociationReferenceProxy):
             object and index of referenced object in referenced object list.
         @return: Referenced object's primary key value.
         """
-        assert len(buffer_key) == 2 and type(buffer_key[0]) == self.broker.cls
+        assert len(buffer_key) == 2 and isinstance(buffer_key[0], self.broker.cls)
         # obj = buffer_key[0]
         # index = buffer_key[1]
         return list.__getitem__(self.obj_lists[buffer_key[0]], buffer_key[1])
@@ -297,10 +299,11 @@ class ListAssociation(AssociationReferenceProxy):
             object and index of referenced object in object list.
         @param value_key: Referenced object's primary key value.
         """
-        assert len(buffer_key) == 2 and type(buffer_key[0]) == self.broker.cls
+        assert len(buffer_key) == 2 and isinstance(buffer_key[0], self.broker.cls)
         # obj = buffer_key[0]
         # index = buffer_key[1]
-        list.__setitem__(self.obj_lists[buffer_key[0]], buffer_key[1], value_key)
+        # __setitem__: list.append(self.obj_lists[buffer_key[0]], buffer_key[1], value_key)
+        list.append(self.obj_lists[buffer_key[0]], value_key)
 
 
     def __get__(self, obj, cls):
@@ -335,19 +338,6 @@ class ListAssociation(AssociationReferenceProxy):
         Assigning list of referenced objects is not implemented yet.
         """
         raise NotImplementedError
-
-
-    def add(self, obj, index, value):
-        """
-        Add referenced object to application object's list of referenced
-        objects.
-
-        @param obj: Application object.
-        @param index: Index of the referenced object in the list of
-            referenced objects.
-        @param value: Referenced object.
-        """
-        self[(obj, index)] = value
 
 
     def getList(self, obj):
@@ -428,19 +418,22 @@ class ListAssociation(AssociationReferenceProxy):
             app[obj] = sets.Set()
         app[obj].add(value)
 
+        assert value in app[obj]
+        assert obj not in rem or value not in rem[obj]
+
 
     def append(self, obj, index, value):
-        self.add(obj, index, value)
+        self[(obj, index)] = value
         self.juggle(obj, value, self.appended, self.removed)
-        assert value in self.appended[obj]
-        assert obj not in self.removed or value not in self.removed[obj]
 
-    def remove(self, obj, index, value):
-        if (obj, index) in self: del self[(obj, index)]
+
+    def remove(self, obj, index):
+        assert obj in self.obj_lists
+        value = self[(obj, index)]
+        if (obj, index) in self:
+            del self[(obj, index)]
         self.juggle(obj, value, self.removed, self.appended)
-        assert value in self.removed[obj]
-        assert obj not in self.appended or value not in self.appended[obj]
-
+        list.__delitem__(self.obj_lists[obj], index)
 
 
 
@@ -451,23 +444,29 @@ class UniDirManyToMany(ListAssociation):
     pass
 
 
-import sets
 class OneToMany(ListAssociation):
     """
     Bi-directional one-to-many association descriptor.
 
     One-to-many association is always bi-directional relationship.
     """
-    def add(self, obj, index, value):
-        super(OneToMany, self).add(obj, index, value)
+    def append(self, obj, index, value):
+        assert value is not None
+        super(OneToMany, self).append(obj, index, value)
         self.association.integrate(value, obj)
 
 
+    def remove(self, obj, index):
+        value = super(OneToMany, self).remove(obj, index)
+        if value is not None:
+            self.association.integrate(value, None)
+        return value
+
+
     def integrate(self, obj, value):
-        if obj is None:
-            self.remove(obj, value)
-        else:
-            self.getList(obj).append(value)
+        assert obj is not None and value is not None
+        self.getList(obj).append(value)
+
 
 
 class ObjectList(list):
@@ -477,8 +476,8 @@ class ObjectList(list):
         self.association = association
 
 
-    def __getitem__(self, item):
-        return self.get(item)
+    def __getitem__(self, index):
+        return self.get(index)
 
 
     def __setitem__(self, index, value):
@@ -487,14 +486,22 @@ class ObjectList(list):
 
 
     def __delitem__(self, index):
-        self.association.remove(self.obj, index, value)
+        if __debug__: size = len(self)
+
+        self.association.remove(self.obj, index)
+
+        assert len(self) == size - 1
 
 
     def append(self, value):
-        assert value is None or self.association.col.vcls == value.__class__
+        assert value is not None and isinstance(value, self.association.col.vcls) #fixme: AssociationError
         index = len(self)
-        list.append(self, None)
-        self.association.append(self.obj, index, value)
+        self.set(index, value)
+        assert len(self) == index + 1
+
+
+    def update(self):
+        self.association.update(self)
 
 
     def __iter__(self):
@@ -512,7 +519,3 @@ class ObjectList(list):
 
     def get(self, index):
         return self.association[(self.obj, index)]
-
-
-    def update(self):
-        self.association.update(self)
