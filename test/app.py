@@ -1,4 +1,4 @@
-# $Id: app.py,v 1.10 2003/10/15 15:46:39 wrobell Exp $
+# $Id: app.py,v 1.11 2003/11/23 23:39:18 wrobell Exp $
 
 """
 Sample test application for Bazaar layer testing purposes.
@@ -8,7 +8,7 @@ File sql/init.sql contains relations definitions.
 
 import bazaar.conf
 
-db_module = None
+dbmod = None
 dsn = ''
 
 ####

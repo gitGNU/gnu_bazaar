@@ -1,4 +1,4 @@
-# $Id: connection.py,v 1.4 2003/09/22 00:35:52 wrobell Exp $
+# $Id: connection.py,v 1.5 2003/11/23 23:39:18 wrobell Exp $
 
 import unittest
 
@@ -19,9 +19,9 @@ class ConnTestCase(btest.BazaarTestCase):
         """Test database connection initialization"""
 
         self.bazaar.connectDB(app.dsn)
-        self.assert_(self.bazaar.motor.db_conn, 'db connection is missing')
+        self.assert_(self.bazaar.motor.conn, 'db connection is missing')
         # simple query
-        self.bazaar.motor.db_conn.cursor().execute('begin; rollback')
+        self.bazaar.motor.conn.cursor().execute('begin; rollback')
 
 
     def testConnectionClosing(self):
@@ -30,4 +30,4 @@ class ConnTestCase(btest.BazaarTestCase):
         self.bazaar.connectDB(app.dsn)
         self.bazaar.closeDBConn()
 
-        self.assert_(not self.bazaar.motor.db_conn, 'db connection should not be set')
+        self.assert_(not self.bazaar.motor.conn, 'db connection should not be set')

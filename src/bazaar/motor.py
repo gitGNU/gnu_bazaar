@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.22 2003/11/22 14:26:49 wrobell Exp $
+# $Id: motor.py,v 1.23 2003/11/23 23:39:18 wrobell Exp $
 """
 Data convertor and database access classes.
 """
@@ -259,15 +259,15 @@ class Motor:
     """
     Database access object.
 
-    @ivar db_module: Python DB API module.
-    @ivar db_conn: Python DB API connection object.
+    @ivar dbmod: Python DB API module.
+    @ivar conn: Python DB API connection object.
     """
-    def __init__(self, db_module):
+    def __init__(self, dbmod):
         """
         Initialize database access object.
         """
-        self.db_module = db_module
-        self.db_conn = None
+        self.dbmod = dbmod
+        self.conn = None
         log.info('Motor object initialized')
 
 
@@ -279,7 +279,7 @@ class Motor:
 
         @see: L{bazaar.motor.Motor.closeDBConn}
         """
-        self.db_conn = self.db_module.connect(dsn)
+        self.conn = self.dbmod.connect(dsn)
         if __debug__: log.debug('connected to database with dsn "%s"' % dsn)
 
 
@@ -289,8 +289,8 @@ class Motor:
 
         @see: L{bazaar.motor.Motor.connectDB}
         """
-        self.db_conn.close()
-        self.db_conn = None
+        self.conn.close()
+        self.conn = None
         if __debug__: log.debug('close database connection')
 
 
@@ -308,7 +308,7 @@ class Motor:
 
         if param is None: param = {}
 
-        dbc = self.db_conn.cursor()
+        dbc = self.conn.cursor()
         dbc.execute(query, param)
 
         if __debug__: log.debug('query "%s": executed, rows = %d' % (query, dbc.rowcount))
@@ -329,7 +329,7 @@ class Motor:
         @param data: Row data to insert.
         """
         if __debug__: log.debug('query "%s", data = %s: executing' % (query, data))
-        dbc = self.db_conn.cursor()
+        dbc = self.conn.cursor()
         dbc.execute(query, data)
         if __debug__: log.debug('query "%s", data = %s: executed' % (query, data))
 
@@ -343,7 +343,7 @@ class Motor:
         @param key: Key of the row to update.
         """
         if __debug__: log.debug('query "%s", data = %s, key = %s: executing' % (query, data, key))
-        dbc = self.db_conn.cursor()
+        dbc = self.conn.cursor()
         dbc.execute(query, tuple(data) + (key, ))
         if __debug__: log.debug('query "%s", data = %s, key = %s: executed' % (query, data, key))
 
@@ -356,7 +356,7 @@ class Motor:
         @param key: Key of the row to delete.
         """
         if __debug__: log.debug('query "%s", key = %s: executing' % (query, key))
-        dbc = self.db_conn.cursor()
+        dbc = self.conn.cursor()
         dbc.execute(query, (key, ))
         if __debug__: log.debug('query "%s", key = %s: executed' % (query, key))
 
@@ -366,7 +366,7 @@ class Motor:
         fixme
         """
         if __debug__: log.debug('query "%s": executing' % query)
-        dbc = self.db_conn.cursor()
+        dbc = self.conn.cursor()
         dbc.executemany(query, iterator)
         if __debug__: log.debug('query "%s": executed' % query)
 
@@ -375,19 +375,19 @@ class Motor:
         """
         Commit pending database transactions.
         """
-        self.db_conn.commit()
+        self.conn.commit()
 
 
     def rollback(self):
         """
         Rollback database transactions.
         """
-        self.db_conn.rollback()
+        self.conn.rollback()
 
 
     def getKey(self, query):
         """
         """
-        dbc = self.db_conn.cursor()
+        dbc = self.conn.cursor()
         dbc.execute(query)
         return dbc.fetchone()[0]

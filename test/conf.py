@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.13 2003/10/06 14:57:24 wrobell Exp $
+# $Id: conf.py,v 1.14 2003/11/23 23:39:18 wrobell Exp $
 
 import unittest
 
@@ -48,6 +48,48 @@ class ConfTestCase(unittest.TestCase):
             self.assert_(col in Person.columns, 'column "%s" not found' % col)
 
 
+    def testInheritance(self):
+        """Test class inheritance"""
+        A = bazaar.conf.Persistence('A')
+        A.addColumn('a1')
+        A.addColumn('a2')
+
+        B = bazaar.conf.Persistence('B', bases = (A,))
+        B.addColumn('b1')
+        B.addColumn('b2')
+
+        C = bazaar.conf.Persistence('C')
+        C.addColumn('c1')
+        C.addColumn('c2')
+
+        D = bazaar.conf.Persistence('D', bases = (B, C))
+        D.addColumn('d1')
+        D.addColumn('d2')
+
+        self.assertEqual(list(B.__bases__), [A])
+
+        d_bases = list(D.__bases__)
+        d_bases.sort()
+        self.assertEqual(d_bases, [B, C])
+
+        a_cols = A.getColumns().keys()
+        a_cols.sort()
+
+        self.assertEqual(a_cols, ['a1', 'a2'])
+
+        b_cols = B.getColumns().keys()
+        b_cols.sort()
+        self.assertEqual(b_cols, ['a1', 'a2', 'b1', 'b2'])
+
+        c_cols = C.getColumns().keys()
+        c_cols.sort()
+
+        self.assertEqual(c_cols, ['c1', 'c2'])
+
+        d_cols = D.getColumns().keys()
+        d_cols.sort()
+        self.assertEqual(d_cols, ['a1', 'a2', 'b1', 'b2', 'c1', 'c2', 'd1', 'd2'])
+
 
 class AssociationTestCase(unittest.TestCase):
     """
@@ -89,27 +131,27 @@ class AssociationTestCase(unittest.TestCase):
         cls_list = (A, B, C)
 
         A.addColumn('a3', 'a3_fkey', B)
-        bzr = bazaar.core.Bazaar(cls_list, app.db_module)
+        bzr = bazaar.core.Bazaar(cls_list, app.dbmod)
         check(A, 'a3', bazaar.assoc.OneToOne, 'uni-directional one-to-one')
 
         A.addColumn('a5', 'a5_fkey', B, vattr = 'b5')
         B.addColumn('b5', 'b5_fkey', A, vattr = 'a5')
-        bzr = bazaar.core.Bazaar(cls_list, app.db_module)
+        bzr = bazaar.core.Bazaar(cls_list, app.dbmod)
         check(A, 'a5', bazaar.assoc.BiDirOneToOne, 'bi-directional one-to-one')
         check(B, 'b5', bazaar.assoc.BiDirOneToOne, 'bi-directional one-to-one')
 
         A.addColumn('a6', 'a61', B, 'a__b', 'b61')
-        bzr = bazaar.core.Bazaar(cls_list, app.db_module)
+        bzr = bazaar.core.Bazaar(cls_list, app.dbmod)
         check(A, 'a6', bazaar.assoc.List, 'uni-directional many-to-many')
 
         A.addColumn('a7', vcls = B, vcol = 'b71', vattr = 'b7')
         B.addColumn('b7', 'b71', A, vattr = 'a7')
-        bzr = bazaar.core.Bazaar(cls_list, app.db_module)
+        bzr = bazaar.core.Bazaar(cls_list, app.dbmod)
         check(A, 'a7', bazaar.assoc.OneToMany, 'many side bi-dir one-to-many')
         check(B, 'b7', bazaar.assoc.BiDirOneToOne, 'one side bi-dir one-to-many')
 
         A.addColumn('a8', vcls = B, vcol = 'b81', vattr = 'b8')
         B.addColumn('b8', 'b81', A, vattr = 'a8')
-        bzr = bazaar.core.Bazaar((C, B, A), app.db_module)
+        bzr = bazaar.core.Bazaar((C, B, A), app.dbmod)
         check(A, 'a8', bazaar.assoc.OneToMany, 'many side bi-dir one-to-many')
         check(B, 'b8', bazaar.assoc.BiDirOneToOne, 'one side bi-dir one-to-many')

@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.14 2003/10/01 14:29:00 wrobell Exp $
+# $Id: core.py,v 1.15 2003/11/23 23:39:18 wrobell Exp $
 
 import unittest
 
@@ -33,7 +33,7 @@ class ObjectLoadTestCase(btest.DBBazaarTestCase):
         for cls in self.cls_list:
             self.bazaar.getObjects(cls)
 
-        dbc = self.bazaar.motor.db_conn.cursor()
+        dbc = self.bazaar.motor.conn.cursor()
         # change data in database
         dbc.execute('update article set price = price * 2')
         dbc.execute('update order_item set quantity = quantity * 2')
@@ -57,7 +57,7 @@ class ObjectLoadTestCase(btest.DBBazaarTestCase):
         for cls in self.cls_list:
             self.bazaar.getObjects(cls)
 
-        dbc = self.bazaar.motor.db_conn.cursor()
+        dbc = self.bazaar.motor.conn.cursor()
         # change data in database
         dbc.execute('update article set price = price * 2')
         dbc.execute('update order_item set quantity = quantity * 2')
@@ -84,7 +84,7 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
     def testObjectAdding(self):
         """Test adding objects into database"""
 
-        dbc = self.bazaar.motor.db_conn.cursor()
+        dbc = self.bazaar.motor.conn.cursor()
 
         # add and check order object
         order = app.Order()

@@ -1,4 +1,4 @@
-# $Id: main.py,v 1.11 2003/11/23 20:33:00 wrobell Exp $
+# $Id: main.py,v 1.12 2003/11/23 23:39:18 wrobell Exp $
 
 import unittest
 import logging.config
@@ -6,7 +6,7 @@ import logging.config
 """
 Bazaar module test suites runner.
 
-@var db_module: Python Database API module.
+@var dbmod: Python Database API module.
 @var dsn: Database source name (as specified in Python DB API Specification).
 """
 
@@ -19,10 +19,10 @@ if __name__ == '__main__':
         print """\
 All test suites for Bazaar module.
 
-usage: main.py db_module dsn [tests...]
+usage: main.py dbmod dsn [tests...]
 
 options:
-    db_module   Python DB API 2.0 module
+    dbmod   Python DB API 2.0 module
     dsn         database connection parameters
 
 examples:
@@ -34,7 +34,7 @@ examples:
         sys.exit(1)
 
     import app
-    app.db_module = __import__(sys.argv[1])
+    app.dbmod = __import__(sys.argv[1])
     app.dsn = sys.argv[2]
 
     del sys.argv[1:3]

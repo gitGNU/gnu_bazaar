@@ -1,4 +1,4 @@
-# $Id: btest.py,v 1.13 2003/11/23 20:33:00 wrobell Exp $
+# $Id: btest.py,v 1.14 2003/11/23 23:39:18 wrobell Exp $
 
 import unittest
 
@@ -18,7 +18,7 @@ class BazaarTestCase(unittest.TestCase):
         Create Bazaar layer object.
         """
         self.cls_list = (app.Order, app.Employee, app.Article, app.OrderItem, app.Boss, app.Department)
-        self.bazaar = bazaar.core.Bazaar(self.cls_list, db_module = app.db_module)
+        self.bazaar = bazaar.core.Bazaar(self.cls_list, dbmod = app.dbmod)
 
 
 class DBBazaarTestCase(BazaarTestCase):
@@ -79,7 +79,7 @@ class DBBazaarTestCase(BazaarTestCase):
             }
         }
 
-        dbc = self.bazaar.motor.db_conn.cursor()
+        dbc = self.bazaar.motor.conn.cursor()
 
         query = 'select "__key__", %s from "%s"' \
                 % (', '.join(['"%s"' % col for col in params[cls]['cols']]), params[cls]['relation'])
@@ -171,7 +171,7 @@ class DBBazaarTestCase(BazaarTestCase):
                 mem_data.append((obj.__key__, val.__key__))
         mem_data.sort()
 
-        dbc = self.bazaar.motor.db_conn.cursor()
+        dbc = self.bazaar.motor.conn.cursor()
         dbc.execute(query)
         db_data = dbc.fetchall()
         db_data.sort()

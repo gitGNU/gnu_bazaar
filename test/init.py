@@ -1,4 +1,4 @@
-# $Id: init.py,v 1.5 2003/09/22 00:43:43 wrobell Exp $
+# $Id: init.py,v 1.6 2003/11/23 23:39:18 wrobell Exp $
 
 import unittest
 
@@ -23,7 +23,7 @@ class InitTestCase(unittest.TestCase):
 
         cls_list = (app.Order, app.Employee, app.Article, app.OrderItem)
 
-        b = bazaar.core.Bazaar(cls_list, app.db_module)
+        b = bazaar.core.Bazaar(cls_list, app.dbmod)
 
         self.assertNotEqual(b.motor, None, 'Motor object does not exist')
         self.assert_(isinstance(b.motor, bazaar.motor.Motor), 'Motor object class mismatch')
@@ -33,7 +33,7 @@ class InitTestCase(unittest.TestCase):
             self.assertEqual(cls, b.brokers[cls].cls, 'broker class mismatch')
 
         # there should be no connection, now
-        self.assert_(not b.motor.db_conn, 'there should be no db connection')
+        self.assert_(not b.motor.conn, 'there should be no db connection')
 
 
     def testConnection(self):
@@ -43,8 +43,8 @@ class InitTestCase(unittest.TestCase):
         cls_list = (app.Order, app.Employee, app.Article, app.OrderItem)
 
         # init bazaar layer with connection
-        b = bazaar.core.Bazaar(cls_list, app.db_module, app.dsn)
-        self.assert_(b.motor.db_conn, 'db connection is missing')
+        b = bazaar.core.Bazaar(cls_list, dsn = app.dsn, dbmod = app.dbmod)
+        self.assert_(b.motor.conn, 'db connection is missing')
         
         # simple query
-        b.motor.db_conn.cursor().execute('begin; rollback')
+        b.motor.conn.cursor().execute('begin; rollback')

@@ -1,4 +1,4 @@
-# $Id: find.py,v 1.1 2003/11/22 14:27:17 wrobell Exp $
+# $Id: find.py,v 1.2 2003/11/23 23:39:18 wrobell Exp $
 
 import unittest
 
@@ -26,7 +26,7 @@ class FindTestCase(btest.DBBazaarTestCase):
         """
         objs.sort(lambda o1, o2: cmp(o1.__key__, o2.__key__))
 #        print [o.__key__ for o in objs]
-        dbc = self.bazaar.motor.db_conn.cursor()
+        dbc = self.bazaar.motor.conn.cursor()
         dbc.execute(query)
         row = dbc.fetchone()
         self.assertEqual(len(objs), dbc.rowcount)

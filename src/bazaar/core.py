@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.22 2003/11/23 20:33:00 wrobell Exp $
+# $Id: core.py,v 1.23 2003/11/23 23:39:18 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -190,12 +190,12 @@ class Bazaar:
     @ivar brokers: Dictionary of brokers. Brokers are mapped with its class application.
     @ivar dsn: Python DB API database source name.
     @ivar cls_list: List of application classes.
-    @ivar db_module: Python DB API module.
+    @ivar dbmod: Python DB API module.
 
     @see: L{Broker} L{bazaar.motor.Motor}
     """
 
-    def __init__(self, cls_list, config = None, dsn = '', db_module = None):
+    def __init__(self, cls_list, config = None, dsn = '', dbmod = None):
         """
         Start the Bazaar layer.
 
@@ -203,7 +203,7 @@ class Bazaar:
         created.
 
         @param cls_list: List of application classes.
-        @param db_module: Python DB API module.
+        @param dbmod: Python DB API module.
         @param dsn: Database source name.
 
         @see: L{bazaar.core.Bazaar.connectDB}
@@ -211,7 +211,7 @@ class Bazaar:
         self.cls_list = cls_list
         self.config = config
         self.dsn = dsn
-        self.db_module = db_module
+        self.dbmod = dbmod
 
         if config is not None:
             self.parseConfig(config)
@@ -228,7 +228,7 @@ class Bazaar:
         """
         Initialize the Bazaar layer.
         """
-        self.motor = bazaar.motor.Motor(self.db_module)
+        self.motor = bazaar.motor.Motor(self.dbmod)
         self.brokers = {}
 
         # first, kill existing associations
@@ -325,7 +325,7 @@ class Bazaar:
         """
         dbmod = config.getDBModule()
         if dbmod is not None:
-            self.db_module = __import__(dbmod)
+            self.dbmod = __import__(dbmod)
 
         dsn = config.getDSN()
         if dsn is not None: self.dsn = dsn

@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.19 2003/10/15 15:46:39 wrobell Exp $
+# $Id: assoc.py,v 1.20 2003/11/23 23:39:18 wrobell Exp $
 
 import app
 import btest
@@ -126,7 +126,7 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
         ord1.no = 1002
         ord1.finished = False
         emp.orders.append(ord1)
-        self.assertRaises(app.db_module.ProgrammingError, emp.orders.update)
+        self.assertRaises(app.dbmod.ProgrammingError, emp.orders.update)
         self.bazaar.rollback()
 
         self.assertRaises(bazaar.exc.AssociationError, emp.orders.append, None)
