@@ -1,4 +1,4 @@
-# $Id: btest.py,v 1.15 2003/11/26 00:16:48 wrobell Exp $
+# $Id: btest.py,v 1.16 2004/01/21 23:06:28 wrobell Exp $
 
 import unittest
 
@@ -18,7 +18,8 @@ class BazaarTestCase(unittest.TestCase):
         Create Bazaar layer object.
         """
         self.cls_list = (app.Order, app.Employee, app.Article, app.OrderItem, app.Boss, app.Department)
-        self.bazaar = bazaar.core.Bazaar(self.cls_list, dbmod = app.dbmod)
+        self.bazaar = bazaar.core.Bazaar(self.cls_list, dbmod = app.dbmod, \
+            seqpattern = "select nextval('%s')") # fixme pgsql dependent
 
 
 class DBBazaarTestCase(BazaarTestCase):
@@ -91,7 +92,7 @@ class DBBazaarTestCase(BazaarTestCase):
 
         if amount is not None:
             self.assertEqual(amount, dbc.rowcount, \
-                'objects count: %d, row count: %d' % (amount, dbc.rowcount))
+                'class %s: objects: %d, rows: %d' % (cls, amount, dbc.rowcount))
 
         row = dbc.fetchone()
         while row:
@@ -149,16 +150,6 @@ class DBBazaarTestCase(BazaarTestCase):
 
     def getCache(self, cls):
         return self.bazaar.brokers[cls].cache
-
-
-    def findObj(self, cls, data):
-        attrs = tuple([attr for attr in data])
-        for obj in self.bazaar.getObjects(cls):
-            data_val = tuple([data[attr] for attr in attrs])
-            obj_val = tuple([getattr(obj, attr) for attr in attrs])
-            if obj_val == data_val:
-                return obj
-        return None
 
 
     def checkListAsc(self, cls, attr, query):

@@ -1,6 +1,29 @@
-# $Id: cache.py,v 1.9 2003/11/26 02:56:01 wrobell Exp $
+# $Id: cache.py,v 1.10 2004/01/21 23:06:28 wrobell Exp $
 """
-Cache classes for application objects.
+Cache and reference buffer classes.
+
+Cache classes are used to buffer objects and association data loaded from
+database. There are two types of cache:
+    - full:
+        - objects - all objects of their class are loaded from database at
+          once
+        - association data - all data (for all application objects of given
+          relationship between two classes) are loaded from database at
+          once
+    - lazy:
+        - objects - only one object is loaded from database
+        - association data - data are loaded for given application object
+
+Cache and buffer classes are dictionaries. A dictionary contains pairs of
+primary key value and object identified by the primary key (object cache)
+or application object and set of primary key values of referenced objects
+(one-to-many and many-to-many association data cache).
+
+Reference buffers contains objects, which does not have priamry key values
+(are not in database).
+
+Every class and association has its own cache, which is configurable, see
+L{bazaar.config} module documentation.
 """
 
 import weakref
@@ -22,7 +45,8 @@ class ReferenceBuffer(weakref.WeakKeyDictionary):
 
     It is dictionary with application objects as keys and referenced
     objects as values.
-    @see: l{bazaar.assoc.ListReferenceBuffer}
+
+    @see: L{bazaar.cache.ListReferenceBuffer}
     """
     def __contains__(self, item):
         """
@@ -58,12 +82,13 @@ class ListReferenceBuffer(ReferenceBuffer):
     """
     def __contains__(self, item):
         """
-        Check if application object referenced objects are in reference
-        buffer. Operator ``in'' can be used in two ways::
+        Check if object is in reference buffer. Operator C{in} can be used
+        in two ways::
 
             # buffer contains minimum one referenced value by application
             # object obj (len(ref_buf[obj]) > 0):
             obj in ref_buf
+            # or
             (obj, None) in ref_buf
 
             # referenced object value is referenced by obj and exists in
@@ -124,10 +149,9 @@ class ListReferenceBuffer(ReferenceBuffer):
 
 
 
-
 class Cache:
     """
-    Abstract, basic class for different object caches.
+    Abstract, basic class for different data caches.
 
     @ivar owner: Owner of the cache - object broker or association object.
     """
@@ -156,9 +180,15 @@ class Cache:
         raise NotImplementedError
 
 
+
 class Full(Cache, dict):
     """
     Abstract, basic cache class for loading all objects and association data.
+
+    @cvar empty: Is returned by L{__getitem__} method when referenced object or
+    association data are not found in cache.
+
+    @see: L{bazaar.cache.FullObject} L{bazaar.cache.FullAssociation}
     """
     def __init__(self, param):
         Cache.__init__(self, param)
@@ -171,6 +201,11 @@ class Full(Cache, dict):
         Return referenced object or association data.
 
         @param param: Referenced object primary key value or application object.
+
+        @return: Referenced object or association data (depends on cache type).
+            If data is not found then C{None} or empty set is returned.
+
+        @see: L{bazaar.cache.FullObject} L{bazaar.cache.FullAssociation}
         """
         if self.owner.reload:
             self.load(param)
@@ -182,6 +217,10 @@ class Full(Cache, dict):
 
 
 class FullObject(Full):
+    """
+    Cache class for loading all objects of application class from database.
+    """
+
     empty = None
 
     def load(self, key):
@@ -197,7 +236,7 @@ class FullObject(Full):
 
 class FullAssociation(Full):
     """
-    Cache for loading all association data from database.
+    Cache for loading all association data of relationship from database.
     """
 
     empty = sets.Set()
@@ -217,6 +256,9 @@ class Lazy(Cache):
     """
     Abstract, basic cache class for lazy objects and association data
     loading.
+
+    @ivar dicttype: Weak dictionary superclass, i.e. C{WeakValueDictionary}
+        or C{WeakKeyDictionary}.
     """
     def __getitem__(self, param):
         """
@@ -262,7 +304,7 @@ class LazyObject(Lazy, weakref.WeakValueDictionary):
 
 class LazyAssociation(Lazy, weakref.WeakKeyDictionary):
     """
-    Cache for lazy loading all association data from database.
+    Cache for lazy loading of association data from database.
     """
     def __init__(self, owner):
         """
@@ -276,6 +318,13 @@ class LazyAssociation(Lazy, weakref.WeakKeyDictionary):
 
 
     def load(self, obj):
+        """
+        Load association data from database for application object C{obj}.
+
+        @param obj: Application object.
+
+        @return: Loaded association data from database.
+        """
         assert self.owner is not None
         data = sets.Set()
         for vkey in self.owner.broker.convertor.getAscData(self.owner, obj):

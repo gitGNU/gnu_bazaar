@@ -1,6 +1,53 @@
-# $Id: config.py,v 1.1 2003/11/23 20:33:00 wrobell Exp $
+# $Id: config.py,v 1.2 2004/01/21 23:06:28 wrobell Exp $
 """
 Module contains basic classes for Bazaar layer configuration.
+
+Bazaar layer is configurable. It is possible to specify several parameters
+in configuration file such as DB-API module, database connection string,
+cache classes, relations, etc.
+
+All parameters are presented in table below::
+
+    +-----------------------------------------------------------------------------+
+    |Group         | Section     | Parameter       | Default value                |
+    +-----------------------------------------------------------------------------+
+    | basic        | bazaar      | module          |          ---                 |
+    |              |             | dsn             |          ---                 |
+    |              |             | seqpattern      | select nextval for %s        |
+    +-----------------------------------------------------------------------------+
+    | classes      | bazaar.cls  | <cls>.relation  | application class name       |
+    |              |             | <cls>.sequencer | <cls>.relation + '_seq'      |
+    |              |             | <cls>.cache     | bazaar.cache.FullObject      |
+    +-----------------------------------------------------------------------------+
+    | associations | bazaar.asc  | <attr>.cache    | bazaar.cache.FullAssociation |
+    +-----------------------------------------------------------------------------+
+
+Sample configuration file using L{bazaar.config.CPConfig} class::
+
+    [bazaar]
+    dsn:        dbname = ord port = 5433
+    module:     psycopg
+    seqpattern: select nextval('%s');
+
+    [bazaar.cls]
+    app.Article.sequencer: article_seq
+    app.Article.relation:  article
+    app.Article.cache:     bazaar.cache.FullObject
+    app.OrderItem.cache:   bazaar.cache.LazyObject
+
+    [bazaar.asc]
+    app.Department.boss.cache: bazaar.cache.FullAssociation
+    app.Order.items.cache:     bazaar.cache.LazyAssociation
+
+
+It is possible to implement different configuration classes. This module
+contains abstract config class L{bazaar.config.Config}. Class
+L{bazaar.config.CPConfig} loads Bazaar configuration with C{ConfigParser}
+class (ini files). Every configuration class method returns an option
+or C{None} if specified parameter is not found in config source.
+
+Of course, it is possible to implement other configuration classes, i.e.
+for U{GConf<http://www.gnome.org/projects/gconf/>} configuration system.
 """
 
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
@@ -19,8 +66,8 @@ class Config(object):
     def getSeqPattern(self):
         """
         Return pattern of SQL query, which is used to get next value of
-        application object's primary key value, i.e.
-        C{select nextval('%s')}, where C{%s} means name of sequencer.
+        application object's primary key value, i.e.  C{select nextval('%s')},
+        where C{%s} means name of sequencer.
         """
         raise NotImplementedError
 

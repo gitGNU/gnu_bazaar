@@ -1,4 +1,4 @@
--- $Id: init.sql,v 1.9 2003/10/16 17:59:38 wrobell Exp $
+-- $Id: init.sql,v 1.10 2004/01/21 23:06:28 wrobell Exp $
 
 create sequence order_seq;
 create table "order" (
@@ -53,24 +53,20 @@ create table employee_orders (
     foreign key ("order") references "order"(__key__)
 );
 
-create sequence boss_seq;
 create table boss (
-    __key__     integer,
--- --     __key__     integer default nextval('boss_seq'),
-    dep_fkey     integer,
-    primary key (__key__)
+    dep_fkey     integer
 --  see below
 --    foreign key (dep_fkey) references department(__key__) initially deferred
-);
+) inherits(employee);
 
 
 create sequence department_seq;
 create table department (
     __key__     integer,
 -- --     __key__     integer default nextval('department_seq'),
-    boss_fkey    integer,
-    primary key (__key__),
-    foreign key (boss_fkey) references boss(__key__) initially deferred
+    boss_fkey    integer unique,
+    primary key (__key__)
+--    foreign key (boss_fkey) references boss(__key__) initially deferred
 );
 
 alter table boss add foreign key (dep_fkey) references department(__key__) initially deferred;

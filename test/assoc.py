@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.22 2003/12/01 17:46:59 wrobell Exp $
+# $Id: assoc.py,v 1.23 2004/01/21 23:06:28 wrobell Exp $
 
 import app
 import btest
@@ -29,10 +29,10 @@ class OneToOneAssociationTestCase(btest.DBBazaarTestCase):
         """Test one-to-one association updating"""
         self.bazaar.getObjects(app.Boss)
         self.bazaar.getObjects(app.Department)
-        b1 = self.getCache(app.Boss)[1000]
-        b2 = self.getCache(app.Boss)[1001]
-        d1 = self.getCache(app.Department)[1000]
-        d2 = self.getCache(app.Department)[1001]
+        b1 = self.getCache(app.Boss)[1001]
+        b2 = self.getCache(app.Boss)[1002]
+        d1 = self.getCache(app.Department)[1001]
+        d2 = self.getCache(app.Department)[1002]
         self.assertEqual(b1.department, d1, 'one-to-one associations data mismatch')
         self.assertEqual(d1.boss, b1, 'one-to-one associations data mismatch')
         self.assertEqual(b2.department, d2, 'one-to-one associations data mismatch')

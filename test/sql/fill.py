@@ -1,14 +1,11 @@
 #!/usr/bin/python
 
-# $Id: fill.py,v 1.10 2003/10/15 15:46:39 wrobell Exp $
+# $Id: fill.py,v 1.11 2004/01/21 23:06:28 wrobell Exp $
 
 import sys
 import random
 import psycopg
 import sets
-import logging
-
-log = logging.getLogger('fill')
 
 AMOUNT_EMPLOYEE = 10
 AMOUNT_ORDER    = 10
@@ -130,12 +127,12 @@ insert(db, ObjectRow('article', {'__key__': 1000, 'name': 'article', 'price': ra
 insert(db, ObjectRow('order', {'__key__': 1000, 'no': 1001, 'finished': 'false' }))
 insert(db, ObjectRow('employee', {'__key__': 1000, 'name': 'n1001', 'surname': 's1001', 'phone': '1001'}))
 
-insert(db, ObjectRow('boss', {'__key__': 1000, 'dep_fkey': 1000}))
-insert(db, ObjectRow('boss', {'__key__': 1001, 'dep_fkey': 1001}))
-insert(db, ObjectRow('department', {'__key__': 1000, 'boss_fkey': 1000}))
+insert(db, ObjectRow('boss', {'__key__': 1001, 'dep_fkey': 1001, 'name': 'name0', 'surname': 'surname0', 'phone': 'phone0'}))
+insert(db, ObjectRow('boss', {'__key__': 1002, 'dep_fkey': 1002, 'name': 'name1', 'surname': 'surname1', 'phone': 'phone1'}))
 insert(db, ObjectRow('department', {'__key__': 1001, 'boss_fkey': 1001}))
+insert(db, ObjectRow('department', {'__key__': 1002, 'boss_fkey': 1002}))
 
-for rel in ['order', 'employee', 'article', 'order_item', 'boss', 'department']:
+for rel in ['order', 'employee', 'article', 'order_item', 'department']:
     db.cursor().execute('select setval(\'%s_seq\', max(__key__)) from "%s"' % (rel, rel))
 
 db.commit()

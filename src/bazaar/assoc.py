@@ -1,6 +1,60 @@
-# $Id: assoc.py,v 1.44 2003/11/26 13:36:21 wrobell Exp $
+# $Id: assoc.py,v 1.45 2004/01/21 23:06:28 wrobell Exp $
 """
 Association classes.
+
+There are several types of associations:
+    - one-to-one
+    - one-to-many
+    - many-to-many
+
+All of them can be:
+    - uni-directional
+    - bi-directional
+
+Defining associations between application classes is described in
+documentation of L{bazaar.conf} module.
+
+Referenced objects are accessed in object-oriented manner::
+
+    # create objects
+    ord = Order()
+    oi  = OrderItem()
+    art = Article()
+
+    # assign reference
+    oi.article = art
+
+    # append object reference to list of objects of one-to-many association
+    ord.items.append(oi)
+
+    for oi in ord.items:
+        print oi.article
+
+
+Getting object reference (C{oi.article}) or iterator of referenced objects
+(C{ord.items}) is performed with descriptors (see below). Iterator of
+objects is implemented with L{bazaar.assoc.ObjectIterator} class. The class
+makes possible operating on objects, i.e. appending objects into
+relationship.
+
+One side of specific relationship is realized with one class descriptor::
+
+    +------------------------------------------------------------------------+
+    | Association  |   Uni-directional   |          Bi-directional           |
+    +------------------------------------------------------------------------+
+    |              |     A    |    B     |         A       |        B        |
+    +------------------------------------------------------------------------+
+    | one-to-one   | OneToOne | OneToOne | BiDirOneToOne   | BiDirOneToOne   |
+    | one-to-many  | OneToOne | ---      | OneToMany       | BiDirOneToOne   |
+    | many-to-many | List     | List     | BiDirManyToMany | BiDirManyToMany |
+    +------------------------------------------------------------------------+
+
+where::
+
+    A < 1 ------ 1 > B         one-to-one
+    A < 1 ------ * > B         one-to-many
+    A < * ------ * > B         many-to-many
+
 """
 
 import sets
@@ -40,14 +94,15 @@ def juggle(obj, value, app, rem):
 
 class ObjectIterator(object):
     """
-    Iterator of referenced objects.
+    Iterator of referenced objects of one-to-many and many-to-many
+    associations.
 
     The iterator is used to append, remove and update referenced
     objects, which are associated with application object.
 
-    For example, to print article of order items::
+    For example, to print articles of order's items::
 
-        items = order.items
+        items = order.items    # get ObjectIterator object
         for oi in items:
             print oi.article
 
@@ -64,8 +119,7 @@ class ObjectIterator(object):
 
     def __init__(self, obj, association):
         """
-        Create iterator of reference objects.
-
+        Create iterator of referenced objects.
 
         @param obj: Application object.
         @param association: One-to-many or many-to-many association object.
@@ -78,9 +132,9 @@ class ObjectIterator(object):
 
     def __iter__(self):
         """
-        Iterate all referenced objects.
+        Iterator interface method.
 
-        @return: Iterator of all referenced objects.
+        @return: Iterator of all referenced objects got from association object.
         """
         return self.association.iterObjects(self.obj)
 
@@ -88,6 +142,11 @@ class ObjectIterator(object):
     def append(self, value):
         """
         Associate referenced object with application object.
+
+        Method works for bi-directional associations, too::
+
+            oi = OrderItem()
+            order.items.append(oi)        # oi.order == oi
 
         Referenced object cannot be C{None}.
 
@@ -108,7 +167,7 @@ class ObjectIterator(object):
 
     def update(self):
         """
-        Update association data for application object.
+        Update association data in database.
         """
         self.association.update(self.obj)
 
@@ -116,6 +175,14 @@ class ObjectIterator(object):
     def remove(self, value):
         """
         Remove referenced object from association.
+
+        Method works for bi-directional associations, too::
+
+            order.items.remove(oi)        # oi.order == None
+
+        or::
+            
+            del order.items[oi]           # oi.order == None
 
         Referenced object cannot be C{None}.
 
@@ -161,11 +228,11 @@ class ObjectIterator(object):
 
 class AssociationReferenceProxy(object):
     """
-    Association reference proxy abstract class for application objects. 
+    Association reference proxy class for application objects. 
 
     Reference proxy allows to get (upon foreign key value of object's column)
     and set (upon primary key value of referenced object) reference to
-    other application object.
+    other application object (referenced object).
 
     There should be one reference proxy object per association between
     application classes.
@@ -245,6 +312,8 @@ class AssociationReferenceProxy(object):
 
         @param obj: Application object.
         @param vkey: Referenced object primary key value.
+
+        @see: L{bazaar.assoc.List} L{bazaar.assoc.OneToOne}
         """
         raise NotImplementedError
 
@@ -254,13 +323,12 @@ class OneToOne(AssociationReferenceProxy):
     """
     Class for uni-directional one-to-one association descriptors.
 
-    @see: L{bazaar.assoc.AssociationReferenceProxy}
-    @see: L{bazaar.assoc.BiDirOneToOne}
+    @see: L{bazaar.assoc.AssociationReferenceProxy} L{bazaar.assoc.BiDirOneToOne}
     """
 
     def __get__(self, obj, cls):
         """
-        Descriptor method to retrieve reference of referenced object for
+        Descriptor interface method to retrieve reference of referenced object for
         application object.
 
         @param obj: Application object.
@@ -292,7 +360,7 @@ class OneToOne(AssociationReferenceProxy):
 
     def __set__(self, obj, value):
         """
-        Descriptor method to set application object's attribute and foreign
+        Descriptor interface method to set application object's attribute and foreign
         key values.
 
         This method is optimized for uni-directional one-to-one association.
@@ -315,6 +383,8 @@ class OneToOne(AssociationReferenceProxy):
 class BiDirOneToOne(OneToOne):
     """
     Bi-directional one-to-one association descriptor.
+
+    @see: L{AssociationReferenceProxy} L{OneToOne}
     """
     def __set__(self, obj, value):
         """
@@ -347,9 +417,6 @@ class BiDirOneToOne(OneToOne):
         Method is called by second association object from bi-directional
         relationship.
         
-        Application object is referenced object in second association
-        object.
-
         @param obj: Application object.
         @param value: Referenced object.
         """
@@ -366,9 +433,6 @@ class BiDirOneToOne(OneToOne):
 
         Method is called by second association object from bi-directional
         relationship.
-        
-        Application object is referenced object in second association
-        object.
 
         @param obj: Application object.
         @param value: Referenced object.
@@ -395,54 +459,10 @@ class List(AssociationReferenceProxy):
         database.
     @ivar appended: Sets of referenced objects appended to association.
     @ivar removed: Sets of referenced objects removed from association.
-
-    @todo: Referenced objects' primary key values and referenced objects with
-    undefinded primary key values are stored with sets internally.
-    Sets are good where list of referenced objects is long enough.
-    Consider the script::
-
-        #!/bin/sh
-        echo amount: $1
-        echo lists:
-        python /usr/lib/python2.3/timeit.pyo -s "amount = $1; x = range(amount)" -n 10000 "amount in x"
-        echo sets:
-        python /usr/lib/python2.3/timeit.pyo -s "import sets; amount = $1; x = sets.Set(range(amount))" -n 10000 "amount in x"
-
-
-    Test results::
-
-        amount: 10
-        lists: 10000 loops, best of 3: 5.4 usec per loop
-        sets:  10000 loops, best of 3: 17.4 usec per loop
-
-        amount: 25
-        lists: 10000 loops, best of 3: 11.5 usec per loop
-        sets:  10000 loops, best of 3: 17.9 usec per loop
-
-        amount: 50
-        lists: 10000 loops, best of 3: 21.8 usec per loop
-        sets:  10000 loops, best of 3: 17.5 usec per loop
-
-        amount: 100
-        lists: 10000 loops, best of 3: 42.7 usec per loop
-        sets:  10000 loops, best of 3: 17.3 usec per loop
-
-
-    Creating set costs more comparing to creating list::
-
-        $ timeit -s 'from sets import Set' -n 100000 'x = Set()'
-        100000 loops, best of 3: 21.5 usec per loop
-
-        $ timeit -s 'from sets import Set' -n 100000 'x = list()'
-        100000 loops, best of 3: 4.5 usec per loop
-
-    Conclusion. Store referenced objects with lists internally by
-    default and make configuration option, so switching to sets is
-    possible or always use sets so system is scalable.
     """
     def __init__(self, col):
         """
-        Create descriptor for one-to-many and one-to-one associations.
+        Create descriptor for one-to-many and many-to-many associations.
 
         @param col: Referenced application object's class column.
 
@@ -477,9 +497,13 @@ class List(AssociationReferenceProxy):
         Descriptor method to get iterator of referenced objects.
 
         For example, to get list of all referenced objects
-        by order C{ord} (items is the descriptor)::
+        of specific order C{ord} (items is the descriptor)::
 
-            order_item_list = [ord.items]
+            order_item_list = list(ord.items)
+
+        or to get a set::
+
+            order_item_set = sets.Set(ord.items)
 
 
         @param obj: Application object.
@@ -530,7 +554,7 @@ class List(AssociationReferenceProxy):
         Referenced object's primary key value is taken from database with
         appropriate convertor methods.
         
-        @see: L{getPairFromBroker} L{bazaar.motor.Convertor.getPair}
+        @see: L{bazaar.motor.Convertor.getAscData}
         """
         for item in self.broker.convertor.getAllAscData(self):
             yield item
@@ -557,7 +581,7 @@ class List(AssociationReferenceProxy):
         """
         Load association data from database.
 
-        @see: L{reloadData} L{getPair} L{appendKey}
+        @see: L{reloadData} L{appendKey}
         """
         log.info('load association %s.%s' % (self.broker.cls, self.col.attr))
 
@@ -600,30 +624,32 @@ class List(AssociationReferenceProxy):
             return getObjects()
 
 
-    def delPair(self, pairs):
+    def delAscData(self, pairs):
         """
         Remove pair of application object's and referenced object's primary
-        key values from m-n relationship's database link relation.
+        key values from database.
 
-        @see: L{addPairWithDB} L{update}
+        @see: L{update}
         """
-        self.broker.convertor.delPair(self, pairs)
+        self.broker.convertor.delAscData(self, pairs)
 
 
-    def addPair(self, pairs):
+    def addAscData(self, pairs):
         """
         Add pair of application object's and referenced object's primary
-        key values into m-n relationship's database link relation.
+        key values into database.
 
-        @see: L{delPairWithDB} L{update}
+        @see: L{update}
         """
-        self.broker.convertor.addPair(self, pairs)
+        self.broker.convertor.addAscData(self, pairs)
 
 
-    def updateablePair(self, obj, value):
+    def updateableAscData(self, obj, value):
         """
         Return pair of application object's and referenced object's primary
         key values.
+
+        The data will be used to update relationship in database.
 
         @see: L{update}
         """
@@ -632,22 +658,23 @@ class List(AssociationReferenceProxy):
 
     def update(self, obj):
         """
-        Update relational data of association of given application object
-        in database.
+        Update in database relational data of association of given
+        application object.
 
         @param obj: Application object.
 
-        @see: L{updateReferencedObjects} L{addReferencedObjects} L{delReferencedObjects}
-            L{addPairWithDB} L{delPairWithDB} L{getObjectPair} L{getKeyPair}
+        @see: L{bazaar.assoc.OneToMany.updateReferencedObjects}
+            L{bazaar.assoc.OneToMany.addReferencedObjects}
+            L{bazaar.assoc.OneToMany.delReferencedObjects}
         """
-        def getPairs(set):
+        def getAscData(set):
             if obj in set:
                 for value in set[obj]:
-                    yield self.updateablePair(obj, value)
+                    yield self.updateableAscData(obj, value)
                 set[obj].clear()
 
-        self.delPair(getPairs(self.removed))
-        self.addPair(getPairs(self.appended))
+        self.delAscData(getAscData(self.removed))
+        self.addAscData(getAscData(self.appended))
 
 
     def append(self, obj, value):
@@ -720,9 +747,8 @@ class List(AssociationReferenceProxy):
 
 class BiDirList(List):
     """
-    Bi-directional one-to-many association descriptor.
-
-    One-to-many association is always bi-directional relationship.
+    Basic bi-directional one-to-many and many-to-many association
+    descriptor.
     """
     def append(self, obj, value):
         """
@@ -773,6 +799,9 @@ class BiDirList(List):
 
 
 class BiDirManyToMany(BiDirList):
+    """
+    Bi-directional many-to-many association descriptor.
+    """
     def appendKey(self, okey, vkey):
         """
         Append referenced object relational data to association data
@@ -789,7 +818,7 @@ class BiDirManyToMany(BiDirList):
         """
         Load association data from database.
 
-        @see: L{reloadData} L{getPair} L{appendKey}
+        @see: L{reloadData} L{appendKey}
         """
         super(BiDirManyToMany, self).loadData()
         self.association.reload = False
@@ -811,6 +840,12 @@ class BiDirManyToMany(BiDirList):
 
 
 class OneToMany(BiDirList):
+    """
+    One-to-many association descriptor.
+
+    One-to-many association defined on "one" side is always bi-directional
+    relationship.
+    """
     def __init__(self, col):
         """
         Create descriptor for one-to-many associations.
@@ -821,11 +856,11 @@ class OneToMany(BiDirList):
         """
         super(OneToMany, self).__init__(col)
         if self.col.update:
-            self.addPair = self.updateReferencedObjects
-            self.delPair = self.updateReferencedObjects
+            self.addAscData = self.updateReferencedObjects
+            self.delAscData = self.updateReferencedObjects
         else:
-            self.addPair = self.addReferencedObjects
-            self.delPair = self.delReferencedObjects
+            self.addAscData = self.addReferencedObjects
+            self.delAscData = self.delReferencedObjects
 
 
     def append(self, obj, value):
@@ -849,9 +884,6 @@ class OneToMany(BiDirList):
         primary key values.
 
         Referenced object is taken from referenced class broker.
-        
-        The method is used as C{List.getPair} method with one-to-many
-        associations.
         """
         for value in self.vbroker.getObjects():
             yield getattr(value, self.col.vcol), value.__key__
@@ -875,7 +907,7 @@ class OneToMany(BiDirList):
         """
         Add referenced objects into database.
 
-        The method is used as C{addPair} method with one-to-many
+        The method is used as C{addAscData} method with one-to-many
         associations when updating relationship.
 
         @see: L{delReferencedObjects} L{updateReferencedObjects} L{update}
@@ -888,7 +920,7 @@ class OneToMany(BiDirList):
         """
         Delete referenced objects from database.
 
-        The method is used as C{delPair} method with one-to-many
+        The method is used as C{delAscData} method with one-to-many
         associations when updating relationship.
 
         @see: L{addReferencedObjects} L{updateReferencedObjects} L{update}
@@ -901,7 +933,7 @@ class OneToMany(BiDirList):
         """
         Update referenced objects in database.
 
-        The method is used as C{addPair} and as C{delPair} with one-to-many
+        The method is used as C{addAscData} and as C{delAscData} with one-to-many
         associations when updating relationship.
 
         @see: L{addReferencedObjects} L{delReferencedObjects} L{update}
@@ -910,9 +942,11 @@ class OneToMany(BiDirList):
             self.vbroker.update(value)
 
 
-    def updateablePair(self, obj, value):
+    def updateableAscData(self, obj, value):
         """
         Return pair of application object and referenced object.
+
+        The data will be used to update association in database.
 
         @see: L{update}
         """

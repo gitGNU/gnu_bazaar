@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.29 2003/11/24 18:42:22 wrobell Exp $
+# $Id: conf.py,v 1.30 2004/01/21 23:06:28 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -30,7 +30,165 @@ Of course, both ideas can be mixed::
     Order.addColumn('no')
     Order.addColumn('finished')
 
-@todo: write tutorial about class configuration
+Associations
+============
+Method L{bazaar.conf.Persistence.addColumn} makes possible to define
+associations between classes (see L{bazaar.assoc} module documentation for
+implementation details).
+
+One-to-one association
+----------------------
+To define one-to-one association between two classes, programmer should
+specify the application class attribute, relation column and referenced
+class. For example, to associate department class with its boss
+(uni-directional relationship)::
+
+    Department.addColumn('boss', 'boss_fkey', Boss)
+
+In case of bi-directional association (where boss is aware of department
+and vice versa)::
+
+    Department.addColumn('boss', 'boss_fkey', Boss, vattr = 'department')
+    Boss.addColumn('department', 'dep_fkey', Department, vattr = 'boss')
+
+Defining bi-directional relationship involves specifing attribute (with
+C{vattr} parameter) of opposite class which glues the whole association.
+
+SQL schema of C{Department} and C{Boss} classes would look like::
+
+    create table boss (
+        __key__      integer,
+        name         varchar(10) not null,
+        surname      varchar(20) not null,
+        phone        varchar(12) not null,
+        dep_fkey     integer unique,
+        unique (name, surname),
+        primary key (__key__)
+        --  see below
+        --    foreign key (dep_fkey) references department(__key__) initially deferred
+    );
+     
+     
+    create sequence department_seq;
+    create table department (
+        __key__      integer,
+        boss_fkey    integer unique,
+        primary key (__key__),
+        foreign key (boss_fkey) references boss(__key__) initially deferred
+    );
+
+    alter table boss add foreign key (dep_fkey) references department(__key__) initially deferred;
+
+
+Many-to-many association
+------------------------
+In relational database many-to-many relationships are created with one
+additional link relation. Therefore, when defining the association,
+programmer should specify following parameters:
+    - attribute name
+    - referenced application class
+    - link relation and its columns
+
+For example, uni-directional many-to-many association between C{Employee}
+and C{Order} classes::
+
+    Employee.addColumn('orders', 'employee', Order, 'employee_orders', 'order')
+
+SQL schema::
+
+    create sequence order_seq;
+    create table "order" (
+        __key__      integer,
+        no           integer not null unique,
+        finished     boolean not null,
+        primary key (__key__)
+    );
+
+    create sequence employee_seq;
+    create table employee (
+        __key__      integer,
+        name         varchar(10) not null,
+        surname      varchar(20) not null,
+        phone        varchar(12) not null,
+        unique (name, surname),
+        primary key (__key__)
+    );
+
+    create table employee_orders (
+        employee         integer,
+        "order"          integer,
+        primary key (employee, "order"),
+        foreign key (employee) references employee(__key__),
+        foreign key ("order") references "order"(__key__)
+    );
+
+
+To define bi-directional association attribute of opposite class, as in
+case of bi-directional one-to-one association, code should be written::
+
+    Employee.addColumn('orders', 'employee' Order, 'employee_orders', 'order', 'employees')
+    Order.addColumn('employees', 'order', Employee, 'employee_orders', 'employee', 'orders')
+
+
+One-to-many association
+-----------------------
+Following SQL schema describes two one-to-many associations::
+
+    create sequence article_seq;
+    create table article (
+        __key__      integer,
+        name         varchar(20) not null,
+        price        numeric(10,2) not null,
+        unique (name),
+        primary key (__key__)
+    );
+     
+    create sequence order_item_seq;
+    create table order_item (
+        __key__      integer,
+        order_fkey   integer,
+        pos          integer not null,
+        article_fkey integer not null,
+        quantity     numeric(10,3) not null,
+        primary key (__key__),
+        unique (order_fkey, pos),
+        foreign key (order_fkey) references "order"(__key__),
+        foreign key (article_fkey) references article(__key__)
+    );
+
+First one is uni-directional relationship between C{Article} and
+C{OrderItem} classes' relations - many order items can be created for one
+article. The relationship should be defined on "many" side with similar
+code as in case of uni-directional one-to-one association::
+    
+    OrderItem.addColumn('article', 'article_fkey', Article)
+
+There is second relationship. Bi-directional association between C{Order}
+and C{OrderItem} classes. The nature of this association due its
+realization excludes uni-directionality. It is because of C{order_fkey}
+column of C{order_item} relation. Definition of such association considers
+its bi-directionality::
+
+    Order.addColumn('items', vcls = OrderItem, vcol = 'order_fkey', vattr = 'order')
+    OrderItem.addColumn('order', 'order_fkey', Order, vattr = 'items')
+
+Inheritance
+===========
+There are two classes defined above. C{Boss} class is very similar to
+C{Employee} class. The last one can be reused with inheritance::
+
+    Boss = bazaar.conf.Persistence('Boss', bases = (Employee,), relation = 'boss')
+
+C{Boss} class derives all attributes and associations from C{Employee}
+class.
+
+SQL schema for C{Boss} class relation can look like::
+
+    create table boss (
+        dep_fkey     integer,
+        foreign key (dep_fkey) references department(__key__) initially deferred
+    ) inherits(employee);
+
 """
 
 import logging
@@ -140,6 +298,7 @@ class Persistence(type):
 
         @param relation: Database relation name.
         @param sequencer: Name of primary key values generator sequencer.
+        @param modname: Module of the application class, i.e.  C{app.business}.
         """
         if data is None:
             data = {}
@@ -195,7 +354,7 @@ class Persistence(type):
             referenced objects on relationship update, otherwise add appended
             objects and delete removed objects.
 
-        @see: bazaar.conf.Column
+        @see: L{bazaar.conf.Column}
         """
         col = Column(attr, col)
         col.vcls = vcls

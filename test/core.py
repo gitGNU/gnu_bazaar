@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.16 2003/11/26 02:51:51 wrobell Exp $
+# $Id: core.py,v 1.17 2004/01/21 23:06:28 wrobell Exp $
 
 import unittest
 
@@ -20,8 +20,6 @@ class ObjectLoadTestCase(btest.DBBazaarTestCase):
     """
     def testObjectLoading(self):
         """Test loaded application objects data integrity"""
-
-        # check test application objects
         for cls in self.cls_list:
             self.checkObjects(cls, len(self.bazaar.getObjects(cls)))
 
@@ -169,11 +167,11 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
         
 
     def testObjectDeleting(self):
-        """Test updating objects in database"""
+        """Test deleting objects from database"""
 
         def delete(cls, data):
             self.bazaar.getObjects(cls)
-            obj = self.findObj(cls, data)
+            obj = self.bazaar.find(cls, data).next()
             assert obj is not None
             key = obj.__key__
             self.bazaar.delete(obj)
@@ -193,7 +191,8 @@ class TransactionsTestCase(btest.DBBazaarTestCase):
         """Test database transaction commit"""
 
         self.bazaar.getObjects(app.Employee)
-        emp = self.findObj(app.Employee, {'name': 'n1001', 'surname': 's1001'})
+        emp = self.bazaar.find(app.Employee, \
+            {'name': 'n1001', 'surname': 's1001'}).next()
         key = emp.__key__
         self.bazaar.delete(emp)
         self.bazaar.commit()
@@ -208,7 +207,8 @@ class TransactionsTestCase(btest.DBBazaarTestCase):
         self.bazaar.add(emp)
         self.bazaar.commit()
         self.bazaar.reloadObjects(app.Employee, now = True)
-        emp = self.findObj(app.Employee, {'name': 'n1001', 'surname': 's1001'})
+        emp = self.bazaar.find(app.Employee, \
+            {'name': 'n1001', 'surname': 's1001'}).next()
         self.assert_(emp.__key__ in self.getCache(app.Employee), 'employee object not found in cache')
 
 
@@ -216,7 +216,8 @@ class TransactionsTestCase(btest.DBBazaarTestCase):
         """Test database transaction rollback"""
 
         self.bazaar.getObjects(app.Employee)
-        emp = self.findObj(app.Employee, {'name': 'n1001', 'surname': 's1001'})
+        emp = self.bazaar.find(app.Employee, {'name': 'n1001', 'surname': 's1001'}).next()
+        key = emp.__key__
         self.bazaar.delete(emp)
         self.bazaar.rollback()
 
@@ -225,5 +226,5 @@ class TransactionsTestCase(btest.DBBazaarTestCase):
 
         # objects is deleted, but it should exist in cache due to objects
         # reload
-        self.assert_(emp.__key__ in self.getCache(app.Employee), \
+        self.assert_(key in self.getCache(app.Employee), \
             'employee object not found in cache')

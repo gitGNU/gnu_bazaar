@@ -30,18 +30,20 @@ class MappingError(BazaarError):
 
 class RelationMappingError(MappingError):
     """
-    Database relation mapping exception. Exception is thrown on mapping
-    database relation to application class error, i.e. empty relation
-    name.
+    Database relation mapping exception.
+    
+    Exception is thrown on mapping database relation to application class
+    error, i.e. empty relation name.
     """
     pass
 
 
 class ColumnMappingError(MappingError):
     """
-    Relation column mapping exception. Exception is thrown on mapping
-    relation column to application class attribute error, i.e. empty
-    attribute name.
+    Relation column mapping exception.
+    
+    Exception is thrown on mapping relation column to application class
+    attribute error, i.e. empty attribute name.
 
     @ivar col: Application class column object.
     """

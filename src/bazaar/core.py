@@ -1,9 +1,14 @@
-# $Id: core.py,v 1.27 2003/11/26 13:35:14 wrobell Exp $
+# $Id: core.py,v 1.28 2004/01/21 23:06:28 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
-Class L{Bazaar} must be used to get,
-modify, find and perform other tasks on application objects.
+Every application object should derive from L{PersistentObject} class.
+
+Class L{Bazaar} is designed to to get, modify, find and perform other
+operations on objects of any application class.
+
+Brokers (L{Broker} class) are responsible for operations on objects of
+specific application class.
 """
 
 import logging
@@ -14,19 +19,20 @@ import bazaar.motor
 
 log = logging.getLogger('bazaar.core')
 
+
 class PersistentObject(object):
     """
     Parent class of an application class.
 
     @ivar __key__: Object's key.
     """
-    def __init__(self, data = None):
+    def __init__(self, **data): # fixme: make test and update kwargs properly
         """
         Create persistent object with initial data.
 
-        @param data: Dictionary with initial values of object attributes.
+        @param data: Initial values of object attributes.
         """
-        if data is not None:
+        if data != {}:
             # set object attributes
             self.__dict__.update(data)
 
@@ -52,7 +58,7 @@ class Broker:
     @see: L{bazaar.motor.Motor} L{bazaar.motor.Convertor}
           L{bazaar.cache}
     """
-    def __init__(self, cls, mtr):
+    def __init__(self, cls, mtr, seqpattern = None):
         """
         Create application class broker.
 
@@ -70,7 +76,7 @@ class Broker:
             % (self.cls, self.cls.cache))
         self.cache = self.cls.cache(self)
 
-        self.convertor = bazaar.motor.Convertor(cls, mtr)
+        self.convertor = bazaar.motor.Convertor(cls, mtr, seqpattern)
 
         log.info('class "%s" broker initialized' % cls)
 
@@ -92,7 +98,7 @@ class Broker:
         Get list of application objects.
 
         If objects reload has been requested, then objects would be loaded
-        from database, before returning objects from the cache.
+        from database before returning objects from the cache.
         
         @see: L{bazaar.core.Broker.loadObjects} L{bazaar.core.Broker.reloadObjects}
         """
@@ -119,15 +125,19 @@ class Broker:
             self.loadObjects()
 
 
-    def find(self, query, dict = None, field = 0):
+    def find(self, query, param = None, field = 0):
         """
         Find objects in database.
 
+        @param query: SQL query or dictionary.
+        @param param: SQL query parameters.
+        @param field: SQL column number which describes found objects' primary
+            key values.
+
         @see: L{bazaar.core.Bazaar.find}
         """
-        for key in self.convertor.find(query, dict, field):
-            # fixme: yield self.cache[key]
-            yield self.get(key)
+        for key in self.convertor.find(query, param, field):
+            yield self.cache[key]
 
 
     def get(self, key):
@@ -136,7 +146,7 @@ class Broker:
 
         Object is returned from cache.
 
-        @param key: object's primary key value
+        @param key: Object's primary key value.
 
         @return: Object with primary key value equal to C{key}.
 
@@ -168,11 +178,13 @@ class Broker:
         """
         Delete object from database.
 
+        Object's primary key value is set to C{None}.
+
         @param obj: Object to delete.
         """
         self.convertor.delete(obj)
         del self.cache[obj.__key__]
-#        obj.__key__ = None
+        obj.__key__ = None
 
 
 
@@ -190,7 +202,7 @@ class Bazaar:
     @see: L{Broker} L{bazaar.motor.Motor}
     """
 
-    def __init__(self, cls_list, config = None, dsn = '', dbmod = None):
+    def __init__(self, cls_list, config = None, dsn = '', dbmod = None, seqpattern = None):
         """
         Start the Bazaar layer.
 
@@ -198,18 +210,24 @@ class Bazaar:
         created.
 
         @param cls_list: List of application classes.
-        @param dbmod: Python DB API module.
+        @param config: Configuration object.
         @param dsn: Database source name.
+        @param dbmod: Python DB API module.
+        @param seqpattern: Sequence command pattern.
 
-        @see: L{bazaar.core.Bazaar.connectDB}
+        @see: L{bazaar.core.Bazaar.connectDB}, L{bazaar.config}
         """
         self.cls_list = cls_list
         self.config = config
         self.dsn = dsn
         self.dbmod = dbmod
+        self.seqpattern = 'select next value for \'%s\''
 
         if config is not None:
             self.parseConfig(config)
+
+        if seqpattern is not None:
+            self.seqpattern = seqpattern
 
         self.init()
 
@@ -300,7 +318,7 @@ class Bazaar:
                                     % (asc_cls, c, col.attr, col.vcls))
 
         for c in self.cls_list:
-            self.brokers[c] = Broker(c, self.motor)
+            self.brokers[c] = Broker(c, self.motor, self.seqpattern)
 
         # again to assign brokers for associations
         for c in self.cls_list:
@@ -427,9 +445,9 @@ class Bazaar:
 
         Only objects of specified class are returned.
 
-        @param cls: Application object class.
+        @param cls: Application class.
 
-        @see: L{bazaar.core.Bazaar.reloadObjects} L{bazaar.core.Broker.getObjects}
+        @see: L{bazaar.core.Bazaar.reloadObjects}
         """
         return self.brokers[cls].getObjects()
 
@@ -438,15 +456,58 @@ class Bazaar:
         """
         Reload objects from database.
 
+        @param cls: Application class.
         @param now: Reload objects immediately.
+
+        @see: L{bazaar.core.Bazaar.getObjects}
         """
         self.brokers[cls].reloadObjects(now)
 
 
     def find(self, cls, query, param = None, field = 0):
         """
-        Find objects in database.
-        """ # fixme: finish description
+        Find objects of given class in database.
+
+        The method can be used in two ways.
+
+        First, simple dictionary can be passed as query::
+
+            # iterator is returned, so its next() method is used to get
+            # the object
+            apple = bazaar.find(Article, {'name': 'apple'}).next()
+
+        Dictionary can contain objects as values, i.e.::
+
+            bazaar.find(OrderItem, {'article': art})
+
+
+        Second, it is possible to use full power of SQL language::
+
+            # find orders and their articles if order amount is greater
+            # than 50$
+
+            # find orders with the query
+            query = \"""
+                select O.__key__ from "order" O
+                left outer join order_item OI on O.__key__ = OI.order_fkey
+                left outer join article A on OI.article_fkey = A.__key__
+                group by O.__key__ having sum(A.price) > 50
+            \"""
+
+            for ord in  bzr.find(Order, query):
+                print ord                     # show order
+                for oi in ord.items:          # show order's articles
+                    print oi.article
+
+
+        @param   cls: Application class.
+        @param query: SQL query or dictionary.
+        @param param: SQL query parameters.
+        @param field: SQL column number which describes found objects' primary
+            key values.
+
+        @return: Iterator of found objects.
+        """
         return self.brokers[cls].find(query, param, field)
 
 
@@ -471,6 +532,8 @@ class Bazaar:
     def delete(self, obj):
         """
         Delete object from database.
+
+        Object's primary key value is set to C{None}.
 
         @param obj: Object to delete.
         """

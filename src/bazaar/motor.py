@@ -1,7 +1,10 @@
-# $Id: motor.py,v 1.26 2003/11/26 02:34:32 wrobell Exp $
+# $Id: motor.py,v 1.27 2004/01/21 23:06:28 wrobell Exp $
 """
 Data convertor and database access classes.
 """
+
+import bazaar.core   # it is required to check if objects are
+                     # PersistentObject class' instances
 
 import logging
 
@@ -11,14 +14,22 @@ class Convertor:
     """
     Relational and object data convertor.
 
+    The class creates all required SQL queries. It converts relational data
+    to object oriented form and vice versa.
+    
+    L{Motor} class is used to connect and execute commands in database.
+
     @ivar queries: Queries to modify data in database.
     @ivar cls: Application class, which objects are converted.
     @ivar motor: Database access object.
     @ivar columns: List of columns used with database queries.
     """
-    def __init__(self, cls, mtr):
+    def __init__(self, cls, mtr, seqpattern = None):
         """
-        Create data convert object.
+        Create data convertor object.
+
+        @param cls: Application class.
+        @param mtr: L{Motor} class object.
         """
         self.queries = {}
         self.cls = cls
@@ -43,6 +54,10 @@ class Convertor:
         #
         # prepare queries
         #
+        self.queries[self.getKey] = seqpattern % self.cls.sequencer
+        if __debug__: log.debug('get next value of sequencer query: "%s"' % \
+            self.queries[self.getKey])
+
         self.queries[self.getObjects] = 'select %s from "%s"' \
             % (', '.join(['"%s"' % col for col in self.load_cols]), self.cls.relation)
         if __debug__: log.debug('get objects query: "%s"' % self.queries[self.getObjects])
@@ -64,9 +79,6 @@ class Convertor:
 
         self.queries[self.delete] = 'delete from "%s" where __key__ = %%s' % self.cls.relation
         if __debug__: log.debug('delete object query: "%s"' % self.queries[self.delete])
-
-        self.queries[self.motor.getKey] = 'select nextval(\'%s\')' % self.cls.sequencer # fixme, use seqpattern
-        if __debug__: log.debug('get primary key value query: "%s"' % self.queries[self.motor.getKey])
 
         self.asc_cols = {}
         for col in self.masc:
@@ -95,12 +107,12 @@ class Convertor:
             else:
                 assert False
 
-            self.queries[asc][self.addPair] = 'insert into "%s" (%s) values(%s)' % \
+            self.queries[asc][self.addAscData] = 'insert into "%s" (%s) values(%s)' % \
                 (relation,
                  ', '.join(['"%s"' % c for c in self.asc_cols[asc]]),
                  ', '.join(('%s', ) * len(self.asc_cols[asc]))
                 )
-            self.queries[asc][self.delPair] = 'delete from "%s" where %s' % \
+            self.queries[asc][self.delAscData] = 'delete from "%s" where %s' % \
                 (relation, ' and '.join(['"%s" = %%s' % c for c in self.asc_cols[asc]]))
 
             self.queries[asc][self.getAllAscData] = 'select %s from "%s"' % \
@@ -116,11 +128,11 @@ class Convertor:
 
             if __debug__:
                 log.debug('association insert query: "%s"' % \
-                        self.queries[asc][self.addPair])
+                        self.queries[asc][self.addAscData])
 
             if __debug__:
                 log.debug('association delete query: "%s"' % \
-                        self.queries[asc][self.delPair])
+                        self.queries[asc][self.delAscData])
 
         self.queries[self.find] = 'select __key__ from "%s" where %%s' % self.cls.relation
         if __debug__: log.debug('object OO find query: "%s"' % self.queries[self.find])
@@ -164,8 +176,6 @@ class Convertor:
 
         @see: L{bazaar.core.Bazaar.find}
         """
-        import bazaar.core # fixme
-
         data = {}
         cols = self.cls.columns
         for attr, value in param.items():
@@ -181,36 +191,58 @@ class Convertor:
         return data
 
 
-    def addPair(self, asc, pairs):
+    def addAscData(self, asc, pairs):
         """
-        fixme
+        Add association relational data into database.
+
+        Adding the data means adding data into link table of many to many
+        association or updating appropriate column of one to many
+        association.
+
+        @param asc: Association descriptor object.
+        @param pairs: List of association data - pairs of primary and
+            foreign key values.
         """
         if __debug__: log.debug('association %s.%s->%s: adding pairs' % (asc.broker.cls, asc.col.attr, asc.col.vcls))
-        self.motor.executeMany(self.queries[asc][self.addPair], pairs)
+        self.motor.executeMany(self.queries[asc][self.addAscData], pairs)
         if __debug__: log.debug('association %s.%s->%s: pairs added' % (asc.broker.cls, asc.col.attr, asc.col.vcls))
 
 
-    def delPair(self, asc, pairs):
+    def delAscData(self, asc, pairs):
         """
-        fixme
+        Delete association relational data from database.
+
+        Deleting the data means removing data from link table of many to
+        many association. In case of one to many association it means
+        deleting rows of relation on "many" side or updating
+        appropriate column of one to many association to None value
+        (it depends on relationship configuration).
+
+        @param asc: Association descriptor object.
+        @param pairs: List of association data - pairs of primary and
+            foreign key values.
         """
         if __debug__: log.debug('association %s.%s->%s: deleting pairs' % (asc.broker.cls, asc.col.attr, asc.col.vcls))
-        self.motor.executeMany(self.queries[asc][self.delPair], pairs)
+        self.motor.executeMany(self.queries[asc][self.delAscData], pairs)
         if __debug__: log.debug('association %s.%s->%s: pairs deleted' % (asc.broker.cls, asc.col.attr, asc.col.vcls))
 
 
     def getAllAscData(self, asc):
         """
-        fixme
+        Get all association data from database.
+
+        @param asc: Association object.
         """
-        okey, vkey = self.asc_cols[asc] # fixme: is this still required
         for data in self.motor.getData(self.queries[asc][self.getAllAscData]):
             yield data[0], data[1]
 
 
     def getAscData(self, asc, obj):
         """
-        fixme
+        Get association relational data for the application object.
+
+        @param asc: Association object.
+        @param obj: Application object.
         """
         for data in self.motor.getData(self.queries[asc][self.getAscData], { 'key': obj.__key__ }):
             yield data[0]
@@ -220,13 +252,25 @@ class Convertor:
         """
         Find objects in database.
 
-        @see L{bazaar.core.Bazaar.find}
+        @param query: SQL query or dictionary.
+        @param param: SQL query parameters.
+        @param field: SQL column number which describes found objects' primary
+            key values.
+
+        @see: L{bazaar.core.Bazaar.find}
         """
+        # parameter mangling, part 1
+        # two cases:
+        # - when query argument is SQL query (string) then do nothing
+        # - when query argument is dict, then SQL query will be created with
+        #   magic - query argument specifies SQL query parametrs then
         if isinstance(query, dict):
             param = query
 
         param = self.objToData(param)
 
+        # parameter mangling, part 2
+        # - create SQL query
         if isinstance(query, dict):
             query = self.queries[self.find] % self.dictToSQL(param)
 
@@ -237,6 +281,7 @@ class Convertor:
             log.debug('find objects with query: \'%s\', params %s, field %d' \
                 % (query, param, field))
 
+        # get primary key values which denote objects
         for data in self.motor.getData(query, param):
             yield data[field]
 
@@ -273,6 +318,15 @@ class Convertor:
             self.motor.getData(self.queries[self.get], (key, )).next())
 
 
+    def getKey(self):
+        """
+        Create new primary key value with sequencer.
+
+        @return: New primary key value.
+        """
+        return self.motor.getData(self.queries[self.getKey]).next()[0]
+
+
     def add(self, obj):
         """
         Add object to database.
@@ -280,10 +334,10 @@ class Convertor:
         @param obj: Object to add.
         """
         data = self.getData(obj)
-        key = self.motor.getKey(self.queries[self.motor.getKey])
+        key = self.getKey()       # create primary key value
         data['__key__'] = key
         self.motor.add(self.queries[self.add], data)
-        obj.__key__ = key
+        obj.__key__ = key         # set primary key value
  
 
     def update(self, obj):
@@ -311,12 +365,17 @@ class Motor:
     """
     Database access object.
 
+    The class depends od database API module - Python DB-API 2.0 in this
+    case.
+
     @ivar dbmod: Python DB API module.
     @ivar conn: Python DB API connection object.
     """
     def __init__(self, dbmod):
         """
         Initialize database access object.
+
+        @param dbmod: DB-API 2.0 module.
         """
         self.dbmod = dbmod
         self.conn = None
@@ -332,7 +391,9 @@ class Motor:
         @see: L{bazaar.motor.Motor.closeDBConn}
         """
         self.conn = self.dbmod.connect(dsn)
-        if __debug__: log.debug('connected to database with dsn "%s"' % dsn)
+# what about password?
+#        if __debug__: log.debug('connected to database with dsn "%s"' % dsn)
+        if __debug__: log.debug('connected to database"')
 
 
     def closeDBConn(self):
@@ -350,9 +411,9 @@ class Motor:
         """
         Get list of rows from database.
 
-        Method returns dictionary per databse relation row. The
+        Method returns dictionary per database relation row. The
         dictionary keys are relation column names and dictionary values
-        are column values for the relation row.
+        are column values of the relation row.
 
         @param query: Database SQL query.
         """
@@ -413,13 +474,16 @@ class Motor:
         if __debug__: log.debug('query "%s", key = %s: executed' % (query, key))
 
 
-    def executeMany(self, query, iterator):
+    def executeMany(self, query, data_list):
         """
-        fixme
+        Execute batch query with list of data parameters.
+
+        @param query: Query to execute.
+        @param data_list: List of query's data.
         """
         if __debug__: log.debug('query "%s": executing' % query)
         dbc = self.conn.cursor()
-        dbc.executemany(query, iterator)
+        dbc.executemany(query, data_list)
         if __debug__: log.debug('query "%s": executed' % query)
 
 
@@ -435,11 +499,3 @@ class Motor:
         Rollback database transactions.
         """
         self.conn.rollback()
-
-
-    def getKey(self, query):
-        """
-        """
-        dbc = self.conn.cursor()
-        dbc.execute(query)
-        return dbc.fetchone()[0]
