@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.4 2003/08/07 18:00:04 wrobell Exp $
+# $Id: core.py,v 1.5 2003/08/09 03:21:15 wrobell Exp $
 
 import unittest
 import logging
@@ -207,11 +207,11 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
         dbc = self.bazaar.motor.dbc
 
         # add and check order object
-        order = app.Order({
-            'no': 1000,
-            'finished': True
-        })
+        order = app.Order()
+        order.no = 1000
+        order.finished = True
         self.bazaar.add(order)
+
         self.assert_(1000 in self.bazaar.brokers[app.Order].cache, \
             'order object not found in cache')
         self.assertEqual(self.bazaar.brokers[app.Order].cache[1000], order,
@@ -219,10 +219,10 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
         self.checkOrderObject(1000, order)
 
         # add and check article object
-        article = app.Article({
-            'name': 'apple',
-            'price': 1.23
-        })
+        article = app.Article()
+        article.name = 'apple'
+        article.price = 1.23
+
         self.bazaar.add(article)
         self.assert_('apple' in self.bazaar.brokers[app.Article].cache, \
             'article object not found in cache')
@@ -231,12 +231,12 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
         self.checkArticleObject('apple', article)
 
         # add and check order item object
-        order_item = app.OrderItem({
-            'order': 1000,
-            'pos': 0,
-            'quantity': 2.123,
-            'article': 'apple'
-        })
+        order_item = app.OrderItem()
+        order_item.order = 1000
+        order_item.pos = 0
+        order_item.quantity = 2.123
+        order_item.article = 'apple'
+
         self.bazaar.add(order_item)
         self.assert_((1000, 0) in self.bazaar.brokers[app.OrderItem].cache, \
             'order item object not found in cache')
@@ -245,11 +245,11 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
         self.checkOrderItemObject(1000, 0, order_item)
 
         # add and check employee object
-        emp = app.Employee({
-            'name': 'name',
-            'surname': 'surname',
-            'phone': '0123456789'
-        })
+        emp = app.Employee()
+        emp.name = 'name'
+        emp.surname = 'surname'
+        emp.phone = '0123456789'
+
         self.bazaar.add(emp)
         self.assert_(('name', 'surname') in self.bazaar.brokers[app.Employee].cache, \
             'employee object not found in cache')
@@ -285,6 +285,18 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
         emp.phone = '00000'
         self.bazaar.update(emp)
         self.checkEmployeeObject(emp.name, emp.surname, emp)
+        
+        # update object with key modification
+        self.bazaar.getObjects(app.Employee)
+        emp = self.bazaar.brokers[app.Employee].cache[('n1001', 's1001')]
+        emp.name = 'nup1001'
+        self.bazaar.update(emp)
+        self.assertEqual(emp.key, ('nup1001', 's1001'), \
+            'employee object key is "%s", should be "%s"' % (emp.key, ('nup1001', 's1001')))
+        self.assert_(emp.key in self.bazaar.brokers[app.Employee].cache, \
+            'employee object not found in cache, its key is "%s"' % (emp.key, ))
+        self.assert_(('n1001', 's1001') not in self.bazaar.brokers[app.Employee].cache, \
+            'employee object found in cache <- error, its key has changed')
 
         log.info('finished test of application objects updating')
 
