@@ -1,9 +1,11 @@
-# $Id: conf.py,v 1.8 2003/09/19 14:56:46 wrobell Exp $
+# $Id: conf.py,v 1.9 2003/09/22 00:35:07 wrobell Exp $
 
 import unittest
 
 import bazaar.conf
 import bazaar.assoc
+
+import app
 
 """
 Test mapping application classes to database relations.
@@ -52,42 +54,6 @@ class ConfTestCase(unittest.TestCase):
             self.assert_(col in Person.columns, 'column "%s" not found' % col)
 
 
-    def testKeyDef(self):
-        """Test database relation key defining"""
-
-        Person = bazaar.conf.Persistence('Person', relation = 'person')
-        Person.addColumn('name')
-        Person.addColumn('surname')
-        Person.addColumn('birthdate')
-
-        Person.setKey(('name', 'surname', 'birthdate'))
-        self.assertEqual(len(Person.key_columns), 3, 'there should be three key columns')
-        self.assertEqual(Person.key_columns, \
-            ('name', 'surname', 'birthdate'), 'key column mismatch')
-
-        Person.setKey(('name', ))
-        self.assertEqual(len(Person.key_columns), 1, 'there should be one key column')
-        self.assertEqual(Person.key_columns, ('name', ), 'key column mismatch')
-
-        Person.setKey(('name', 'surname'))
-        self.assertEqual(len(Person.key_columns), 2, 'there should be two key columns')
-        self.assertEqual(Person.key_columns, ('name', 'surname'), 'key column mismatch')
-
-        try:
-            Person.setKey(('foo', 'bar'))
-        except ValueError, exc:
-            self.assertEqual(str(exc), 'key\'s column "foo" not found on list of relation columns')
-        else:
-            self.fail('setting key with non-existing columns should fail')
-
-        try:
-            Person.setKey(())
-        except ValueError, exc:
-            self.assertEqual(str(exc), 'list of key\'s columns should not be empty')
-        else:
-            self.fail('setting empty key should fail')
-
-
 
 class AssociationTestCase(unittest.TestCase):
     """
@@ -104,7 +70,6 @@ class AssociationTestCase(unittest.TestCase):
                 'a1' : bazaar.conf.Column('a1'),
                 'a2' : bazaar.conf.Column('a2'),
             }
-            key_columns = ('a1', )
 
         class B:
             __metaclass__ = bazaar.conf.Persistence
@@ -112,7 +77,6 @@ class AssociationTestCase(unittest.TestCase):
             columns       = {
                 'b1' : bazaar.conf.Column('b1'),
             }
-            key_columns = ('b1', )
 
         class C:
             __metaclass__ = bazaar.conf.Persistence
@@ -121,24 +85,37 @@ class AssociationTestCase(unittest.TestCase):
                 'c1' : bazaar.conf.Column('c1'),
                 'c2' : bazaar.conf.Column('c1'),
             }
-            key_columns = ('c1', 'c2')
 
-        def check(cls, col, attr, descriptor, msg):
-            self.assertEqual(type(cls.columns[col].association), descriptor, \
+        def check(cls, attr, descriptor, msg):
+            self.assertEqual(type(cls.columns[attr].association), descriptor, \
                 'it should be %s association' % msg)
-            self.assertEqual(cls.columns[col].association, getattr(cls, attr), \
+            self.assertEqual(cls.columns[attr].association, getattr(cls, attr), \
                 'application class association descriptor mismatch')
 
-        A.addColumn('a3_fkey', 'a3', B, ('aa31',))
-        A.addColumn('a4_fkey', 'a4', C, ('aa41', 'aa42'))
-        check(A, 'a3_fkey', 'a3', bazaar.assoc.UniDirOneToOneAssociation, \
-                'uni-directional one-to-one')
-        check(A, 'a4_fkey', 'a4', bazaar.assoc.UniDirOneToOneAssociation, \
-                'uni-directional one-to-one')
+        cls_list = (A, B, C)
 
-        A.addColumn('a5_fkey', 'a5', B, ('aa51',), bidir = 'b5_fkey')
-        B.addColumn('b5_fkey', 'b5', A, ('bb51',), bidir = 'a5_fkey')
-        check(A, 'a5_fkey', 'a5', bazaar.assoc.BiDirOneToOneAssociation, \
-                'bi-directional one-to-one')
-        check(B, 'b5_fkey', 'b5', bazaar.assoc.BiDirOneToOneAssociation, \
-                'bi-directional one-to-one')
+        A.addColumn('a3', 'a3_fkey', B)
+        bzr = bazaar.core.Bazaar(cls_list, app.db_module)
+        check(A, 'a3', bazaar.assoc.OneToOne, 'uni-directional one-to-one')
+
+        A.addColumn('a5', 'a5_fkey', B, vattr = 'b5')
+        B.addColumn('b5', 'b5_fkey', A, vattr = 'a5')
+        bzr = bazaar.core.Bazaar(cls_list, app.db_module)
+        check(A, 'a5', bazaar.assoc.BiDirOneToOne, 'bi-directional one-to-one')
+        check(B, 'b5', bazaar.assoc.BiDirOneToOne, 'bi-directional one-to-one')
+
+        A.addColumn('a6', 'a61', B, 'a__b', 'b61')
+        bzr = bazaar.core.Bazaar(cls_list, app.db_module)
+        check(A, 'a6', bazaar.assoc.UniDirManyToMany, 'bi-directional many-to-many')
+
+        A.addColumn('a7', vcls = B, vcol = 'b71', vattr = 'b7')
+        B.addColumn('b7', 'b71', A, vattr = 'a7')
+        bzr = bazaar.core.Bazaar(cls_list, app.db_module)
+        check(A, 'a7', bazaar.assoc.OneToMany, 'many side bi-dir one-to-many')
+        check(B, 'b7', bazaar.assoc.BiDirOneToOne, 'one side bi-dir one-to-many')
+
+        A.addColumn('a8', vcls = B, vcol = 'b81', vattr = 'b8')
+        B.addColumn('b8', 'b81', A, vattr = 'a8')
+        bzr = bazaar.core.Bazaar((C, B, A), app.db_module)
+        check(A, 'a8', bazaar.assoc.OneToMany, 'many side bi-dir one-to-many')
+        check(B, 'b8', bazaar.assoc.BiDirOneToOne, 'one side bi-dir one-to-many')
