@@ -1,4 +1,4 @@
-# $Id: cache.py,v 1.11 2004/01/22 23:21:40 wrobell Exp $
+# $Id: cache.py,v 1.12 2004/02/02 17:59:28 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -206,15 +206,16 @@ class Full(Cache, dict):
     """
     Abstract, basic cache class for loading all objects and association data.
 
-    @cvar empty: Is returned by L{__getitem__} method when referenced object or
+    @ivar empty: Is returned by L{__getitem__} method when referenced object or
     association data are not found in cache.
 
-    @see: L{bazaar.cache.FullObject} L{bazaar.cache.FullAssociation}
+    @see: L{getEmpty} L{bazaar.cache.FullObject} L{bazaar.cache.FullAssociation}
     """
     def __init__(self, param):
         Cache.__init__(self, param)
         dict.__init__(self)
         self.dicttype = dict
+        self.empty = self.getEmpty()
 
 
     def __getitem__(self, param):
@@ -236,13 +237,28 @@ class Full(Cache, dict):
             return self.empty
 
 
+    def getEmpty(self):
+        """
+        Get data which will be returned when object or association data
+        will not be found in the cache.
+        """
+        raise NotImplementedError
+
+
 
 class FullObject(Full):
     """
     Cache class for loading all objects of application class from database.
     """
+    def getEmpty(self):
+        """
+        Get data which will be returned when object or association data
+        will not be found in the cache.
 
-    empty = None
+        This method returns C{None}.
+        """
+        return None
+
 
     def load(self, key):
         """
@@ -259,8 +275,15 @@ class FullAssociation(Full):
     """
     Cache for loading all association data of relationship from database.
     """
+    def getEmpty(self):
+        """
+        Get data which will be returned when object or association data
+        will not be found in the cache.
 
-    empty = sets.Set()
+        This method returns empty set.
+        """
+        return sets.Set()
+
 
     def load(self, obj):
         """
