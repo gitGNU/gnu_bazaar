@@ -1,4 +1,4 @@
-# $Id: find.py,v 1.3 2004/01/22 23:21:41 wrobell Exp $
+# $Id: find.py,v 1.4 2004/02/10 23:40:15 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -121,3 +121,7 @@ class FindTestCase(btest.DBBazaarTestCase):
             " where quantity > %(quantity)s order by 1" % {
                 'quantity': 5,
             })
+
+        # now, just try to find some articles without specyfing parameters
+        list(self.bazaar.find(app.Article, \
+            "select __key__ from article where name = 'art 00'"))
