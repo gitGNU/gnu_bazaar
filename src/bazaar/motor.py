@@ -1,6 +1,6 @@
-# $Id: motor.py,v 1.18 2003/09/30 14:04:49 wrobell Exp $
+# $Id: motor.py,v 1.19 2003/10/02 10:24:55 wrobell Exp $
 """
-Data convertor and database access objects.
+Data convertor and database access classes.
 """
 
 import logging
@@ -9,7 +9,7 @@ log = logging.getLogger('bazaar.motor')
 
 class Convertor:
     """
-    Data convertor.
+    Relational and object data convertor.
 
     @ivar queries: Queries to modify data in database.
     @ivar cls: Application class, which objects are converted.

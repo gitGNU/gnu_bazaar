@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.16 2003/09/28 15:56:21 wrobell Exp $
+# $Id: core.py,v 1.17 2003/10/02 10:24:54 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -18,7 +18,7 @@ class PersistentObject(object):
     """
     Parent class of an application class.
 
-    @ivar key: Object's key.
+    @ivar __key__: Object's key.
     """
     def __init__(self, data = None):
         """
@@ -50,6 +50,12 @@ class Broker:
     objects from database or cache, loading application objects from
     database with convertor and manipulating application objects with
     cache.
+
+    @ivar cls: Application class.
+    @ivar cache: Cache of application objects.
+    @ivar convertor: Relational and object data convertor.
+    @ivar reload: If true, then application object's reload has been
+        requested.
 
     @see: L{bazaar.motor.Motor} L{bazaar.motor.Convertor}
           L{bazaar.cache}
