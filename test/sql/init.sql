@@ -1,8 +1,8 @@
--- $Id: init.sql,v 1.5 2003/09/22 00:46:40 wrobell Exp $
+-- $Id: init.sql,v 1.6 2003/09/24 18:18:44 wrobell Exp $
 
 create sequence order_seq;
 create table "order" (
-    __key__      integer default nextval ('order_seq'),
+    __key__      integer,
     no           integer,
     finished     boolean not null,
     created      timestamp not null default current_timestamp,
@@ -12,7 +12,7 @@ create table "order" (
 
 create sequence employee_seq;
 create table employee (
-    __key__      integer default nextval ('employee_seq'),
+    __key__      integer,
     name         varchar(10),
     surname      varchar(20),
     phone        varchar(12),
@@ -22,7 +22,7 @@ create table employee (
 
 create sequence article_seq;
 create table article (
-    __key__      integer default nextval ('article_seq'),
+    __key__      integer,
     name         varchar(20),
     price        numeric(10,2) not null,
     unique (name),
@@ -31,7 +31,7 @@ create table article (
 
 create sequence order_item_seq;
 create table order_item (
-    __key__      integer default nextval ('order_item_seq'),
+    __key__      integer,
     order_fkey   integer,
     pos          integer,
     article_fkey integer not null,
