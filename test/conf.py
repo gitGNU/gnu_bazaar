@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.7 2003/09/03 22:42:31 wrobell Exp $
+# $Id: conf.py,v 1.8 2003/09/19 14:56:46 wrobell Exp $
 
 import unittest
 
@@ -122,14 +122,23 @@ class AssociationTestCase(unittest.TestCase):
                 'c2' : bazaar.conf.Column('c1'),
             }
             key_columns = ('c1', 'c2')
-        
+
+        def check(cls, col, attr, descriptor, msg):
+            self.assertEqual(type(cls.columns[col].association), descriptor, \
+                'it should be %s association' % msg)
+            self.assertEqual(cls.columns[col].association, getattr(cls, attr), \
+                'application class association descriptor mismatch')
+
         A.addColumn('a3_fkey', 'a3', B, ('aa31',))
         A.addColumn('a4_fkey', 'a4', C, ('aa41', 'aa42'))
-        self.assertEqual(type(A.columns['a3_fkey'].association), bazaar.assoc.OneToOneAssociation, \
-            'it should be one-to-one association')
-        self.assertEqual(type(A.columns['a4_fkey'].association), bazaar.assoc.OneToOneAssociation, \
-            'it should be one-to-one association')
-        self.assertEqual(A.columns['a3_fkey'].association, A.a3, \
-            'application class association descriptor mismatch')
-        self.assertEqual(A.columns['a4_fkey'].association, A.a4, \
-            'application class associaion descriptor mismatch')
+        check(A, 'a3_fkey', 'a3', bazaar.assoc.UniDirOneToOneAssociation, \
+                'uni-directional one-to-one')
+        check(A, 'a4_fkey', 'a4', bazaar.assoc.UniDirOneToOneAssociation, \
+                'uni-directional one-to-one')
+
+        A.addColumn('a5_fkey', 'a5', B, ('aa51',), bidir = 'b5_fkey')
+        B.addColumn('b5_fkey', 'b5', A, ('bb51',), bidir = 'a5_fkey')
+        check(A, 'a5_fkey', 'a5', bazaar.assoc.BiDirOneToOneAssociation, \
+                'bi-directional one-to-one')
+        check(B, 'b5_fkey', 'b5', bazaar.assoc.BiDirOneToOneAssociation, \
+                'bi-directional one-to-one')
