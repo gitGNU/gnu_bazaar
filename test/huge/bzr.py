@@ -1,4 +1,4 @@
-# $Id: bzr.py,v 1.3 2004/01/22 23:21:41 wrobell Exp $
+# $Id: bzr.py,v 1.4 2004/05/26 17:28:04 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -26,7 +26,7 @@ import time
 
 import bazaar.core
 
-import app
+import bazaar.test.app
 
 opt_parser = optparse.OptionParser('%prog [options] module dsn')
 opt_parser.add_option('-p', dest = 'prof', action = 'store_true', \
@@ -46,12 +46,15 @@ mod = __import__(sys.argv[1])
 dsn = sys.argv[2]
 
 
-Order     = app.Order
-OrderItem = app.OrderItem
-Article   = app.Article
-Employee  = app.Employee
+Order     = bazaar.test.app.Order
+OrderItem = bazaar.test.app.OrderItem
+Article   = bazaar.test.app.Article
+Employee  = bazaar.test.app.Employee
 
-bzr = bazaar.core.Bazaar((Order, OrderItem, Article, Employee), dbmod = mod, dsn = dsn)
+bzr = bazaar.core.Bazaar(
+    (Order, OrderItem, Article, Employee),
+    dbmod = mod, dsn = dsn,
+    seqpattern = 'select nextval(\'%s\')')
 if options.commit:
     finish = bzr.commit
 else:
@@ -59,9 +62,9 @@ else:
 
 def go(opers):
     if 'add' in opers:
-        art = Article({'name': 'apple', 'price': 2.22})
+        art = Article(name = 'apple', price = 2.22)
         bzr.add(art)
-        ord = Order({'no': 1, 'finished': False})
+        ord = Order(no = 1, finished = False)
         bzr.add(ord)
         # add
         ts = time.time()
@@ -80,7 +83,7 @@ def go(opers):
     if 'load' in opers:
         # load
         ts = time.time()
-        obj_list = bzr.getObjects(OrderItem)
+        obj_list = list(bzr.getObjects(OrderItem))
         te = time.time()
         print 'load: %0.2f' % (te - ts)
 

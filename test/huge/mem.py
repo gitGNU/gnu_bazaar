@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# $Id: mem.py,v 1.5 2004/01/22 23:21:41 wrobell Exp $
+# $Id: mem.py,v 1.6 2004/05/26 17:28:05 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -28,25 +28,26 @@ import re
 
 import bazaar.core
 
-import app
+import bazaar.test.app
 
-Order     = app.Order
-OrderItem = app.OrderItem
-Article   = app.Article
-Employee  = app.Employee
+Order     = bazaar.test.app.Order
+OrderItem = bazaar.test.app.OrderItem
+Article   = bazaar.test.app.Article
+Employee  = bazaar.test.app.Employee
 
 mod = __import__(sys.argv[1])
 dsn = sys.argv[2]
 amount = int(sys.argv[3])
 
-bzr = bazaar.core.Bazaar((Order, OrderItem, Article, Employee), \
-    dbmod = mod, dsn = dsn)
+bzr = bazaar.core.Bazaar((Order, OrderItem, Article, Employee),
+    dbmod = mod, dsn = dsn,
+    seqpattern = 'select nextval(\'%s\')')
 
-art = Article({'name': 'apple', 'price': 2.22})
+art = Article(name = 'apple', price = 2.22)
 bzr.add(art)
 
 for j in range(0, amount, 5000):
-    ord = Order({'no': j, 'finished': False})
+    ord = Order(no = j, finished = False)
     bzr.add(ord)
     items = ord.items
     oi_count = j + 5000

@@ -1,4 +1,4 @@
-# $Id: std.py,v 1.3 2004/01/22 23:21:41 wrobell Exp $
+# $Id: std.py,v 1.4 2004/05/26 17:28:05 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -88,8 +88,8 @@ if 'add' in opers:
         c.execute(query['add'], obj.__dict__)
         obj_list.append(obj)
 
-        te = time.time()
-        print 'add: %0.2f' % (te - ts)
+    te = time.time()
+    print 'add: %0.2f' % (te - ts)
 
 
 # load
