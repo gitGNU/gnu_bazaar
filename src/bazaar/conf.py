@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.20 2003/09/28 15:56:21 wrobell Exp $
+# $Id: conf.py,v 1.21 2003/09/29 16:08:54 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -58,6 +58,10 @@ class Column:
 
     @ivar association: Association descriptor of given column.
 
+    @ivar update: Used with 1-n associations. If true, then update
+        referenced objects on relationship update, otherwise add appended
+        objects and delete removed objects.
+
     @ivar is_one_to_one: Class attribute is one-to-one association.
     @ivar is_one_to_many: Class attribute is one-to-many association.
     @ivar is_many_to_many: Class attribute is many-to-many association.
@@ -86,6 +90,7 @@ class Column:
         self.vcol = None
         self.vattr = None
         self.association = None
+        self.update = True
 
 
     is_one_to_one = property(lambda self: \
@@ -152,7 +157,7 @@ class Persistence(type):
         return c
 
 
-    def addColumn(self, attr, col = None, vcls = None, link = None, vcol = None, vattr = None):
+    def addColumn(self, attr, col = None, vcls = None, link = None, vcol = None, vattr = None, update = True):
         """
         Add attribute description to persistent application class.
 
@@ -174,7 +179,7 @@ class Persistence(type):
         col.vcol = vcol
         col.vattr = vattr
 
-        self.delete_values = False
+        self.update = update
 
         if not attr:
             raise ColumnMappingError('wrong column name', self, col)
