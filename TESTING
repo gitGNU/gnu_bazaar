@@ -1,0 +1,3 @@
+To run all tests
+    export PYTHONPATH=src
+    python src/bazaar/test/bzr.py test/bazaar.ini
