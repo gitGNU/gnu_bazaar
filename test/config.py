@@ -1,4 +1,4 @@
-# $Id: config.py,v 1.3 2003/11/24 18:42:22 wrobell Exp $
+# $Id: config.py,v 1.4 2003/11/26 00:24:35 wrobell Exp $
 
 from ConfigParser import ConfigParser
 
@@ -24,12 +24,16 @@ class ConfigTestCase(btest.BazaarTestCase):
         """Test Bazaar reconfiguration"""
         config = ConfigParser()
         config.read('bazaar.ini')
-#        config.add_section('bazaar')
-#        config.set('bazaar', 'dsn', app.dsn)
-#        config.set('bazaar', 'module', app.dbmod)
 
         b = bazaar.core.Bazaar(self.cls_list)
         
+        # save default conf
+        oldconf = app.Article.relation, \
+            app.Article.sequencer, \
+            app.Article.cache, \
+            app.Order.items.col.cache
+
+        # set new configuration
         b.setConfig(bazaar.config.CPConfig(config))
 
         self.assertEqual(b.dsn, 'dbname = ord port = 5433')
@@ -43,3 +47,7 @@ class ConfigTestCase(btest.BazaarTestCase):
         self.assertEqual(b.brokers[app.Article].cache.__class__, bazaar.cache.LazyObject)
 
         self.assertEqual(app.Order.items.col.cache, bazaar.cache.LazyAssociation)
+
+        # restore default conf to process in the rest of tests
+        app.Article.relation, app.Article.sequencer, \
+            app.Article.cache, app.Order.items.col.cache = oldconf
