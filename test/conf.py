@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.2 2003/06/19 16:40:58 wrobell Exp $
+# $Id: conf.py,v 1.3 2003/07/10 23:05:43 wrobell Exp $
 
 import unittest
 import logging
@@ -9,7 +9,7 @@ import bazaar.conf
 <s>Test mapping application classes to database relations.</s>
 """
 
-log = logging.getLogger('bazaar.test.core')
+log = logging.getLogger('bazaar.test.conf')
 
 class ConfTestCase(unittest.TestCase):
     """
