@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.2 2003/07/10 23:18:09 wrobell Exp $
+# $Id: core.py,v 1.3 2003/07/19 10:01:06 wrobell Exp $
 
 import logging
 
@@ -113,6 +113,23 @@ class Broker:
         return self.cache.getObjects()
 
 
+    def reloadObjects(self, now = False):
+        """
+        <s>Reload objects from database.</s>
+
+        <p>
+            Objects are loaded when <r method = 'getObjects'/> is invoked.
+            This behaviour can be changed with <r attr = 'now'/> method
+            parameter.
+        </p>
+        
+        <attr name = 'now'>Reload objects immediately.</attr>
+        """
+        self.reload = True
+        if now:
+            self.getObjects()
+
+
 
 class Bazaar:
     """
@@ -204,3 +221,12 @@ class Bazaar:
         </see>
         """
         return self.brokers[cls].getObjects()
+
+
+    def reloadObjects(self, cls, now = False):
+        """
+        <s>Reload objects from database.</s>
+
+        <attr name = 'now'>Reload objects immediately.</attr>
+        """
+        self.brokers[cls].reloadObjects(now)
