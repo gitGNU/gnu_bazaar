@@ -1,4 +1,4 @@
-# $Id: btest.py,v 1.8 2003/09/24 18:19:10 wrobell Exp $
+# $Id: btest.py,v 1.9 2003/09/25 11:35:06 wrobell Exp $
 
 import unittest
 
@@ -123,3 +123,13 @@ class DBBazaarTestCase(BazaarTestCase):
 
     def getCache(self, cls):
         return self.bazaar.brokers[cls].cache
+
+
+    def findObj(self, cls, data):
+        attrs = tuple([attr for attr in data])
+        for obj in self.bazaar.getObjects(cls):
+            data_val = tuple([data[attr] for attr in attrs])
+            obj_val = tuple([getattr(obj, attr) for attr in attrs])
+            if obj_val == data_val:
+                return obj
+        return None

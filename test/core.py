@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.12 2003/09/24 18:19:10 wrobell Exp $
+# $Id: core.py,v 1.13 2003/09/25 11:35:06 wrobell Exp $
 
 import unittest
 
@@ -164,15 +164,18 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
 
     def testObjectDeleting(self):
         """Test updating objects in database"""
-        def delete(cls, key):
+
+        def delete(cls, data):
             self.bazaar.getObjects(cls)
-            obj = self.getCache(cls)[key]
+            obj = self.findObj(cls, data)
+            assert obj is not None
+            key = obj.__key__
             self.bazaar.delete(obj)
             self.assert_(key not in self.getCache(cls), '%s object found in cache <- error, it is deleted' % cls)
 
-        delete(app.Order, 1000)
-        delete(app.Article, 1000)
-        delete(app.Employee, 1000)
+        delete(app.Order, {'no': 1001})
+        delete(app.Article, {'name': 'article'})
+        delete(app.Employee, {'name': 'n1001', 'surname': 's1001'})
 
 
 
@@ -184,29 +187,30 @@ class TransactionsTestCase(btest.DBBazaarTestCase):
         """Test database transaction commit"""
 
         self.bazaar.getObjects(app.Employee)
-        print self.getCache(app.Employee)
-        emp = self.getCache(app.Employee)[1000]
+        emp = self.findObj(app.Employee, {'name': 'n1001', 'surname': 's1001'})
+        key = emp.__key__
         self.bazaar.delete(emp)
         self.bazaar.commit()
         self.bazaar.reloadObjects(app.Employee, now = True)
 
         # object is deleted, so it does not exist in cache due to objects
         # _immediate_ reload
-        self.assert_(1000 not in self.getCache(app.Employee), \
+        self.assert_(key not in self.getCache(app.Employee), \
             'employee object found in cache <- error, it is deleted')
 
         # readd object and commit, it should reappear in cache
         self.bazaar.add(emp)
         self.bazaar.commit()
         self.bazaar.reloadObjects(app.Employee, now = True)
-        self.assert_(1000 in self.getCache(app.Employee), 'employee object not found in cache')
+        emp = self.findObj(app.Employee, {'name': 'n1001', 'surname': 's1001'})
+        self.assert_(emp.__key__ in self.getCache(app.Employee), 'employee object not found in cache')
 
 
     def testRollback(self):
         """Test database transaction rollback"""
 
         self.bazaar.getObjects(app.Employee)
-        emp = self.getCache(app.Employee)[1000]
+        emp = self.findObj(app.Employee, {'name': 'n1001', 'surname': 's1001'})
         self.bazaar.delete(emp)
         self.bazaar.rollback()
 
@@ -215,5 +219,5 @@ class TransactionsTestCase(btest.DBBazaarTestCase):
 
         # objects is deleted, but it should exist in cache due to objects
         # reload
-        self.assert_(1000 in self.getCache(app.Employee), \
+        self.assert_(emp.__key__ in self.getCache(app.Employee), \
             'employee object not found in cache')
