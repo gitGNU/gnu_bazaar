@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.45 2004/01/21 23:06:28 wrobell Exp $
+# $Id: assoc.py,v 1.46 2004/01/22 22:57:17 wrobell Exp $
 """
 Association classes.
 
@@ -612,9 +612,9 @@ class List(AssociationReferenceProxy):
         
 
         assert None not in getObjects(), \
-            '%s.%s -> %s.%s (obj: %s, key: %s) iterated objects: %s' % \
+                '%s.%s -> %s.%s (obj: %s, key: %s)\niterated objects: %s\ncache: %s' % \
             (self.broker.cls, self.col.attr, self.col.vcls, self.col.col, \
-                obj, obj.__key__, list(getObjects()))
+                obj, obj.__key__, list(getObjects()), self.cache[obj])
 
         if obj in self.ref_buf:
             # return all objects
