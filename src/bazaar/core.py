@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.14 2003/09/24 16:44:26 wrobell Exp $
+# $Id: core.py,v 1.15 2003/09/27 00:18:50 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -8,10 +8,9 @@ modify, find and perform other tasks on application objects.
 
 import logging
 
-import assoc
-import cache
-import conf
-import motor
+import bazaar.assoc
+import bazaar.cache
+import bazaar.motor
 
 log = logging.getLogger('bazaar.core')
 
@@ -69,8 +68,8 @@ class Broker:
         self.reload = True
         self.cls = cls
         
-        self.cache = cache.Cache()
-        self.convertor = motor.Convertor(cls, mtr)
+        self.cache = bazaar.cache.Cache()
+        self.convertor = bazaar.motor.Convertor(cls, mtr)
 
         log.info('class "%s" broker initialized' % cls)
 
@@ -200,7 +199,7 @@ class Bazaar:
         if len(cls_list) < 1:
             raise ValueError('list of application classes should not be empty')
 
-        self.motor = motor.Motor(db_module)
+        self.motor = bazaar.motor.Motor(db_module)
         self.brokers = {}
 
         # first, kill existing associations
@@ -215,15 +214,15 @@ class Bazaar:
                 if col.association is not None: continue
 
                 if col.is_one_to_one:
-                    asc_cls = assoc.OneToOne
+                    asc_cls = bazaar.assoc.OneToOne
                 elif col.is_one_to_many:
-                    asc_cls = assoc.BiDirList
+                    asc_cls = bazaar.assoc.BiDirList
                 elif col.is_many_to_many:
-                    asc_cls = assoc.List
+                    asc_cls = bazaar.assoc.List
                 else:
                     assert False
 
-                assert issubclass(asc_cls, assoc.AssociationReferenceProxy)
+                assert issubclass(asc_cls, bazaar.assoc.AssociationReferenceProxy)
 
                 def setAssociation(cls, col, asc_cls):
                     col.association = asc_cls(col)
@@ -235,19 +234,19 @@ class Bazaar:
 
                     vcol = col.vcls.columns[col.vattr]
 
-                    if issubclass(asc_cls, assoc.OneToOne):
-                        asc_cls = assoc.BiDirOneToOne
+                    if issubclass(asc_cls, bazaar.assoc.OneToOne):
+                        asc_cls = bazaar.assoc.BiDirOneToOne
                         if vcol.is_one_to_one:
                             asc_vcls = asc_cls
                         elif vcol.is_one_to_many:   
-                            asc_vcls = assoc.BiDirList
-                    elif issubclass(asc_cls, assoc.List):
+                            asc_vcls = bazaar.assoc.BiDirList
+                    elif issubclass(asc_cls, bazaar.assoc.List):
                         if vcol.is_one_to_one or vcol.is_one_to_many:
-                            asc_vcls = assoc.BiDirOneToOne
+                            asc_vcls = bazaar.assoc.BiDirOneToOne
                         elif vcol.is_many_to_many:
-                            asc_vcls = assoc.BiDirList
+                            asc_vcls = bazaar.assoc.BiDirList
 
-                    assert issubclass(asc_vcls, assoc.AssociationReferenceProxy)
+                    assert issubclass(asc_vcls, bazaar.assoc.AssociationReferenceProxy)
 
                     setAssociation(c, col, asc_cls)
                     setAssociation(col.vcls, vcol, asc_vcls)
@@ -257,8 +256,8 @@ class Bazaar:
                     assert col.association is not None
                     assert col.is_bidir and hasattr(col.association, 'association')
                     assert hasattr(col.association, 'col')
-                    assert isinstance(col.association, assoc.AssociationReferenceProxy)
-                    assert isinstance(vcol.association, assoc.AssociationReferenceProxy)
+                    assert isinstance(col.association, bazaar.assoc.AssociationReferenceProxy)
+                    assert isinstance(vcol.association, bazaar.assoc.AssociationReferenceProxy)
 
                     if __debug__: log.info('bi-directional association %s.%s <-> %s.%s' \
                                 % (c, col.attr, col.vcls, col.vattr))
