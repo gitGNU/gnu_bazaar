@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.25 2003/10/18 16:13:27 wrobell Exp $
+# $Id: conf.py,v 1.26 2003/11/07 17:22:52 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -205,3 +205,17 @@ class Persistence(type):
         self.columns[col.attr] = col
 
         if __debug__: log.debug('column "%s" is added to class "%s"' % (attr, self.__name__))
+
+
+    def getColumns(self):
+        """
+        Return list of all defined columns including inherited.
+        """
+        cols = {}
+
+        for cls in self.__bases__:
+            if isinstance(cls, Persistence):
+                cols.update(cls.getColumns())
+        cols.update(self.columns)
+
+        return cols

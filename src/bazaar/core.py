@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.19 2003/10/18 16:13:27 wrobell Exp $
+# $Id: core.py,v 1.20 2003/11/07 17:22:53 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -227,11 +227,11 @@ class Bazaar:
 
                 # bi-directional association
                 if col.is_bidir:
-                    if col.vattr not in col.vcls.columns:
+                    if col.vattr not in col.vcls.getColumns():
                         raise ColumnMappingError('column of referenced class is not defined', \
                             c, col)
 
-                    vcol = col.vcls.columns[col.vattr]
+                    vcol = col.vcls.getColumns()[col.vattr]
                     
                     # specialized classes for bi-directional associations
                     if issubclass(asc_cls, bazaar.assoc.OneToOne):

@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.20 2003/10/18 16:13:27 wrobell Exp $
+# $Id: motor.py,v 1.21 2003/11/07 17:22:53 wrobell Exp $
 """
 Data convertor and database access classes.
 """
@@ -24,7 +24,7 @@ class Convertor:
         self.cls = cls
         self.motor = mtr
 
-        cls_columns = self.cls.columns.values()
+        cls_columns = self.cls.getColumns().values()
         self.columns = [col.col for col in cls_columns if col.association is None]
 
         self.oto_ascs = [col for col in cls_columns if col.is_one_to_one]
