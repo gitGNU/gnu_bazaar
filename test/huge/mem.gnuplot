@@ -1,5 +1,5 @@
-set xlabel 'Pamiec[kB]'
-set ylabel 'Ilosc obiektow'
+set xlabel 'Ilosc obiektow'
+set ylabel 'Pamiec[kB]'
 set terminal pdf
 set output 'mem.pdf'
 plot "mem.out"
