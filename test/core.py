@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.7 2003/08/27 15:22:38 wrobell Exp $
+# $Id: core.py,v 1.8 2003/09/06 12:13:59 wrobell Exp $
 
 import unittest
 
@@ -206,7 +206,7 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
         order_item.order = 1000
         order_item.pos = 0
         order_item.quantity = 2.123
-        order_item.article = 'apple'
+        order_item.article = article
 
         self.bazaar.add(order_item)
         self.assert_((1000, 0) in self.bazaar.brokers[app.OrderItem].cache, \
@@ -243,7 +243,7 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
         self.checkArticleObject(article.key, article)
 
         order_item = self.bazaar.getObjects(app.OrderItem)[0]
-        order_item.article = 'art 09'
+        order_item.article = article
         self.bazaar.update(order_item)
         self.checkOrderItemObject(order_item.order, order_item.pos, order_item)
 
@@ -301,14 +301,14 @@ class TransactionsTestCase(btest.DBBazaarTestCase):
         emp = self.bazaar.brokers[app.Employee].cache[('n1001', 's1001')]
         self.bazaar.delete(emp)
         self.bazaar.commit()
-        self.bazaar.reloadObjects(app.Employee)
+        self.bazaar.reloadObjects(app.Employee, now = True)
         # objects is deleted, so it does not exist in cache due to objects
-        # reload
+        # _immediate_ reload
         self.assert_(emp.key not in self.bazaar.brokers[app.Employee].cache, \
             'employee object found in cache <- error, it is deleted')
         self.bazaar.add(emp)
         self.bazaar.commit()
-        self.bazaar.reloadObjects(app.Employee)
+        self.bazaar.reloadObjects(app.Employee, now = True)
         self.assert_(emp.key in self.bazaar.brokers[app.Employee].cache, \
             'employee object not found in cache')
 
