@@ -1,4 +1,4 @@
-# $Id: __init__.py,v 1.11 2004/01/22 23:25:59 wrobell Exp $
+# $Id: __init__.py,v 1.12 2004/02/09 09:08:47 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -226,11 +226,11 @@ Append order items to order. It can be made in two ways
 
 Finally, add created objects data into database::
 
-    bazaar.add(apple)
-    bazaar.add(peach)
-    bazaar.add(oi1)
-    bazaar.add(oi2)
-    bazaar.add(ord)
+    bzr.add(apple)
+    bzr.add(peach)
+    bzr.add(oi1)
+    bzr.add(oi2)
+    bzr.add(ord)
 
 Objects can be updated and deleted, too (L{bazaar.core.Bazaar}).
 
