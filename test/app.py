@@ -1,4 +1,4 @@
-# $Id: app.py,v 1.14 2004/01/22 23:21:40 wrobell Exp $
+# $Id: app.py,v 1.15 2004/03/24 23:21:24 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -56,8 +56,8 @@ dsn = ''
 #   addColumn('orders', 'employee', Order, 'employee_orders', 'order')
 #
 #   # m-n bi-dir; de facto vattr = 'employees'
-#   addColumn('orders', 'employee' Order, 'employee_orders', 'order', 'empleyees')
-#   addColumn('empleyees', 'order', Employee, 'employee_orders', 'employee', 'orders')
+#   addColumn('orders', 'employee' Order, 'employee_orders', 'order', 'employees')
+#   addColumn('employees', 'order', Employee, 'employee_orders', 'employee', 'orders')
 #
 # define test application classes
 Article = bazaar.conf.Persistence('Article', relation = 'article', modname = 'app')
