@@ -1,20 +1,221 @@
-# $Id: assoc.py,v 1.15 2003/09/24 00:43:37 wrobell Exp $
+# $Id: assoc.py,v 1.16 2003/09/24 16:48:17 wrobell Exp $
 """
 Association classes.
 """
 
 import sets
+import itertools
+
 import logging
 
 log = logging.getLogger('bazaar.assoc')
 
-class AssociationReferenceProxy(dict):
+
+def juggle(self, obj, value, app, rem):
+    """
+    Dictionaries C{app} and C{rem} contain sets of referenced objects
+    indexed by application objects C{obj}.
+
+    Function appends referenced object C{value} to set C{app[obj]} and
+    removes it from C{rem[obj]}. If set C{rem[obj]} contains no values, then
+    it is deleted.
+    """
+    if obj in rem:
+        objects = rem[obj]
+        if value in objects:
+            del objects[value]
+        if len(objects) == 0:
+            del rem[obj]
+
+    if obj not in app:
+        app[obj] = sets.Set()
+    app[obj].add(value)
+
+    assert value in app[obj]
+    assert obj not in rem or value not in rem[obj]
+
+
+
+class ReferenceBuffer(dict):
+    """
+    Simple reference buffer class.
+
+    The class is used to save referenced objects, which has no primary key
+    value.
+
+    It is dictionary with application objects as keys and referenced
+    objects as values.
+    @see: l{bazaar.assoc.ListReferenceBuffer}
+    """
+    def __contains__(self, (obj, value)):
+        """
+        Check if application object is stored in reference buffer.
+
+        @param obj: Application object.
+        @param value: Referenced object.
+
+        @return: Returns true if C{obj} is in reference buffer.
+        """
+        return super(ReferenceBuffer, self).__contains__(obj)
+
+
+    def __delitem__(self, (obj, value)):
+        """
+        Remove application object from reference buffer. 
+        """
+        super(ReferenceBuffer, self).__delitem__(obj)
+
+
+
+class ListReferenceBuffer(ReferenceBuffer):
+    """
+    Reference buffer for set of objects.
+
+    It is dictionary with application objects as keys and set of referenced
+    objects as value.
+
+    @see: L{bazaar.assoc.ReferenceBuffer}
+    """
+    def __contains__(self, (obj, value)):
+        """
+        Check if application object referenced objects are in reference
+        buffer.
+
+        @param obj: Application object.
+        @param value: Referenced object.
+        """
+        return super(ListReferenceBuffer, self).__contains__((obj, value)) and value in self[obj]
+
+
+    def __setitem__(self, obj, value):
+        """
+        Add referenced object to the aplication object's set of referenced
+        objects.
+
+        The set is created if it does not exist.
+
+        @param obj: Application object.
+        @param value: Referenced object.
+        """
+        assert obj is not None and value is not None
+
+        ref_buf = super(ListReferenceBuffer, self)
+        if ref_buf.__contains__((obj, value)):
+            obj_set = ref_buf.__getitem__(obj)
+        else:
+            obj_set = sets.Set()
+            ref_buf.__setitem__(obj, obj_set)
+
+        assert isinstance(obj_set, sets.Set)
+
+        obj_set.add(value)
+
+
+    def __delitem__(self, (obj, value)):
+        """
+        Remove referenced object from application object's set of
+        referenced objects.
+
+        If the set contains no more referenced objects, it is removed from
+        dictionary.
+
+        @param obj: Application object.
+        @param value: Referenced object.
+        """
+        assert obj is not None and value is not None
+
+        ref_buf = ListReferenceBuffer(self)
+        if obj in ref_buf:
+            ref_buf[obj].discard(value)
+            if len(ref_buf[obj]) == 0:
+                del ref_buf[obj]
+
+        assert obj not in ref_buf or obj in ref_buf and len(ref_buf[obj]) > 0 and value not in ref_buf[obj]
+
+
+
+class ObjectIterator(object):
+    """
+    Iterator of referenced objects.
+    """
+
+    def __init__(self, obj, association):
+        """
+        Create iterator of reference objects.
+
+        The iterator is used to append, remove and update referenced
+        objects, which are associated with application object.
+
+        For example, to print article of order items::
+
+            for oi in order.items:
+                print oi.article
+
+
+        @param obj: Application object.
+        @param association: One-to-many or many-to-many association object.
+        """
+        object.__init__(self)
+        self.obj = obj
+        self.association = association
+        assert isinstance(association, List)
+
+
+    def __iter__(self):
+        """
+        Iterate all referenced objects.
+
+        @return: Iterator of all referenced objects.
+        """
+        return self.association.iterAllObjects(obj)
+
+
+    def append(self, value):
+        """
+        Associate referenced object with application object.
+
+        Referenced object cannot be C{None}.
+
+        @param value: Referenced object.
+        """
+        assert value is not None  # fixme: AssociationError
+        self.association.append(self.obj, value)
+
+
+    def remove(self, value):
+        """
+        Remove referenced object from association.
+
+        Referenced object cannot be C{None}.
+
+        @param value: Referenced object.
+        """
+        assert value is not None  # fixme: AssociationError
+        self.association.remove(self.obj, value)
+
+
+    def update(self):
+        """
+        Update association data for application object.
+        """
+        self.association.update(self.obj)
+
+
+    def __len__(self):
+        """
+        Return amount of referenced objects.
+        """
+        return self.association.len(self.obj)
+
+
+
+class AssociationReferenceProxy(object):
     """
     Association reference proxy abstract class for application objects. 
 
     Reference proxy allows to get (upon foreign key value of object's column)
     and set (upon primary key value of referenced object) reference to
-    other object.
+    other application object.
 
     There should be one reference proxy object per association between
     application classes.
@@ -26,31 +227,19 @@ class AssociationReferenceProxy(dict):
         - None (NULL) value
 
     When referenced object has no primary key, then reference proxy buffers
-    the object as value. Objects are buffered with buffer key, which is
-    defined by descendants of this class (see L{getForeignKey} and
-    L{setForeignKey} methods). The buffer key value should be unique in
-    space of all referenced objects of given class, i.e. for one-to-one
-    association buffer key can be referenced object itself and for one-to-many
-    buffer key can be tuple of object and referenced object's position in
-    the list of objects.
-
-    The class derives from C{dict} type, so setting and getting referenced object is
-    performed with::
-
-        ref_buffer[obj] = value
-        value = ref_buffer[obj]
+    the object as value with reference buffer.
 
     Application class attribute C{col} defines parameters of association.
 
     @ivar col: Application object's class attribute.
     @ivar broker: Broker of application class.
     @ivar vbroker: Broker of referenced application objects' class.
-    @ivar association: Referenced object's association object of
-        bi-directional association.
+    @ivar association: Referenced class' association object of bi-directional association.
 
-    @see: L{bazaar.conf.Persistence} L{bazaar.conf.Column}
+    @see: L{bazaar.assoc.ReferenceBuffer} L{bazaar.assoc.ListReferenceBuffer}
+        L{bazaar.conf.Persistence} L{bazaar.conf.Column}
     """
-    def __init__(self, col):
+    def __init__(self, col, ref_buf = None):
         """
         Create association reference proxy.
 
@@ -67,86 +256,54 @@ class AssociationReferenceProxy(dict):
         self.broker = None
         self.vbroker = None
         self.association = None
-
-
-    def __getitem__(self, buffer_key):
-        """
-        Return referenced object.
-
-        Foreign key value of application object's column is extracted with 
-        L{getForeignKey} method.
-
-        @param buffer_key: Buffer key value.
-
-        @see: L{getForeignKey}
-        """
-        assert self.vbroker is not None
-
-        # if the referenced object have had no primary key, then return
-        # object from reference buffer, otherwise get referenced object
-        # with broker
-        if dict.has_key(self, buffer_key):
-            return dict.__getitem__(self, buffer_key)
+        if ref_buf is None:
+            self.ref_buf = ReferenceBuffer()
         else:
-            value_key = self.getForeignKey(buffer_key)
-            if value_key is None:
-                return None
-            else:
-                return self.vbroker.get(value_key)
-            # fixme: above five lines -> self.vbroker.get(self.getForeignKey(buffer_key))
+            self.ref_buf = ref_buf
 
 
-    def __setitem__(self, buffer_key, value):
+    def save(self, obj, value):
         """
         Assign referenced object.
 
-        Foreign key value of application object's column is set with 
-        L{setForeignKey} method.
+        If primary key value of referenced object is not defined, then it
+        is stored in reference buffer, otherwise it's set with L{saveForeignKey}
+        method.
 
-        @param buffer_key: Buffer key value.
+        @param obj: Application object.
         @param value: Referenced object.
 
-        @see: L{setForeignKey}
+        @see: L{saveForeignKey} L{bazaar.assoc.ReferenceBuffer}
+            L{bazaar.assoc.ListReferenceBuffer}
         """
         # remove entry from reference buffer if it exists
-        if dict.has_key(self, buffer_key):
-            del self[buffer_key]
+        if (obj, value) in self.ref_buf:
+            del self.ref_buf[obj, value]
 
         # if value is NULL/None or value's primary key is NULL/None
         # then set referenced object's column foreign key value to None
-        fk_value = None
+        vkey = None
 
         if value is not None:
             if value.__key__ is None:
                 # refernced object's primary key is not defined,
                 # store object in reference buffer
-                dict.__setitem__(self, buffer_key, value)
+                self.ref_buf[obj] = value
             else:
                 # set referenced object's column foreign key value
                 # to referenced object's primary key
-                fk_value = value.__key__
+                vkey = value.__key__
 
-        # set foreign key value
-        self.setForeignKey(buffer_key, fk_value)
+        # store foreign key value
+        self.saveForeignKey(obj, vkey)
 
 
-    def getForeignKey(self, buffer_key):
+    def saveForeignKey(self, obj, vkey):
         """
-        Abstract method to get foreign key value of application
-        object's column.
+        Abstract method to save referenced object's primary key value.
 
-        @param buffer_key: Buffer key value.
-        """
-        raise NotImplementedError
-
-
-    def setForeignKey(self, buffer_key, value_key):
-        """
-        Abstract method to set foreign key value of application
-        object's column to referenced object's primary key.
-
-        @param buffer_key: Buffer key value.
-        @param value_key: Associated object's primary key value.
+        @param obj: Application object.
+        @param vkey: Referenced object primary key value.
         """
         raise NotImplementedError
 
@@ -168,48 +325,43 @@ class OneToOne(AssociationReferenceProxy):
         @param obj: Application object.
         @param cls: Application class.
 
-        @return: Returns referenced object when C{obj} is not null,
-            otherwise descriptor object is returned.
+        @return: Referenced object when C{obj} is not null, otherwise descriptor object.
         """
         if obj:
-            return self[obj]
+            if (obj, None) in self.ref_buf:
+                return self.ref_buf[obj]
+            else:
+                return self.vbroker.get(getattr(obj, self.col.col))
         else:
             return self
 
 
-    def getForeignKey(self, buffer_key):
+    def saveForeignKey(self, obj, vkey):
         """
-        Return foreign key value of application object's column.
+        Save referenced object's primary key value.
 
-        @param buffer_key: Buffer key value, which is application object.
+        Application object's foreign key value is set to referenced
+        object's primary key value.
+
+        @param obj: Application object.
+        @param vkey: Referenced object primary key value.
         """
-        return getattr(buffer_key, self.col.col)
-
-
-    def setForeignKey(self, buffer_key, value_key):
-        """
-        Set foreign key value of application object's column to
-        referenced object's primary key.
-
-        @param buffer_key: Buffer key value, which is application object.
-        @param value_key: Referenced object's primary key value.
-        """
-        setattr(buffer_key, self.col.col, value_key)
+        setattr(obj, self.col.col, vkey)
 
 
     def __set__(self, obj, value):
         """
-        Descriptor method to set application object's column value.
+        Descriptor method to set application object's attribute and foreign
+        key values.
 
-        This method is optimized for uni-directional one-to-one
-        association.
+        This method is optimized for uni-directional one-to-one association.
 
         @param obj: Application object.
         @param value: Referenced object.
         """
         assert value is None or isinstance(value, self.col.vcls), '%s != %s' % (value.__class__, self.col.vcls) # fixme: AssociationError
         assert obj is not None
-        self[obj] = value
+        self.save(obj, value)
 
 
 
@@ -219,7 +371,8 @@ class BiDirOneToOne(OneToOne):
     """
     def __set__(self, obj, value):
         """
-        Descriptor method to set application object's column value.
+        Descriptor method to set application object's attribute and foreign
+        key values.
 
         The method keeps data integrity of bi-directional one-to-one
         association.
@@ -227,14 +380,22 @@ class BiDirOneToOne(OneToOne):
         @param obj: Application object.
         @param value: Referenced object.
         """
+        old_val = getattr(obj, self.col.attr)
         super(BiDirOneToOne, self).__set__(obj, value)
-        if value is not None:
-            self.association.integrate(value, obj)
+
+        if value is None:
+            if old_val is not None:
+                self.association.integrateRemove(old_val, obj)
+        else:
+            self.association.integrateSave(value, obj)
 
 
-    def integrate(self, obj, value):
+    def integrateSave(self, obj, value):
         """
-        Keep bi-directional association data integrity method.
+        Keep bi-directional association data integrity when setting
+        reference is performed.
+
+        Application and referenced objects cannot be C{None}.
 
         Method is called by second association object from bi-directional
         relationship.
@@ -245,18 +406,40 @@ class BiDirOneToOne(OneToOne):
         @param obj: Application object.
         @param value: Referenced object.
         """
-        assert obj is not None
-        super(BiDirOneToOne, self).__set__(obj, value)
+        assert obj is not None and value is not None
+        self.save(obj, value)
+
+
+    def integrateRemove(self, obj, value):
+        """
+        Keep bi-directional association data integrity when removal
+        of reference is performed.
+
+        Application and referenced objects cannot be C{None}.
+
+        Method is called by second association object from bi-directional
+        relationship.
+        
+        Application object is referenced object in second association
+        object.
+
+        @param obj: Application object.
+        @param value: Referenced object.
+        """
+        assert obj is not None and value is not None
+        self.save(obj, None)
 
 
 
-class ListAssociation(AssociationReferenceProxy):
+class List(AssociationReferenceProxy):
     """
     Basic descriptor for one-to-many and many-to-many associations.
 
-    @ivar obj_lists: Lists of referenced objects per application object.
+    @ivar value_keys: Sets of referenced objects's primary key values per application object.
     @ivar reload: If true, then association data will be loaded from
         database.
+    @ivar appended: Sets of referenced objects appended to association.
+    @ivar removed: Sets of referenced objects removed from association.
     """
     def __init__(self, col):
         """
@@ -268,67 +451,49 @@ class ListAssociation(AssociationReferenceProxy):
             L{bazaar.core.Bazaar.__init__} L{bazaar.conf.Persistence}
             L{bazaar.conf.Column}
         """
-        super(ListAssociation, self).__init__(col)
-        self.obj_lists = {}
+        super(List, self).__init__(col, ListReferenceBuffer())
+        self.value_keys = {}
         self.appended = {}
         self.removed = {}
         self.reload = True
+        assert isinstance(self.ref_buf, ListReferenceBuffer)
 
 
-
-    def getForeignKey(self, buffer_key):
+    def saveForeignKey(self, obj, vkey):
         """
-        Return foreign key value of application object's column.
+        Save referenced object's primary key value.
 
-        @param buffer_key: Buffer key value, which is pair of application
-            object and index of referenced object in referenced object list.
-        @return: Referenced object's primary key value.
+        Primary key value is appended to the set of referenced objects'
+        primary key values.
+
+        @param obj: Application object.
+        @param vkey: Referenced object's primary key value.
         """
-        assert len(buffer_key) == 2 and isinstance(buffer_key[0], self.broker.cls)
-        # obj = buffer_key[0]
-        # index = buffer_key[1]
-        return list.__getitem__(self.obj_lists[buffer_key[0]], buffer_key[1])
-
-
-    def setForeignKey(self, buffer_key, value_key):
-        """
-        Set foreign key value of application object's column to primary key
-        of referenced object.
-
-        @param buffer_key: Buffer key value, which is pair of application
-            object and index of referenced object in object list.
-        @param value_key: Referenced object's primary key value.
-        """
-        assert len(buffer_key) == 2 and isinstance(buffer_key[0], self.broker.cls)
-        # obj = buffer_key[0]
-        # index = buffer_key[1]
-        # __setitem__: list.append(self.obj_lists[buffer_key[0]], buffer_key[1], value_key)
-        list.append(self.obj_lists[buffer_key[0]], value_key)
+        self.getValueKeys(obj).add(vkey)
 
 
     def __get__(self, obj, cls):
         """
-        Descriptor method to get list of referenced objects.
+        Descriptor method to get iterator of referenced objects.
 
-        For example, (items is the descriptor)::
+        For example, to get list of all referenced objects
+        by order C{ord} (items is the descriptor)::
 
-            order_item_list = order.items
+            order_item_list = [ord.items]
+
 
         @param obj: Application object.
         @param cls: Application class.
 
-        @return: Returns list of referenced objects, when C{obj} is not null,
-            otherwise descriptor object is returned.
+        @return: Iterator of referenced objects, when C{obj} is not null,
+            otherwise descriptor object.
+
+        @see: L{bazaar.assoc.ObjectIterator}
         """
         if obj:
-
             if self.reload:
                 self.loadData()
-
-            if obj not in self.obj_lists:
-                self.obj_lists[obj] = ObjectList(obj, self)
-
-            return self.obj_lists[obj]
+            return ObjectIterator(obj, self)   
         else:
             return self
 
@@ -340,21 +505,23 @@ class ListAssociation(AssociationReferenceProxy):
         raise NotImplementedError
 
 
-    def getList(self, obj):
+    def getValueKeys(self, obj):
         """
-        Append referenced object to application object's list of referenced
-        objects.
+        Get referenced objects' primary key values set.
+
+        If the set does not exist, then it will be created.
 
         @param obj: Application object.
-        @param value: Referenced object.
         """
         assert obj is not None
-        if obj not in self.obj_lists:    # if list of referenced objects does not exist, then create it
-            self.obj_lists[obj] = ObjectList(obj, self)
-        return self.obj_lists[obj]
+
+        # if set of referenced objects does not exist, then create it
+        if obj not in self.value_keys:
+            self.value_keys[obj] = sets.Set()
+        return self.value_keys[obj]
 
 
-    def reloadData(self, now):
+    def reloadData(self, now = False):
         """
         Request reloading association relational data.
 
@@ -364,11 +531,12 @@ class ListAssociation(AssociationReferenceProxy):
         @param now: Reload relationship data immediately.
         """
         self.reload = True
-        self.obj_lists.clear()
+        self.value_keys.clear()
         self.appended.clear()
         self.removed.clear()
         if now:
             self.loadData()
+
 
 
     def loadData(self):
@@ -376,24 +544,50 @@ class ListAssociation(AssociationReferenceProxy):
         Load association data from database.
         """
         log.info('load association %s.%s' % (self.broker.cls, self.col.attr))
+
+        assert len(self.value_key) == 0 and len(self.appended) ==0 and len(self.removed) == 0
+
         for okey, vkey in self.broker.convertor.getPair(self.col):
             obj = self.broker.get(okey)
             if obj is not None:
-                list.append(self.getList(obj), vkey)
+                value = self.vbroker.get(vkey)
+                self.getValueKeys(obj).add(vkey)
 
-        log.info('len(%s.%s) = %d' % (self.broker.cls, self.col.attr, len(self.obj_lists)))
+        log.info('len(%s.%s) = %d' % (self.broker.cls, self.col.attr, len(self.value_keys)))
 
         self.reload = False
 
 
-    def update(self, obj_list):
+    def iterObjects(self, obj):
         """
-        Update association data of given list of referenced objects in
-        database.
+        Return iterator of all referenced objects by application object.
 
+        @param obj: Application object.
+
+        @return: Iterator of all referenced objects.
+        """
+        # return all objects with defined primary key values
+        def getObjects():
+            if obj in self.value_keys:
+                for vkey in self.value_keys[obj]:
+                    yield self.vbroker.get(vkey)
+
+        if obj in self.ref_buf:
+            # return all objects
+            return itertools.chain(getObjects(), self.ref_buf[obj])
+        else:
+            # no objects with undefined primary key value
+            return getObjects()
+
+
+    def update(self, obj):
+        """
+        Update relational data of association of given application object
+        in database.
+
+        @param obj: Application object.
         fixme: nfy
         """
-        obj = obj_list.obj
         okey = obj.__key__
 
         def equalize(set, method):
@@ -405,116 +599,94 @@ class ListAssociation(AssociationReferenceProxy):
         equalize(self.appended, self.broker.convertor.addPair)
 
 
-    def juggle(self, obj, value, app, rem):
-        if obj in rem:
-            objects = rem[obj]
-            if value in objects:
-                del objects[value]
-            if len(objects) == 0:
-                del rem[obj]
+    def append(self, obj, value):
+        """
+        Append referenced object to association.
 
-        if obj not in app:
-            app[obj] = sets.Set()
-        app[obj].add(value)
-
-        assert value in app[obj]
-        assert obj not in rem or value not in rem[obj]
-
-
-    def append(self, obj, index, value):
-        self[(obj, index)] = value
+        @param obj: Application object.
+        @param value: Referenced object.
+        """
+        self.save(obj, value)
         self.juggle(obj, value, self.appended, self.removed)
 
 
-    def remove(self, obj, index):
-        assert obj in self.obj_lists
-        value = self[(obj, index)]
-        if (obj, index) in self:
-            del self[(obj, index)]
+    def remove(self, obj, value):
+        """
+        Remove referenced object from association.
+
+        @param obj: Application object.
+        @param value: Referenced object.
+        """
+        assert obj in self.value_keys
+
         self.juggle(obj, value, self.removed, self.appended)
-        list.__delitem__(self.obj_lists[obj], index)
+
+        if (obj, value) in self.ref_buf:
+            del self.ref_buf[(obj, value)]
+        elif obj in self.value_keys:
+            self.value_keys.discard(value.__key__)
+
+
+    def len(self, obj):
+        """
+        Return amount of all referenced objects by application object.
+        """
+        size = 0
+        if obj in self.value_keys:            # amount of objects with defined primary key value
+            size += len(self.value_keys[obj])
+        if (obj, None) in self.ref_buf:       # amount of objects with undefined primary key value
+            size += len(self.ref_buf[obj])
+        return size
 
 
 
-class UniDirManyToMany(ListAssociation):
-    """
-    Uni-directional many-to-many association.
-    """
-    pass
-
-
-class OneToMany(ListAssociation):
+class BiDirList(List):
     """
     Bi-directional one-to-many association descriptor.
 
     One-to-many association is always bi-directional relationship.
     """
-    def append(self, obj, index, value):
+    def append(self, obj, value):
+        """
+        Append referenced object to association and integrate association
+        data.
+
+        @param obj: Application object.
+        @param value: Referenced object.
+        """
         assert value is not None
-        super(OneToMany, self).append(obj, index, value)
-        self.association.integrate(value, obj)
+        super(BiDirList, self).append(obj, value)
+        self.association.integrateSave(value, obj)
 
 
-    def remove(self, obj, index):
-        value = super(OneToMany, self).remove(obj, index)
-        if value is not None:
-            self.association.integrate(value, None)
-        return value
+    def remove(self, obj, value):
+        """
+        Remove referenced object from association and integrate association
+        data.
+
+        @param obj: Application object.
+        @param value: Referenced object.
+        """
+        super(BiDirList, self).remove(obj, value)
+        self.association.integrateRemove(value, obj)
 
 
-    def integrate(self, obj, value):
+    def integrateSave(self, obj, value):
+        """
+        Integrate association data when referenced object is appended to
+        association.
+        """
         assert obj is not None and value is not None
-        self.getList(obj).append(value)
+        super(BiDirList, self).append(obj, value)
 
 
+    def integrateRemove(self, obj, value):
+        """
+        Integrate association data when referenced object is removed from
+        association.
 
-class ObjectList(list):
-    def __init__(self, obj, association):
-        list.__init__(self)
-        self.obj = obj
-        self.association = association
-
-
-    def __getitem__(self, index):
-        return self.get(index)
-
-
-    def __setitem__(self, index, value):
-        raise NotImplementedError
-        #self.set(index, value)
-
-
-    def __delitem__(self, index):
-        if __debug__: size = len(self)
-
-        self.association.remove(self.obj, index)
-
-        assert len(self) == size - 1
-
-
-    def append(self, value):
-        assert value is not None and isinstance(value, self.association.col.vcls) #fixme: AssociationError
-        index = len(self)
-        self.set(index, value)
-        assert len(self) == index + 1
-
-
-    def update(self):
-        self.association.update(self)
-
-
-    def __iter__(self):
-        for i in range(len(self)):
-            yield self.get(i)
-
-
-    def __str__(self):
-        return str([val for val in self])
-
-
-    def set(self, index, value):
-        self.association.add(self.obj, index, value)
-
-
-    def get(self, index):
-        return self.association[(self.obj, index)]
+        @param obj: Application object.
+        @param value: Referenced object.
+        """
+        assert obj is not None and value is not None
+        super(BiDirList, self).remove(obj, value)

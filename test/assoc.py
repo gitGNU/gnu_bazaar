@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.3 2003/09/22 00:32:35 wrobell Exp $
+# $Id: assoc.py,v 1.4 2003/09/24 16:48:17 wrobell Exp $
 
 import app
 import btest
@@ -67,7 +67,6 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
         emps = self.bazaar.getObjects(app.Employee)
         for emp in emps:
             print emp.__key__, len(emp.orders)
-        print emps[0].orders[0].__key__
 
 
     def testAppending(self):
@@ -89,7 +88,7 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
 #        self.bazaar.add(ord2)
 
         emps[0].orders.update()
-        app.Employee.orders.reloadAssociations()
+        app.Employee.orders.reloadData()
         print 'e', emps[0].__key__, emps[0].orders, len(emps[0].orders)
 
 
@@ -143,5 +142,5 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
 ##        print 'oi3 key', oi3.__key__
 
         order.items.update()
-        app.Order.items.reloadAssociations()
+        app.Order.items.reloadData()
         print 'e2', order.__key__, order.items, len(order.items)
