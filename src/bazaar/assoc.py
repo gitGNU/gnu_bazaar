@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.16 2003/09/24 16:48:17 wrobell Exp $
+# $Id: assoc.py,v 1.17 2003/09/24 17:23:08 wrobell Exp $
 """
 Association classes.
 """
@@ -11,7 +11,7 @@ import logging
 log = logging.getLogger('bazaar.assoc')
 
 
-def juggle(self, obj, value, app, rem):
+def juggle(obj, value, app, rem):
     """
     Dictionaries C{app} and C{rem} contain sets of referenced objects
     indexed by application objects C{obj}.
@@ -545,7 +545,7 @@ class List(AssociationReferenceProxy):
         """
         log.info('load association %s.%s' % (self.broker.cls, self.col.attr))
 
-        assert len(self.value_key) == 0 and len(self.appended) ==0 and len(self.removed) == 0
+        assert len(self.value_keys) == 0 and len(self.appended) ==0 and len(self.removed) == 0
 
         for okey, vkey in self.broker.convertor.getPair(self.col):
             obj = self.broker.get(okey)
@@ -607,7 +607,7 @@ class List(AssociationReferenceProxy):
         @param value: Referenced object.
         """
         self.save(obj, value)
-        self.juggle(obj, value, self.appended, self.removed)
+        juggle(obj, value, self.appended, self.removed)
 
 
     def remove(self, obj, value):
@@ -619,7 +619,7 @@ class List(AssociationReferenceProxy):
         """
         assert obj in self.value_keys
 
-        self.juggle(obj, value, self.removed, self.appended)
+        juggle(obj, value, self.removed, self.appended)
 
         if (obj, value) in self.ref_buf:
             del self.ref_buf[(obj, value)]
