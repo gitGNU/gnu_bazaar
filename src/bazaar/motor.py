@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.21 2003/11/07 17:22:53 wrobell Exp $
+# $Id: motor.py,v 1.22 2003/11/22 14:26:49 wrobell Exp $
 """
 Data convertor and database access classes.
 """
@@ -97,18 +97,8 @@ class Convertor:
                 log.debug('association delete query: "%s"' % \
                         self.queries[asc][self.delPair])
 
-
-    def getObjects(self):
-        """
-        Load objects from database.
-        """
-        cols = ['__key__'] + self.columns
-        iter = range(len(cols))
-        for data in self.motor.getData(self.queries[self.getObjects], cols):
-            obj = self.cls()              # create object instance
-            for i in iter:
-                setattr(obj, cols[i], data[i])
-            yield obj
+        self.queries[self.find] = 'select __key__ from "%s" where %%s' % self.cls.relation
+        if __debug__: log.debug('object OO find query: "%s"' % self.queries[self.find])
 
 
     def getData(self, obj):
@@ -129,6 +119,40 @@ class Convertor:
                 data[col.col] = None
             else:
                 data[col.col] = value.__key__
+        return data
+
+
+    def dictToSQL(self, param):
+        """
+        Convert dictionary into C{WHERE} SQL clause.
+
+        All dictionary items are glued with C{AND} operator.
+
+        @see: L{bazaar.core.Bazaar.find}
+        """
+        return ' and '.join(['"%s" = %%(%s)s' % (col, col) for col in param])
+
+
+    def objToData(self, param):
+        """
+        Convert object oriented parameters to pure relational data.
+
+        @see: L{bazaar.core.Bazaar.find}
+        """
+        import bazaar.core # fixme
+
+        data = {}
+        cols = self.cls.columns
+        for attr, value in param.items():
+            # change class attribute and object value pair into relation
+            # column and primary key value
+            if attr in cols:
+                attr = cols[attr].col
+            if isinstance(value, bazaar.core.PersistentObject):
+                value = value.__key__
+
+            data[attr] = value
+
         return data
 
 
@@ -154,10 +178,47 @@ class Convertor:
         """
         fixme
         """
-        okey, vkey = self.asc_cols[asc] # fixme
-        for data in self.motor.getData(self.queries[asc][self.getPair], \
-                self.asc_cols[asc]):
+        okey, vkey = self.asc_cols[asc] # fixme: is this still required
+        for data in self.motor.getData(self.queries[asc][self.getPair]):
             yield data[0], data[1]
+
+
+    def find(self, query, param = None, field = 0):
+        """
+        Find objects in database.
+
+        @see L{bazaar.core.Bazaar.find}
+        """
+        if isinstance(query, dict):
+            param = query
+
+        param = self.objToData(param)
+
+        if isinstance(query, dict):
+            query = self.queries[self.find] % self.dictToSQL(param)
+
+        assert isinstance(query, str) and isinstance(param, dict) \
+            and isinstance(field, int)
+
+        if __debug__:
+            log.debug('find objects with query: \'%s\', params %s, field %d' \
+                % (query, param, field))
+
+        for data in self.motor.getData(query, param):
+            yield data[field]
+
+
+    def getObjects(self):
+        """
+        Load objects from database.
+        """
+        cols = ['__key__'] + self.columns
+        iter = range(len(cols))
+        for data in self.motor.getData(self.queries[self.getObjects]):
+            obj = self.cls()              # create object instance
+            for i in iter:
+                setattr(obj, cols[i], data[i])
+            yield obj
 
 
     def add(self, obj):
@@ -233,7 +294,7 @@ class Motor:
         if __debug__: log.debug('close database connection')
 
 
-    def getData(self, query, cols):
+    def getData(self, query, param = None):
         """
         Get list of rows from database.
 
@@ -242,12 +303,13 @@ class Motor:
         are column values for the relation row.
 
         @param query: Database SQL query.
-        @param cols: List of relation columns.
         """
-        if __debug__: log.debug('query "%s": executing' % query)
+        if __debug__: log.debug('query "%s", params %s: executing' % (query, param))
+
+        if param is None: param = {}
 
         dbc = self.db_conn.cursor()
-        dbc.execute(query)
+        dbc.execute(query, param)
 
         if __debug__: log.debug('query "%s": executed, rows = %d' % (query, dbc.rowcount))
 
