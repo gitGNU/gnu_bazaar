@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# $Id: exdocex.py,v 1.1 2003/10/09 16:41:49 wrobell Exp $
+# $Id: exdocex.py,v 1.2 2003/10/09 16:47:31 wrobell Exp $
 
 import sys
 import re
@@ -11,7 +11,7 @@ indent = None  # indentation of example code
 
 for l in sys.stdin:
     if code:
-        if re.match('(^(%s)+[\'\"{}()\[\]#_a-zA-Z])|(^$)' % indent, l) is not None:
+        if re.match('(^%s+[\'\"{}()\[\]#_a-zA-Z])|(^$)' % indent, l) is not None:
             pl = re.match('(^%s(.*))|^()$' % indent, l).group(2)
             if pl is None:
                 print
