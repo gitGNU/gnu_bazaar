@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.4 2003/09/24 16:48:17 wrobell Exp $
+# $Id: assoc.py,v 1.5 2003/09/25 16:33:32 wrobell Exp $
 
 import app
 import btest
@@ -31,29 +31,7 @@ class OneToOneAssociationTestCase(btest.DBBazaarTestCase):
 
     def testUpdating(self):
         """Test one-to-one association updating"""
-        order_item = self.bazaar.getObjects(app.OrderItem)[0]
-
-        art = app.Article()
-        art.name = 'xxx1'
-        art.price = 2.3
-        self.bazaar.add(art)
-        order_item.article = art
-        self.bazaar.update(order_item)
-
-        art = app.Article()
-        art.name = 'xxx2'
-        art.price = 2.3
-        order_item.article = art
-        self.bazaar.add(art)
-        self.bazaar.update(order_item)
-
-        order_item.article = None
-        self.assertRaises(app.db_module.ProgrammingError, self.bazaar.update, order_item)
-        self.bazaar.rollback() # exception line above, so rollback
-
-        art = app.Article()
-        art.name = 'xxx3'
-        art.price = 2.3
+        pass
 
 
 
@@ -61,35 +39,123 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
     """
     Test many-to-many associations.
     """
+    def checkAsc(self):
+        mem_data = []
+        for obj in self.bazaar.getObjects(app.Employee):
+            for val in obj.orders:
+                self.assert_(val is not None, \
+                    'referenced object cannot be None (application object key: %d)' % obj.__key__)
+                mem_data.append((obj.__key__, val.__key__))
+        mem_data.sort()
+
+        dbc = self.bazaar.motor.db_conn.cursor()
+        dbc.execute('select employee, "order" from employee_orders order by employee, "order"')
+        db_data = dbc.fetchall()
+        db_data.sort()
+
+        self.assertEqual(db_data, mem_data, 'database data are different than memory data')
+
+
     def testLoading(self):
         """Test many-to-many association loading.
         """
-        emps = self.bazaar.getObjects(app.Employee)
-        for emp in emps:
-            print emp.__key__, len(emp.orders)
+        self.checkAsc()
 
 
-    def testAppending(self):
-        """Test appending to many-to-many association.
+    def testReloading(self):
+        """Test many-to-many association loading.
         """
-        emps = self.bazaar.getObjects(app.Employee)
+        emp = self.bazaar.getObjects(app.Employee)[0]
+        orders = emp.orders
+
+        # remove some referenced objects
+        assert len(orders) > 0
+        for o in orders:
+            del orders[o]
+        assert len(orders) == 0
+
+        # reload data and check if they are reloaded
+        app.Employee.orders.reloadData()
+        self.checkAsc()
+
+
+    def testErrorAppending(self):
+        """Test error when appending object with undefined primary key value.
+        """
+        emp = self.bazaar.getObjects(app.Employee)[0]
+
         ord1 = app.Order()
         ord1.no = 1002
         ord1.finished = False
+
+        emp.orders.append(ord1)
+        self.assertRaises(app.db_module.ProgrammingError, emp.orders.update)
+
+
+    def testAppending(self):
+        """Test appending objects to many-to-many association.
+        """
+        emp = self.bazaar.getObjects(app.Employee)[0]
+
+        ord1 = app.Order()
+        ord1.no = 1002
+        ord1.finished = False
+
         ord2 = app.Order()
         ord2.no = 1003
         ord2.finished = False
 
-        emps[0].orders.append(ord1)
-#        emps[0].orders[0] = ord2
-
+        # append object with _defined_ primary key value
         self.bazaar.add(ord1)
-        print 'key', ord1.__key__
-#        self.bazaar.add(ord2)
+        emp.orders.append(ord1)
 
-        emps[0].orders.update()
-        app.Employee.orders.reloadData()
-        print 'e', emps[0].__key__, emps[0].orders, len(emps[0].orders)
+        # append object with _undefined_ primary key value
+        emp.orders.append(ord2)
+        self.bazaar.add(ord2)
+        emp.orders.update()
+        self.checkAsc()
+
+
+    def testRemoving(self):
+        """Test removing objects from many-to-many association.
+        """
+        emp = self.bazaar.getObjects(app.Employee)[0]
+        assert len(emp.orders) > 0
+        orders = list(emp.orders)
+        del emp.orders[orders[0]]
+        emp.orders.update()
+        self.checkAsc()
+
+
+    def testMixedUpdate(self):
+        """Test appending and removing objects to/from many-to-many association.
+        """
+        emp = self.bazaar.getObjects(app.Employee)[0]
+
+        ord1 = app.Order()
+        ord1.no = 1002
+        ord1.finished = False
+
+        ord2 = app.Order()
+        ord2.no = 1003
+        ord2.finished = False
+
+        # append object with _defined_ primary key value
+        self.bazaar.add(ord1)
+        emp.orders.append(ord1)
+
+        assert len(emp.orders) > 0
+        orders = list(emp.orders)
+        ord = orders[0]
+        # fixme: improve test code, so assertion below is not required
+        assert ord != ord2 != ord1
+        del emp.orders[ord]
+
+        # append object with _undefined_ primary key value
+        emp.orders.append(ord2)
+        self.bazaar.add(ord2)
+        emp.orders.update()
+        self.checkAsc()
 
 
 
