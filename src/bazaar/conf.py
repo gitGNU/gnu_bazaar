@@ -1,5 +1,4 @@
-# $Id: conf.py,v 1.10 2003/08/25 19:01:06 wrobell Exp $
-
+# $Id: conf.py,v 1.11 2003/08/31 08:40:56 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -15,7 +14,7 @@ Application class can be defined by standard Python class definition::
         key_columns = ('no')
 
 It is possible to create application class by class instantiation::
-    Order = bazaar.conf.Persitence('order')
+    Order = bazaar.conf.Persistence('order')
     Order.addColumn('no')
     Order.addColumn('finished')
     Order.setKey(('no', ))
@@ -33,30 +32,121 @@ Of course, both ideas can be mixed::
 import logging
 
 import bazaar.core
+import bazaar.assoc
 
 log = logging.getLogger('bazaar.conf')
 
 
+def getConvertKeyMethod(key_columns):
+    """
+    Create conversion method of key value into a tuple of values.
+
+    Key can be either single column or multi column. Returned callable
+    class is an efficient method for returning key value as a tuple of
+    values for both types of keys.
+
+    Examples:
+
+        # convert single column key value
+        key = 'John'
+        convert_key = getConvertKeyMethod(('name',))()
+        get_key(data)
+        ('John', )
+
+        # get multi column key value
+        key = ('John', 'Smith')
+        get_key = getConvertKeyMethod(('name', 'surname'))()
+        get_key(data)
+        ('John', 'Smith')
+
+
+    @param key_columns: Names of key columns.
+    """
+    assert key_columns >= 1
+
+    def toSTuple(self, key): return (key, )
+    def toMTuple(self, key): return key
+
+    class ConvertKeyTool(object):
+        if len(key_columns) == 1:
+            __call__ = toSTuple
+            if __debug__: log.debug('single column key conversion method')
+        else:
+            __call__ = toMTuple
+            if __debug__: log.debug('multi column key conversion method')
+    return ConvertKeyTool
+
+
+
+def getGetKeyMethod(key_columns):
+    """
+    Create extraction method of key value from dictionary.
+
+    Key can be either single column or multi column. Returned callable
+    class is an efficient method for returning key value for both types of
+    keys.
+
+    Examples:
+
+        data = {'name': 'John', 'surname': 'Smith', 'birthdate': '01-09-1900'}
+        
+        # get single column key value
+        get_key = getGetKeyMethod(('name',))()
+        get_key(data)
+        'John'
+
+        # get multi column key value
+        get_key = getGetKeyMethod(('name', 'surname'))()
+        get_key(data)
+        ('John', 'Smith')
+
+    @param key_columns: Names of key columns.
+    """
+
+    assert key_columns >= 1
+
+    def getSKey(self, data): return data[self.cols[0]]
+    def getMKey(self, data): return tuple([data[col] for col in self.cols])
+
+    class GetKeyTool(object):
+        if len(key_columns) == 1:
+            __call__ = getSKey
+            if __debug__: log.debug('single column key setting method')
+        else:
+            __call__ = getMKey
+            if __debug__: log.debug('multi column key setting method')
+        cols = key_columns
+    return GetKeyTool
+
+
+
 class Column:
     """
-    Describes database relation column.
+    Describes application class column.
 
-    The column name is application class attribute.
+    The column name is attribute name by default.
 
-    @ivar name: Column name.
+    @ivar name: Application class column name.
+    @ivar attr: Application class attribute name.
+    @ivar association: Association descriptor of given column.
+    @ivar onet_to_one: Association is one-to-one association.
     """
 
-    def __init__(self, name):
+    def __init__(self, name, attr = None):
         """
-        Create database relation column.
+        Create application class column.
 
         @param name: Column name.
+        @param attr: Attribute name.
         """
         self.name = name
+        self.association = None
+        self.one_to_one = False
+        if attr is None: self.attr = self.name
 
 
 
-class Persitence(type):
+class Persistence(type):
     """
     Application class metaclass.
 
@@ -70,7 +160,7 @@ class Persitence(type):
     @ivar key_columns: Database relation column names.
     """
 
-    def __new__(cls, name, bases = (bazaar.core.PersistentObject, ), data = None, relation = ''):
+    def __new__(self, name, bases = (bazaar.core.PersistentObject, ), data = None, relation = ''):
         """
         Create application class.
 
@@ -91,10 +181,13 @@ class Persitence(type):
         if 'key_columns' not in data:
             data['key_columns'] = ()
 
+        if 'convertKey' not in data:
+            data['convertKey'] = None
+
         if 'getKey' not in data:
             data['getKey'] = None
 
-        c = type.__new__(cls, name, bases, data)
+        c = type.__new__(self, name, bases, data)
 
         if __debug__:
             log.debug('new class "%s" for relation "%s"' % (c.__name__, data['relation']))
@@ -104,24 +197,38 @@ class Persitence(type):
         return c
 
 
-    def addColumn(cls, name):
+    def addColumn(self, name, attr = None, cls = None, fkey_columns = None):
         """
-        Add relation column.
+        Add column to persistent application class.
 
-        This way the application class attribute is defined.
+        This way the application class attribute and associations between
+        application classes are defined.
 
         @param name: Column name.
+        @param cls: Associated application object class.
+        @param attr: fixme
+        @param fkey_columns: List of foreign key's column names.
         """
 
-        if name in cls.columns:
-            raise ValueError('column "%s" is already defined in class "%s"' % (name, cls.__name__))
+        if name in self.columns:
+            raise ValueError('column "%s" is already defined in class "%s"' % (name, self.__name__))
 
-        cls.columns[name] = Column(name)
+        col = Column(name, attr)
 
-        if __debug__: log.debug('column "%s" is added to class "%s"' % (name, cls.__name__))
+        if cls is not None:
+            # fixme: throw exc when len(fkey_columns) < 1 or is None
+            col.cls = cls
+            col.association = bazaar.assoc.OneToOneAssociation(col)
+            col.one_to_one = True
+            col.fkey_columns = fkey_columns
+            setattr(self, attr, col.association)
+
+        self.columns[name] = col
+
+        if __debug__: log.debug('column "%s" is added to class "%s"' % (name, self.__name__))
 
 
-    def setKey(cls, columns):
+    def setKey(self, columns):
         """
         Set relation key.
 
@@ -135,33 +242,13 @@ class Persitence(type):
 
         # check if given columns exist in list of relation columns
         for c in columns: 
-            if c not in cls.columns:
+            if c not in self.columns:
                 raise ValueError('key\'s column "%s" not found on list of relation columns' % c)
 
-        cls.key_columns = tuple(columns)
+        self.key_columns = tuple(columns)
 
-        #
-        # object key value extraction methods
-        #
+        # set key value extraction and conversion methods
+        self.getKey = getGetKeyMethod(self.key_columns)()
+        self.convertKey = getConvertKeyMethod(self.key_columns)()
 
-        # get multi column key value from object
-        def getMKey(cls, obj):
-#            if __debug__: log.debug('class "%s" object key value: "%s"' \
-#                % (cls,  tuple([obj.__dict__[c] for c in cls.key_columns])))
-            return tuple([obj.__dict__[c] for c in cls.key_columns])
-
-        # get one column key value from object
-        def getKey(cls, obj):
-#            if __debug__: log.debug('class "%s" object key value: "%s"' \
-#                % (cls,  obj.__dict__[cls.key_columns[0]]))
-            return obj.__dict__[cls.key_columns[0]]
-
-        # create class methods for object key extraction 
-        if len(cls.key_columns) == 1:
-            cls.getKey = classmethod(getKey)
-            if __debug__: log.debug('class "%s" single column key extraction method' % cls)
-        else:
-            cls.getKey = classmethod(getMKey)
-            if __debug__: log.debug('class "%s" multi column key extraction method' % cls)
-
-        if __debug__: log.debug('class "%s" key: %s' % (cls.__name__, cls.key_columns))
+        if __debug__: log.debug('class "%s" key: %s' % (self.__name__, self.key_columns))
