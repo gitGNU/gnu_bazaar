@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.40 2003/10/06 18:18:55 wrobell Exp $
+# $Id: assoc.py,v 1.41 2003/11/22 11:42:25 wrobell Exp $
 """
 Association classes.
 """
@@ -684,12 +684,14 @@ class List(AssociationReferenceProxy):
         """
         log.info('load association %s.%s' % (self.broker.cls, self.col.attr))
 
-        assert len(self.value_keys) == 0 and len(self.appended) ==0 and len(self.removed) == 0
+        assert len(self.value_keys) == 0 and len(self.appended) == 0 \
+            and len(self.removed) == 0
 
         for okey, vkey in self.getPair():
             self.appendKey(okey, vkey)
 
-        log.info('application objects of %s.%s = %d' % (self.broker.cls, self.col.attr, len(self.value_keys)))
+        log.info('application objects of %s.%s = %d' % \
+            (self.broker.cls, self.col.attr, len(self.value_keys)))
 
         self.reload = False
 
