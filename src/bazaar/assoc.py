@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.18 2003/09/24 22:41:04 wrobell Exp $
+# $Id: assoc.py,v 1.19 2003/09/25 12:50:55 wrobell Exp $
 """
 Association classes.
 """
@@ -9,6 +9,7 @@ import itertools
 import logging
 
 log = logging.getLogger('bazaar.assoc')
+
 
 
 def juggle(obj, value, app, rem):
@@ -440,6 +441,50 @@ class List(AssociationReferenceProxy):
         database.
     @ivar appended: Sets of referenced objects appended to association.
     @ivar removed: Sets of referenced objects removed from association.
+
+    @todo: Referenced objects' primary key values and referenced objects with
+    undefinded primary key values are stored with sets internally.
+    Sets are good where list of referenced objects is long enough.
+    Consider the script::
+
+        #!/bin/sh
+        echo amount: $1
+        echo lists:
+        python /usr/lib/python2.3/timeit.pyo -s "amount = $1; x = range(amount)" -n 10000 "amount in x"
+        echo sets:
+        python /usr/lib/python2.3/timeit.pyo -s "import sets; amount = $1; x = sets.Set(range(amount))" -n 10000 "amount in x"
+
+
+    Test results::
+
+        amount: 10
+        lists: 10000 loops, best of 3: 5.4 usec per loop
+        sets:  10000 loops, best of 3: 17.4 usec per loop
+
+        amount: 25
+        lists: 10000 loops, best of 3: 11.5 usec per loop
+        sets:  10000 loops, best of 3: 17.9 usec per loop
+
+        amount: 50
+        lists: 10000 loops, best of 3: 21.8 usec per loop
+        sets:  10000 loops, best of 3: 17.5 usec per loop
+
+        amount: 100
+        lists: 10000 loops, best of 3: 42.7 usec per loop
+        sets:  10000 loops, best of 3: 17.3 usec per loop
+
+
+    Creating set costs more comparing to creating list::
+
+        $ timeit -s 'from sets import Set' -n 100000 'x = Set()'
+        100000 loops, best of 3: 21.5 usec per loop
+
+        $ timeit -s 'from sets import Set' -n 100000 'x = list()'
+        100000 loops, best of 3: 4.5 usec per loop
+
+    Conclusion. Store referenced objects with lists internally by
+    default and make configuration option, so switching to sets is
+    possible.
     """
     def __init__(self, col):
         """
