@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.34 2003/10/02 14:44:16 wrobell Exp $
+# $Id: assoc.py,v 1.35 2003/10/02 16:42:23 wrobell Exp $
 """
 Association classes.
 """
@@ -657,9 +657,9 @@ class List(AssociationReferenceProxy):
         """
         self.reload = True
         self.value_keys.clear()
+        self.ref_buf.clear()
         self.appended.clear()
         self.removed.clear()
-        self.ref_buf.clear()
         if self.col.is_one_to_many:
             self.vbroker.reloadObjects(now)
         if now:
