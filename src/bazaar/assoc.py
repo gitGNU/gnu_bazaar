@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.3 2003/09/09 07:46:07 wrobell Exp $
+# $Id: assoc.py,v 1.4 2003/09/09 22:03:13 wrobell Exp $
 """
 Association classes.
 """
@@ -98,9 +98,12 @@ class AssociationReferenceProxy(dict):
         # if value is None then just set associating object foreign key
         # column value to None
         if value is None:
-            self.setForeignKey(buffer_key, None)
             if dict.has_key(self, buffer_key):
                 del self[buffer_key]
+
+            # set associating object's column foreign key value to NULL/None
+            fk_value = None
+
         else:
             if value.key is None:
                 # associated object has no primary key, so store object in reference buffer
@@ -111,9 +114,11 @@ class AssociationReferenceProxy(dict):
                 if dict.has_key(self, buffer_key):
                     del self[buffer_key]
 
-            # finally, assign associated object primary key to associating
-            # object column foreign key value
-            self.setForeignKey(buffer_key, value.key)
+            # set associating object's column foreign key value
+            # to associated object primary key
+            fk_value = value.key
+
+        self.setForeignKey(buffer_key, fk_value)
 
 
     def getForeignKey(self, buffer_key):
