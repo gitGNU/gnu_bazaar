@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.23 2004/01/21 23:06:28 wrobell Exp $
+# $Id: assoc.py,v 1.24 2004/01/21 23:21:46 wrobell Exp $
 
 import app
 import btest
@@ -437,10 +437,17 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
         oi2.quantity = 10.4
         oi2.article = art
 
+        # fixme: create a test similar to this but without two lines below
+        # fixme: the test will fail but ord.items.update (?) should throw
+        # fixme: an exception about objects not added into database...
+        self.bazaar.add(oi1)
+        self.bazaar.add(oi2)
+
         ord.items.append(oi1)
         ord.items.append(oi2)
         ord.items.remove(oi1)
         ord.items.remove(oi2)
+
         ord.items.update()
         self.checkOrdAsc()
 
