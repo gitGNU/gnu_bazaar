@@ -1,9 +1,10 @@
-# $Id: cache.py,v 1.5 2003/11/24 16:42:17 wrobell Exp $
+# $Id: cache.py,v 1.6 2003/11/25 16:27:48 wrobell Exp $
 """
 Cache classes for application objects.
 """
 
 import weakref
+from UserDict import UserDict # weakref inherits from UserDict :-\
 
 import logging
 
@@ -17,7 +18,7 @@ class Cache(object):
     """
     def __init__(self, owner):
         """
-        Create cache class.
+        Create cache object.
 
         @param owner: Owner of the cache - object broker or association object.
         """
@@ -76,7 +77,7 @@ class FullAssociation(Full):
     """
     Cache for loading all association data from database.
     """
-    def load(self, key):
+    def load(self, obj):
         """
         Load all association data from database.
 
@@ -86,7 +87,8 @@ class FullAssociation(Full):
         self.owner.loadData()
 
 
-class Lazy(Cache, dict):
+
+class Lazy(Cache):
     """
     Abstract, basic cache class for lazy objects and association data
     loading.
@@ -97,26 +99,44 @@ class Lazy(Cache, dict):
 
         @param param: Referenced object primary key value or application object.
         """
+        # keep strong reference to data until returned,
+        # so data will not be wiped out
         if param not in self:
-            self.load(param)
-        return super(Lazy, self).__getitem__(param)
+            data = self.load(param)
+        else:
+            data = self.weak.__getitem__(self, param)
+        return data
 
 
 
-class LazyObject(Lazy):
+
+class LazyObject(Lazy, weakref.WeakValueDictionary):
     """
     Cache for lazy referenced object loading.
     """
+    def __init__(self, owner):
+        """
+        Create object lazy cache.
+
+        @param owner: Owner of the cache - object broker or association object.
+        """
+        Lazy.__init__(self, owner)
+        self.weak = weakref.WeakValueDictionary # to know weak dictionary superclass
+        weakref.WeakValueDictionary.__init__(self)
+
+
     def load(self, key):
         """
         Load referenced object with primary key value C{key}.
         """
         assert self.owner is not None
-        pass #fixme
+        obj = self.owner.convertor.get(key)
+        self[key] = obj
+        return obj
 
 
 
-class LazyAssociation(Lazy):
+class LazyAssociation(Lazy, weakref.WeakKeyDictionary):
     """
     Cache for loading all association data from database.
     """

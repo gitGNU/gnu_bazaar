@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.25 2003/11/24 18:42:22 wrobell Exp $
+# $Id: core.py,v 1.26 2003/11/25 16:27:48 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -134,18 +134,14 @@ class Broker:
         """
         Get application object of given key.
 
-        Objects is returned from cache. If application objects reload has
-        been requested, then objects would be loaded from database.
+        Objects is returned from cache.
 
         @param key: key of object to load
 
-        @return: fixme
+        @return: Object with primary key value equal to C{key}
 
-        @see: L{bazaar.core.Broker.loadObjects} L{bazaar.core.Broker.reloadObjects}
+        @see: L{bazaar.cache}
         """
-        if self.reload:
-            self.loadObjects()
-
         if key is None:
             return None
         else:
@@ -168,7 +164,6 @@ class Broker:
 
         @param obj: Object to update.
         """
-        old_key = obj.__key__
         self.convertor.update(obj)
 
 

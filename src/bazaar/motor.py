@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.23 2003/11/23 23:39:18 wrobell Exp $
+# $Id: motor.py,v 1.24 2003/11/25 16:27:48 wrobell Exp $
 """
 Data convertor and database access classes.
 """
@@ -35,33 +35,37 @@ class Convertor:
 
         self.mtm_ascs = [col for col in cls_columns if col.is_many_to_many]
 
+        self.load_cols = ['__key__'] + self.columns
+
+        # used to get values of object's loaded data
+        self.itercols = range(len(self.load_cols))
+
         #
         # prepare queries
         #
-        self.queries[self.getObjects] = 'select "__key__", %s from "%s"' \
-            % (', '.join(['"%s"' % col for col in self.columns]), self.cls.relation)
+        self.queries[self.getObjects] = 'select %s from "%s"' \
+            % (', '.join(['"%s"' % col for col in self.load_cols]), self.cls.relation)
+        if __debug__: log.debug('get objects query: "%s"' % self.queries[self.getObjects])
 
-        if __debug__: log.debug('get object query: "%s"' % self.queries[self.getObjects])
+        self.queries[self.get] = self.queries[self.getObjects] \
+            + ' where __key__ = %s'
+        if __debug__: log.debug('get single object query: "%s"' % self.queries[self.get])
 
         self.queries[self.add] = 'insert into "%s" (__key__, %s) values (%%(__key__)s, %s)' \
             % (self.cls.relation,
                ', '.join(['"%s"' % col for col in self.columns]),
                ', '.join(['%%(%s)s' % col for col in self.columns])
               )
-
         if __debug__: log.debug('add object query: "%s"' % self.queries[self.add])
 
         self.queries[self.update] = 'update "%s" set %s where __key__ = %%s' \
             % (self.cls.relation, ', '.join(['"%s" = %%s' % col for col in self.columns]))
-
         if __debug__: log.debug('update object query: "%s"' % self.queries[self.update])
 
         self.queries[self.delete] = 'delete from "%s" where __key__ = %%s' % self.cls.relation
-
         if __debug__: log.debug('delete object query: "%s"' % self.queries[self.delete])
 
-        self.queries[self.motor.getKey] = 'select nextval(\'%s\')' % self.cls.sequencer
-
+        self.queries[self.motor.getKey] = 'select nextval(\'%s\')' % self.cls.sequencer # fixme, use seqpattern
         if __debug__: log.debug('get primary key value query: "%s"' % self.queries[self.motor.getKey])
 
         self.asc_cols = {}
@@ -208,17 +212,36 @@ class Convertor:
             yield data[field]
 
 
+    def createObject(self, data):
+        """
+        Create object from relational data.
+
+        @param data: Relational data.
+
+        @return: Created object.
+        """
+        obj = self.cls()              # create object instance
+        for i in self.itercols:       # set values of object's attributes
+            setattr(obj, self.load_cols[i], data[i])
+        return obj
+
+
     def getObjects(self):
         """
         Load objects from database.
         """
-        cols = ['__key__'] + self.columns
-        iter = range(len(cols))
         for data in self.motor.getData(self.queries[self.getObjects]):
-            obj = self.cls()              # create object instance
-            for i in iter:
-                setattr(obj, cols[i], data[i])
-            yield obj
+            yield self.createObject(data)
+
+
+    def get(self, key):
+        """
+        Load object from database.
+
+        @param key: Primary key value of object to load.
+        """
+        return self.createObject( \
+            self.motor.getData(self.queries[self.get], (key, )).next())
 
 
     def add(self, obj):
