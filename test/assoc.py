@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.15 2003/09/30 12:45:36 wrobell Exp $
+# $Id: assoc.py,v 1.16 2003/10/01 14:28:24 wrobell Exp $
 
 import app
 import btest
@@ -248,7 +248,12 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
     def testReloading(self):
         """Test one-to-many association loading
         """
-        ord = self.bazaar.getObjects(app.Order)[0]
+        # find order with amount of items greater than zero, so it is
+        # possible to remove a item
+        for ord in self.bazaar.getObjects(app.Order):
+            if len(ord.items) > 0:
+                break
+
         # remove all of referenced objects
         assert len(ord.items) > 0
         for oi in ord.items:
@@ -312,8 +317,12 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
     def testRemoving(self):
         """Test removing objects from one-to-many association
         """
-        ord = self.bazaar.getObjects(app.Order)[0]
-        assert len(ord.items) > 1
+        # find order with amount of items greater than zero, so it is
+        # possible to remove a item
+        for ord in self.bazaar.getObjects(app.Order):
+            if len(ord.items) > 0:
+                break
+        assert len(ord.items) > 0
         items = list(ord.items)
         oi = items[0]
         del ord.items[oi]
@@ -337,7 +346,12 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
     def testMixedUpdate(self):
         """Test appending and removing objects to/from one-to-many association
         """
-        ord = self.bazaar.getObjects(app.Order)[0]
+        # find order with amount of items greater than zero, so it is
+        # possible to remove a item
+        for ord in self.bazaar.getObjects(app.Order):
+            if len(ord.items) > 0:
+                break
+
         art = self.bazaar.getObjects(app.Article)[0]
 
         oi1 = app.OrderItem()
@@ -352,7 +366,7 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
 
         # first, get order item object to remove, this way we are sure that we
         # will not remove object appended as oi1
-        assert len(ord.items) > 0
+        assert len(ord.items) > 0, 'order key %d' % ord.__key__
         items = list(ord.items)
         oi = items[0]
 
