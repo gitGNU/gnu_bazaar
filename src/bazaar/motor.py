@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.7 2003/08/07 17:42:53 wrobell Exp $
+# $Id: motor.py,v 1.8 2003/08/09 03:19:42 wrobell Exp $
 
 import logging
 
@@ -82,6 +82,8 @@ class Convertor:
         """
         for data in self.motor.getData(self.queries[self.getObjects], self.columns):
             obj = self.cls(data)   # create object instance
+            obj.key = obj.__class__.getKey(obj)
+
             yield obj
 
 
@@ -92,6 +94,7 @@ class Convertor:
         <attr name = 'obj'>Object to add.</attr>
         """
         self.motor.add(self.queries[self.add], obj.__dict__)
+        obj.key = obj.__class__.getKey(obj)
  
 
     def update(self, obj):
@@ -102,6 +105,7 @@ class Convertor:
         """
         self.motor.update(self.queries[self.update], \
             [obj.__dict__[col] for col in self.columns], self.convertKey(obj.key))
+        obj.key = obj.__class__.getKey(obj)
 
 
     def delete(self, obj):
