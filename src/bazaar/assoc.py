@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.36 2003/10/02 17:15:19 wrobell Exp $
+# $Id: assoc.py,v 1.37 2003/10/03 14:30:04 wrobell Exp $
 """
 Association classes.
 """
@@ -152,26 +152,30 @@ class ListReferenceBuffer(ReferenceBuffer):
 class ObjectIterator(object):
     """
     Iterator of referenced objects.
+
+    The iterator is used to append, remove and update referenced
+    objects, which are associated with application object.
+
+    For example, to print article of order items::
+
+        items = order.items
+        for oi in items:
+            print oi.article
+
+    Several operators are supported
+        - len: C{len(items)}
+        - in: C{oi in items}
+        - del: C{del items[oi]}
+
+    @ivar association: Association object.
+    @ivar obj: Application object.
+
+    @see: L{AssociationReferenceProxy}
     """
 
     def __init__(self, obj, association):
         """
         Create iterator of reference objects.
-
-        The iterator is used to append, remove and update referenced
-        objects, which are associated with application object.
-
-        For example, to print article of order items::
-
-            items = order.items
-            for oi in items:
-                print oi.article
-
-
-        Several operators are supported
-            - len: C{len(items)}
-            - in: C{oi in items}
-            - del: C{del items[oi]}
 
 
         @param obj: Application object.
