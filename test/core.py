@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.15 2003/11/23 23:39:18 wrobell Exp $
+# $Id: core.py,v 1.16 2003/11/26 02:51:51 wrobell Exp $
 
 import unittest
 
@@ -85,6 +85,12 @@ class ModifyObjectTestCase(btest.DBBazaarTestCase):
         """Test adding objects into database"""
 
         dbc = self.bazaar.motor.conn.cursor()
+
+        # load all objects before adding new objects into database;
+        # this way added objects will not be reloaded when accessing object
+        # cache
+        for cls in self.cls_list:
+            self.bazaar.getObjects(cls)
 
         # add and check order object
         order = app.Order()
