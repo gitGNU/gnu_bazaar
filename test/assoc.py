@@ -1,7 +1,9 @@
-# $Id: assoc.py,v 1.9 2003/09/28 15:56:21 wrobell Exp $
+# $Id: assoc.py,v 1.10 2003/09/29 11:36:42 wrobell Exp $
 
 import app
 import btest
+
+import bazaar.exc
 
 class OneToOneAssociationTestCase(btest.DBBazaarTestCase):
     """
@@ -79,19 +81,6 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
         self.checkAsc()
 
 
-    def testErrorAppending(self):
-        """Test error when appending object with undefined primary key value
-        """
-        emp = self.bazaar.getObjects(app.Employee)[0]
-
-        ord1 = app.Order()
-        ord1.no = 1002
-        ord1.finished = False
-
-        emp.orders.append(ord1)
-        self.assertRaises(app.db_module.ProgrammingError, emp.orders.update)
-
-
     def testAppending(self):
         """Test appending objects to many-to-many association
         """
@@ -121,6 +110,18 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
         emp.orders.update()
         self.checkAsc()
 
+        # append object with undefined primary key value
+        ord1 = app.Order()
+        ord1.no = 1002
+        ord1.finished = False
+        emp.orders.append(ord1)
+        self.assertRaises(app.db_module.ProgrammingError, emp.orders.update)
+        self.bazaar.rollback()
+
+        self.assertRaises(bazaar.exc.AssociationError, emp.orders.append, None)
+        self.assertRaises(bazaar.exc.AssociationError, emp.orders.append, object())
+        self.assertRaises(bazaar.exc.AssociationError, emp.orders.append, ord1)
+
 
     def testRemoving(self):
         """Test removing objects from many-to-many association
@@ -128,11 +129,15 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
         emp = self.bazaar.getObjects(app.Employee)[0]
         assert len(emp.orders) > 0
         orders = list(emp.orders)
-        del emp.orders[orders[0]]
-        self.assert_(orders[0] not in emp.orders, \
+        ord = orders[0]
+        del emp.orders[ord]
+        self.assert_(ord not in emp.orders, \
             'removed referenced object found in association')
         emp.orders.update()
         self.checkAsc()
+        self.assertRaises(bazaar.exc.AssociationError, emp.orders.remove, None)
+        self.assertRaises(bazaar.exc.AssociationError, emp.orders.remove, object())
+        self.assertRaises(bazaar.exc.AssociationError, emp.orders.remove, ord)
 
 
     def testMixedUpdate(self):
@@ -175,9 +180,6 @@ class ManyToManyAssociationTestCase(btest.DBBazaarTestCase):
         self.assert_(ord not in emp.orders, \
             'removed referenced object found in association')
 
-        # fixme: 
-        #self.assertRaises(KeyError, emp.orders.__delitem__, ord)
-
         self.assert_(ord1 in emp.orders, \
             'appended referenced object not found in association')
         self.assert_(ord2 in emp.orders, \
@@ -213,50 +215,3 @@ class OneToManyAssociationTestCase(btest.DBBazaarTestCase):
     """
     Test one-to-many associations.
     """
-    def testLoading(self):
-        """Test one-to-many association loading
-        """
-        orders = self.bazaar.getObjects(app.Order)
-        for order in orders:
-            print 'l:', order.__key__, len(order.items)
-
-
-    def testAppending(self):
-        """Test appending to one-to-many association
-        """
-        orders = self.bazaar.getObjects(app.Order)
-        arts = self.bazaar.getObjects(app.Article)
-
-        oi1 = app.OrderItem()
-        oi1.pos = 1002
-        oi1.article = arts[0]
-        oi1.quantity = 5
-
-        oi2 = app.OrderItem()
-        oi2.pos = 1003
-        oi2.article = arts[1]
-        oi2.quantity = 6
-
-        oi3 = app.OrderItem()
-        oi3.pos = 1004
-        oi3.article = arts[1]
-        oi3.quantity = 7
-
-        order = orders[1]
-
-        print 'e1', order.__key__, order.items, len(order.items)
-
-        order.items.append(oi1)
-        oi2.order = order
-##        order.items[0] = oi3
-
-        self.bazaar.add(oi1)
-        self.bazaar.add(oi2)
-        self.bazaar.add(oi3)
-        print 'oi1 key', oi1.__key__
-        print 'oi2 key', oi2.__key__
-##        print 'oi3 key', oi3.__key__
-
-        order.items.update()
-        app.Order.items.reloadData()
-        print 'e2', order.__key__, order.items, len(order.items)
