@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.12 2003/09/29 22:07:53 wrobell Exp $
+# $Id: conf.py,v 1.13 2003/10/06 14:57:24 wrobell Exp $
 
 import unittest
 
@@ -105,11 +105,11 @@ class AssociationTestCase(unittest.TestCase):
         A.addColumn('a7', vcls = B, vcol = 'b71', vattr = 'b7')
         B.addColumn('b7', 'b71', A, vattr = 'a7')
         bzr = bazaar.core.Bazaar(cls_list, app.db_module)
-        check(A, 'a7', bazaar.assoc.BiDirList, 'many side bi-dir one-to-many')
+        check(A, 'a7', bazaar.assoc.OneToMany, 'many side bi-dir one-to-many')
         check(B, 'b7', bazaar.assoc.BiDirOneToOne, 'one side bi-dir one-to-many')
 
         A.addColumn('a8', vcls = B, vcol = 'b81', vattr = 'b8')
         B.addColumn('b8', 'b81', A, vattr = 'a8')
         bzr = bazaar.core.Bazaar((C, B, A), app.db_module)
-        check(A, 'a8', bazaar.assoc.BiDirList, 'many side bi-dir one-to-many')
+        check(A, 'a8', bazaar.assoc.OneToMany, 'many side bi-dir one-to-many')
         check(B, 'b8', bazaar.assoc.BiDirOneToOne, 'one side bi-dir one-to-many')

@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.37 2003/10/03 14:30:04 wrobell Exp $
+# $Id: assoc.py,v 1.38 2003/10/06 14:57:24 wrobell Exp $
 """
 Association classes.
 """
@@ -571,7 +571,6 @@ class List(AssociationReferenceProxy):
         if self.col.is_many_to_many:
             self.addPair = self.addPairWithDB
             self.delPair = self.delPairWithDB
-            self.getPair = self.getPairFromDB
             self.getUpdatePair = self.getKeyPair
 
         elif self.col.is_one_to_many:
@@ -582,7 +581,6 @@ class List(AssociationReferenceProxy):
                 self.addPair = self.addReferencedObjects
                 self.delPair = self.delReferencedObjects
 
-            self.getPair = self.getPairFromBroker
             self.getUpdatePair = self.getObjectPair
 
         else:
@@ -672,22 +670,8 @@ class List(AssociationReferenceProxy):
             self.loadData()
 
 
-    def getPairFromBroker(self):
-        """
-        Return tuple of application object's and referenced object's
-        primary key values.
 
-        Referenced object is taken from referenced class broker.
-        
-        The method is used as C{List.getPair} method with one-to-many
-        associations.
-        """
-        for value in self.vbroker.getObjects():
-            yield getattr(value, self.col.vcol), value.__key__
-
-
-
-    def getPairFromDB(self):
+    def getPair(self):
         """
         Return tuple of application object's and referenced object's
         primary key values.
@@ -704,6 +688,18 @@ class List(AssociationReferenceProxy):
             yield item
 
 
+    def appendKey(self, okey, vkey):
+        """
+        Append referenced object relational data to association data.
+
+        @param okey: Application object's primary key value.
+        @param vkey: Referenced object's primary key value.
+        """
+        obj = self.broker.get(okey)
+        if obj is not None:
+            self.getValueKeys(obj).add(vkey)
+
+
     def loadData(self):
         """
         Load association data from database.
@@ -715,9 +711,7 @@ class List(AssociationReferenceProxy):
         assert len(self.value_keys) == 0 and len(self.appended) ==0 and len(self.removed) == 0
 
         for okey, vkey in self.getPair():
-            obj = self.broker.get(okey)
-            if obj is not None:
-                self.getValueKeys(obj).add(vkey)
+            self.appendKey(okey, vkey)
 
         log.info('application objects of %s.%s = %d' % (self.broker.cls, self.col.attr, len(self.value_keys)))
 
@@ -871,21 +865,30 @@ class List(AssociationReferenceProxy):
         self.save(obj, value)
 
 
-    def remove(self, obj, value):
+    def justRemove(self, obj, value):
         """
         Remove referenced object from association.
 
         @param obj: Application object.
         @param value: Referenced object.
         """
-        assert obj in self.value_keys
-
-        juggle(obj, value, self.removed, self.appended)
-
         if (obj, value) in self.ref_buf:
             del self.ref_buf[(obj, value)]
         else:
             self.value_keys[obj].discard(value.__key__)
+
+
+    def remove(self, obj, value):
+        """
+        Remove referenced object from association and update information
+        about data removal.
+
+        @param obj: Application object.
+        @param value: Referenced object.
+        """
+        assert obj in self.value_keys
+        juggle(obj, value, self.removed, self.appended)
+        self.justRemove(obj, value)
 
 
     def len(self, obj):
@@ -970,3 +973,48 @@ class BiDirList(List):
         """
         assert obj is not None and value is not None
         super(BiDirList, self).remove(obj, value)
+
+
+
+class BiDirManyToMany(BiDirList):
+    def appendKey(self, okey, vkey):
+        """
+        Append referenced object relational data to association data
+        and update association data of referenced class.
+
+        @param okey: Application object's primary key value.
+        @param vkey: Referenced object's primary key value.
+        """
+        super(BiDirManyToMany, self).appendKey(okey, vkey)
+        super(BiDirManyToMany, self.association).appendKey(okey, vkey)
+
+
+
+class OneToMany(BiDirList):
+    def append(self, obj, value):
+        """
+        Append referenced object to association and integrate association
+        data.
+
+        @param obj: Application object.
+        @param value: Referenced object.
+        """
+        assert value is not None and isinstance(self.association, AssociationReferenceProxy)
+        old_obj = getattr(value, self.col.vattr)
+        if old_obj is not None:
+            self.justRemove(old_obj, value)
+        super(OneToMany, self).append(obj, value)
+
+
+    def getPair(self):
+        """
+        Return tuple of application object's and referenced object's
+        primary key values.
+
+        Referenced object is taken from referenced class broker.
+        
+        The method is used as C{List.getPair} method with one-to-many
+        associations.
+        """
+        for value in self.vbroker.getObjects():
+            yield getattr(value, self.col.vcol), value.__key__

@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.17 2003/10/02 10:24:54 wrobell Exp $
+# $Id: core.py,v 1.18 2003/10/06 14:57:24 wrobell Exp $
 """
 This module contains basic Bazaar implementation.
 
@@ -174,6 +174,7 @@ class Broker:
         """
         self.convertor.delete(obj)
         self.cache.remove(obj)
+#        obj.__key__ = None
 
 
 
@@ -220,7 +221,7 @@ class Bazaar:
                 if col.is_one_to_one:
                     asc_cls = bazaar.assoc.OneToOne
                 elif col.is_one_to_many:
-                    asc_cls = bazaar.assoc.BiDirList
+                    asc_cls = bazaar.assoc.OneToMany
                 elif col.is_many_to_many:
                     asc_cls = bazaar.assoc.List
                 else:
@@ -246,12 +247,12 @@ class Bazaar:
                         if vcol.is_one_to_one:
                             asc_vcls = asc_cls
                         elif vcol.is_one_to_many:   
-                            asc_vcls = bazaar.assoc.BiDirList
+                            asc_vcls = bazaar.assoc.OneToMany
                     elif issubclass(asc_cls, bazaar.assoc.List):
                         if vcol.is_one_to_one or vcol.is_one_to_many:
                             asc_vcls = bazaar.assoc.BiDirOneToOne
                         elif vcol.is_many_to_many:
-                            asc_vcls = bazaar.assoc.BiDirList
+                            asc_vcls = bazaar.assoc.BiDirManyToMany
 
                     assert issubclass(asc_vcls, bazaar.assoc.AssociationReferenceProxy)
 
