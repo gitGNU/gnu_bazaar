@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.16 2003/09/20 17:11:24 wrobell Exp $
+# $Id: conf.py,v 1.17 2003/09/20 22:17:12 wrobell Exp $
 """
 Provides classes for mapping application classes to database relations.
 
@@ -43,13 +43,13 @@ class Column:
     Application class atribute can be simple attribute or can define
     association (relationship) between application classes.
 
-    When class attribute describes association the @C{vcls} is always
+    When class attribute describes association the C{vcls} is always
     defined. Depedning on relationship type (1-1, 1-n, m-n,
-    uni-directional, bi-directional) some of the attributes @C{vlink},
-    @C{vcol}, @C{vattr} are defined, too.
+    uni-directional, bi-directional) some of the attributes C{vlink},
+    C{vcol}, C{vattr} are defined, too.
 
     @ivar attr: Application class attribute name.
-    @ivar col: Relation column name (equal to @C{attr} by default).
+    @ivar col: Relation column name (equal to C{attr} by default).
 
     @ivar vcls: Class of referenced object(s).
     @ivar link:  Many-to-many link relation name.
@@ -158,7 +158,7 @@ class Persistence(type):
         application classes are defined.
 
         @ivar attr: Application class attribute name.
-        @ivar col: Relation column name (equal to @C{attr} by default).
+        @ivar col: Relation column name (equal to C{attr} by default).
         @ivar vcls: Class of referenced object(s).
         @ivar link:  Many-to-many link relation name.
         @ivar vcol: Relation column name of referenced object(s).
