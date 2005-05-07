@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.38 2005/02/16 15:01:46 wrobell Exp $
+# $Id: core.py,v 1.39 2005/05/07 00:26:15 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -32,14 +32,11 @@ Brokers (L{Broker} class) are responsible for operations on objects of
 specific application class.
 """
 
-import logging
-
 import bazaar.assoc
 import bazaar.cache
 import bazaar.motor
 
-log = logging.getLogger('bazaar.core')
-
+log = bazaar.Log('bazaar.core')
 
 class PersistentObject(object):
     """

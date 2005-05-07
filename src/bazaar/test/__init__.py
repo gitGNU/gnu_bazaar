@@ -1,4 +1,4 @@
-# $Id: __init__.py,v 1.5 2004/12/20 07:39:52 wrobell Exp $
+# $Id: __init__.py,v 1.6 2005/05/07 00:26:15 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -136,9 +136,32 @@ def main():
     Set Bazaar ORM library configuration file and run all unit tests.
     """
     import sys
+    import logging.config
 
-    globals()['cfg_file'] = sys.argv[1] # get configuration filename
+    import optparse
+    parser = optparse.OptionParser('usage: bzr.py [options] <bazaar.ini>')
+    parser.add_option("-l", "--logfile-conf", dest="logfile_conf",
+                      help="logging configuration")
+
+    (options, sys.argv) = parser.parse_args(sys.argv)
+    logfile_conf = options.logfile_conf
+
+    if len(sys.argv) != 2:
+        parser.error('incorrect number of arguments')
+
+    conf = sys.argv[1]
     del sys.argv[1]
+
+    if logfile_conf:
+        logging.config.fileConfig(logfile_conf)
+    else:
+        logging.basicConfig()
+
+    log = logging.getLogger('bazaar.test')
+
+    log.info('starting tests, conf = %s', conf)
+
+    globals()['cfg_file'] = conf # set configuration filename
 
     unittest.main()
 

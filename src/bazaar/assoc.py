@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.49 2004/12/20 07:39:52 wrobell Exp $
+# $Id: assoc.py,v 1.50 2005/05/07 00:26:15 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -81,11 +81,9 @@ import sets
 import itertools
 import weakref
 
-import logging
-
 import bazaar.exc
 
-log = logging.getLogger('bazaar.assoc')
+log = bazaar.Log('bazaar.assoc')
 
 
 def juggle(obj, value, app, rem):

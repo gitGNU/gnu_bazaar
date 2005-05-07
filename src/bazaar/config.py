@@ -1,4 +1,4 @@
-# $Id: config.py,v 1.4 2004/12/20 07:39:52 wrobell Exp $
+# $Id: config.py,v 1.5 2005/05/07 00:26:15 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -72,6 +72,9 @@ for U{GConf<http://www.gnome.org/projects/gconf/>} configuration system.
 """
 
 from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+
+import bazaar
+log = bazaar.Log('bazaar.config')
 
 class Config(object):
     """

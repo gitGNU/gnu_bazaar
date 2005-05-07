@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.33 2004/12/20 07:39:52 wrobell Exp $
+# $Id: conf.py,v 1.34 2005/05/07 00:26:15 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -212,13 +212,11 @@ SQL schema for C{Boss} class relation can look like::
 
 """
 
-import logging
-
 import bazaar.core
 import bazaar.cache
 import bazaar.exc
 
-log = logging.getLogger('bazaar.conf')
+log = bazaar.Log('bazaar.conf')
 
 
 class Column:

@@ -1,4 +1,4 @@
-# $Id: cache.py,v 1.16 2004/12/20 07:39:52 wrobell Exp $
+# $Id: cache.py,v 1.17 2005/05/07 00:26:15 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -51,9 +51,9 @@ import weakref
 from UserDict import UserDict # weakref inherits from UserDict :-\
 import sets
 
-import logging
+import bazaar
 
-log = logging.getLogger('bazaar.cache')
+log = bazaar.Log('bazaar.cache')
 
 
 

@@ -1,4 +1,4 @@
-# $Id: __init__.py,v 1.13 2004/12/20 07:39:52 wrobell Exp $
+# $Id: __init__.py,v 1.14 2005/05/07 00:26:15 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -278,3 +278,40 @@ Finally, commit transaction::
 # Bazaar supports GUI development with set of powerful widgets designed
 # to simplify development of presentation, manipulation and
 # data searching.
+
+class Log(object):
+    """
+    Utility class to deffer creation of loggers (of logging package).
+
+    Usage:
+        log = Log('bazaar.core') # log is Log instance
+        log.debug()              # log is logging.Logger instance
+
+    @attr logger: Logger name.
+    """
+    def __init__(self, logger):
+        self.logger = logger
+
+
+    def __getattr__(self, attr):
+        """
+        Replace utility instance with real logger from logging package.
+        """
+        import logging
+        import sys
+        log = logging.getLogger(self.logger)
+        # find modules and utility instance names
+        for modname, mod in sys.modules.items():
+            if mod is not None:
+                 vars = [name for name, var in mod.__dict__.items() if var is self]
+                 if vars:
+                     break
+
+        # replace utility instances
+        for name in vars:
+            setattr(mod, name, log)
+
+        # return requested logger's method/attribute
+        return getattr(log, attr)
+
+        # this method should not be called again for object self, now
