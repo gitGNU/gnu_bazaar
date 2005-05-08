@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.33 2005/05/07 00:26:15 wrobell Exp $
+# $Id: motor.py,v 1.34 2005/05/08 16:30:43 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -28,7 +28,7 @@ import bazaar.core   # it is required to check if objects are
 
 log = bazaar.Log('bazaar.motor')
 
-class Convertor:
+class Convertor(object):
     """
     Relational and object data convertor.
 
@@ -385,7 +385,7 @@ class Convertor:
 
 
 
-class Motor:
+class Motor(object):
     """
     Database access object.
 

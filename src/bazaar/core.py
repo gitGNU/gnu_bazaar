@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.39 2005/05/07 00:26:15 wrobell Exp $
+# $Id: core.py,v 1.40 2005/05/08 16:30:43 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -61,7 +61,7 @@ class PersistentObject(object):
 
 
 
-class Broker:
+class Broker(object):
     """
     Application class broker.
 
@@ -89,7 +89,6 @@ class Broker:
         @param cls: Application class.
         @param mtr: Database access object.
         """
-
         self.reload = True
         self.cls = cls
         
@@ -215,7 +214,7 @@ class Broker:
 
 
 
-class Bazaar:
+class Bazaar(object):
     """
     The interface to get, modify, find and perform other tasks on
     application objects.

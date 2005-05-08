@@ -1,4 +1,4 @@
-# $Id: cache.py,v 1.18 2005/05/08 15:50:23 wrobell Exp $
+# $Id: cache.py,v 1.19 2005/05/08 16:30:43 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -169,7 +169,7 @@ class ListReferenceBuffer(ReferenceBuffer):
 
 
 
-class Cache:
+class Cache(object):
     """
     Abstract, basic class for different data caches.
 
@@ -206,8 +206,7 @@ class Full(Cache, dict):
     Abstract, basic cache class for loading all objects and association data.
     """
     def __init__(self, param):
-        Cache.__init__(self, param)
-        dict.__init__(self)
+        super(Full, self).__init__(param)
         self.dicttype = dict
 
 
