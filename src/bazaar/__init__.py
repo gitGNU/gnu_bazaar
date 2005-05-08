@@ -1,4 +1,4 @@
-# $Id: __init__.py,v 1.14 2005/05/07 00:26:15 wrobell Exp $
+# $Id: __init__.py,v 1.15 2005/05/08 15:40:59 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -287,15 +287,18 @@ class Log(object):
         log = Log('bazaar.core') # log is Log instance
         log.debug()              # log is logging.Logger instance
 
-    @attr logger: Logger name.
+    @ivar logger: Logger name.
     """
     def __init__(self, logger):
+        """
+        Create log utility class
+        """
         self.logger = logger
 
 
     def __getattr__(self, attr):
         """
-        Replace utility instance with real logger from logging package.
+        Replace log utility instance with real logger from logging package.
         """
         import logging
         import sys
