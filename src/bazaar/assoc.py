@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.51 2005/05/08 15:50:23 wrobell Exp $
+# $Id: assoc.py,v 1.52 2005/05/08 15:59:23 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -634,8 +634,8 @@ class List(AssociationReferenceProxy):
         # return all objects with defined primary key values
         def getObjects():
             keys = self.cache[obj]
-            if keys is not None:
-                for vkey in list(self.cache[obj]):
+            if keys:
+                for vkey in keys.copy():
                     yield self.vbroker.get(vkey)
         
 
