@@ -1,4 +1,4 @@
-# $Id: __init__.py,v 1.16 2005/05/08 15:50:23 wrobell Exp $
+# $Id: __init__.py,v 1.17 2005/05/08 21:08:45 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -53,8 +53,8 @@ Features:
 Requirements:
     - Python 2.4
     - Python DB API 2.0 module with ``format'' and ``pyformat'' parameter
-      style support (tested with U{psycopg 1.1.10<http://initd.org/software/psycopg>})
-    - RDBMS (tested with U{PostgreSQL 7.4<http://www.postgresql.org>})
+      style support (tested with U{psycopg 2.0<http://initd.org/software/psycopg>})
+    - RDBMS (tested with U{PostgreSQL 8.0<http://www.postgresql.org>})
 
 This is free software distributed under U{GNU Lesser General Public
 License<http://www.gnu.org/licenses/lgpl.html>}. Download it from
