@@ -1,4 +1,4 @@
-# $Id: bzr.py,v 1.3 2004/12/20 07:39:52 wrobell Exp $
+# $Id: bzr.py,v 1.4 2005/05/08 15:50:23 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -168,9 +168,8 @@ class TestCase(bazaar.test.DBTestCase):
         if db_data != mem_data:
             print 'db', db_data
             print 'mem', mem_data
-            import sets
-            print sets.Set(db_data) - sets.Set(mem_data)
-            print sets.Set(mem_data) - sets.Set(db_data)
+            print set(db_data) - set(mem_data)
+            print set(mem_data) - set(db_data)
             print bazaar.test.app.Employee.orders.cache
         self.assertEqual(db_data, mem_data, 'database data are different than memory data')
 

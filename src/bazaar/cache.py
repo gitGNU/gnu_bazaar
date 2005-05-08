@@ -1,4 +1,4 @@
-# $Id: cache.py,v 1.17 2005/05/07 00:26:15 wrobell Exp $
+# $Id: cache.py,v 1.18 2005/05/08 15:50:23 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -49,7 +49,6 @@ L{bazaar.config} module documentation.
 
 import weakref
 from UserDict import UserDict # weakref inherits from UserDict :-\
-import sets
 
 import bazaar
 
@@ -141,10 +140,10 @@ class ListReferenceBuffer(ReferenceBuffer):
         assert obj is not None and value is not None
 
         if obj not in self:
-            ref_buf = ReferenceBuffer.__setitem__(self, obj, sets.Set())
+            ref_buf = ReferenceBuffer.__setitem__(self, obj, set())
         key_set = self[obj]
 
-        assert isinstance(key_set, sets.Set)
+        assert isinstance(key_set, set)
         key_set.add(value)
 
 
@@ -351,7 +350,7 @@ class LazyAssociation(Lazy, weakref.WeakKeyDictionary):
         @return: Loaded association data from database.
         """
         assert self.owner is not None
-        data = sets.Set()
+        data = set()
         for vkey in self.owner.broker.convertor.getAscData(self.owner, obj):
             data.add(vkey)
         self[obj] = data

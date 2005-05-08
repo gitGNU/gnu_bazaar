@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.50 2005/05/07 00:26:15 wrobell Exp $
+# $Id: assoc.py,v 1.51 2005/05/08 15:50:23 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -77,7 +77,6 @@ where::
 
 """
 
-import sets
 import itertools
 import weakref
 
@@ -102,7 +101,7 @@ def juggle(obj, value, app, rem):
             del rem[obj]
 
     if obj not in app:
-        app[obj] = sets.Set()
+        app[obj] = set()
     app[obj].add(value)
 
     assert value in app[obj]
@@ -512,7 +511,7 @@ class List(AssociationReferenceProxy):
                 # when needed
                 keys = self.cache[obj]
             else:
-                keys = sets.Set()
+                keys = set()
                 self.cache[obj] = keys
             keys.add(vkey)
 
@@ -528,7 +527,7 @@ class List(AssociationReferenceProxy):
 
         or to get a set::
 
-            order_item_set = sets.Set(ord.items)
+            order_item_set = set(ord.items)
 
 
         @param obj: Application object.
@@ -598,9 +597,9 @@ class List(AssociationReferenceProxy):
             # loading data now and cache[obj] will be a unwanted recursive call
             keys = self.cache.dicttype.__getitem__(self.cache, obj)
         else:
-            keys = sets.Set()
+            keys = set()
             self.cache[obj] = keys
-        assert isinstance(keys, sets.Set)
+        assert isinstance(keys, set)
         keys.add(vkey)
 
 
