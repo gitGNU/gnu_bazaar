@@ -1,4 +1,4 @@
-# $Id: __init__.py,v 1.6 2005/05/07 00:26:15 wrobell Exp $
+# $Id: __init__.py,v 1.7 2005/05/08 15:44:23 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -139,14 +139,15 @@ def main():
     import logging.config
 
     import optparse
-    parser = optparse.OptionParser('usage: bzr.py [options] <bazaar.ini>')
+    parser = optparse.OptionParser('usage: bzr.py [options] <bazaar.ini>'
+        ' [-- [unit test options] [tests]]')
     parser.add_option("-l", "--logfile-conf", dest="logfile_conf",
                       help="logging configuration")
 
     (options, sys.argv) = parser.parse_args(sys.argv)
     logfile_conf = options.logfile_conf
 
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         parser.error('incorrect number of arguments')
 
     conf = sys.argv[1]
