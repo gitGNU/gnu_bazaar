@@ -1,5 +1,28 @@
+0.99.6
+- tested with Python 2.4.1 and psycopg 2.0 beta1
+- Python 2.4 is required
+- Bazaar.get method introduced to get an object by its key
+- test framework improvements
+
+0.99.5
+- application object lazy cache improvements
+- Bazaar.reloadObjects can return objects (as iterator)
+- Bazaar.getObjects returns iterator
+- created test framework for applications using Bazaar ORM library
+
+0.99.4
+- application class defining improvements
+- object and association cache bugfixes
+
+0.99.3
+- application class attributes can have default values
+- better support for inheritance
+
+0.99.2
+- minor bugfixes
+
 0.99.1
-- object SQL searching and application object creation bugs fixed
+- fixed bugs related to object SQL searching and application object creation
 
 0.99.0
 - initial public release
