@@ -1,3 +1,61 @@
-To run all tests
+PostgreSQL RDBMS and psycopg Python module are used below below.
+
+1. Create test database, i.e. bazaar:
+
+    $ cd bazaar
+    $ dropdb bazaar
+    $ createdb -E utf-8 bazaar
+    $ psql -f test/sql/init.sql bazaar
+    $ python -O test/sql/fill.py psycopg 'dbname = bazaar'
+
+2. You can edit test/bazaar.ini to suit your needs.
+
+3. Run all tests:
     export PYTHONPATH=src
-    python src/bazaar/test/bzr.py test/bazaar.ini
+    python src/bazaar/test/bzr.py test/bazaar.ini -- -v
+
+
+You should get something like:
+
+    Test association defining ... ok
+    Test application class to database relation mapping ... ok
+    Test database relation columns defining ... ok
+    Test class inheritance ... ok
+    Test Bazaar ORM reconfiguration ... ok
+    Test database connection initialization ... ok
+    Test database connection closing ... ok
+    Test object creation ... ok
+    Test object oriented searching ... ok
+    Test SQL searching ... ok
+    Test association full cache ... ok
+    Test object full cache ... ok
+    Test layer initialization ... ok
+    Test layer initialization and database connection ... ok
+    Test association data lazy cache ... ok
+    Test object lazy cache ... ok
+    Test appending objects to many-to-many association ... ok
+    Test many-to-many association loading ... ok
+    Test appending and removing objects to/from many-to-many association ... ok
+    Test many-to-many association loading ... ok
+    Test removing objects from many-to-many association ... ok
+    Test adding objects into database ... ok
+    Test deleting objects from database ... ok
+    Test updating objects in database ... ok
+    Test loaded application objects data integrity ... ok
+    Test application objects reloading ... ok
+    Test application objects immediate reloading ... ok
+    Test appending objects to one-to-many association ... ok
+    Test empty list of referenced objects (1-n) ... ok
+    Test one-to-many association loading ... ok
+    Test appending and removing objects to/from one-to-many association ... ok
+    Test one-to-many association loading ... ok
+    Test removing objects from one-to-many association ... ok
+    Test one-to-one association loading ... ok
+    Test one-to-one association updating ... ok
+    Test database transaction commit ... ok
+    Test database transaction rollback ... ok
+
+    ----------------------------------------------------------------------
+    Ran 37 tests in 3.343s
+
+    OK
