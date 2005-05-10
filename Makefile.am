@@ -2,7 +2,7 @@ include $(top_srcdir)/Makefile.rules
 
 SUBDIRS = src test
 
-EPYDOC_OPTIONS = -n "Bazaar $(VERSION) API Documentation" $(DOCSOURCES)
+EPYDOC_OPTIONS = -n "Bazaar ORM $(VERSION) API Documentation" $(DOCSOURCES)
 
 doc/pdf/api.pdf: $(DOCSOURCES)
 	rm -rf $(srcdir)/doc/pdf
