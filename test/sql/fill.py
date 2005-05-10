@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# $Id: fill.py,v 1.13 2005/05/04 16:24:18 wrobell Exp $
+# $Id: fill.py,v 1.14 2005/05/10 16:57:13 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -24,7 +24,6 @@
 
 import sys
 import random
-import psycopg
 import sets
 
 AMOUNT_EMPLOYEE = 10
@@ -32,11 +31,13 @@ AMOUNT_ORDER    = 10
 AMOUNT_MAX_ORDER_ITEMS = 20
 AMOUNT_ARTICLE = 10
 
-if len(sys.argv) != 2:
-    print 'usage: %s <dsn>' % sys.argv[0]
+if len(sys.argv) != 3:
+    print 'usage: %s <dbmodule> <dsn>' % sys.argv[0]
+    print '  i.e. %s psycopg "dbname = bazaar"' % sys.argv[0]
     sys.exit(1)
 
-db = psycopg.connect(sys.argv[1])
+dbmodule = __import__(sys.argv[1])
+db = dbmodule.connect(sys.argv[2])
 
 class Row(dict):
     """
@@ -128,13 +129,6 @@ def gen_orders(amount):
                 'order': row['__key__'],
             })
 
-if len(sys.argv) != 2:
-    print """bazaar test data generator
-
-usage:
-    fill.py dsn
-"""
-    sys.exit(1)
 
 for row in employees:
     insert(db, row)
