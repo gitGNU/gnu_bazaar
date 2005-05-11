@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.52 2005/05/08 15:59:23 wrobell Exp $
+# $Id: assoc.py,v 1.53 2005/05/11 16:26:59 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -170,14 +170,18 @@ class ObjectIterator(object):
         @param value: Referenced object.
         """
         if value is None:
-            raise bazaar.exc.AssociationError('referenced object cannot be null', \
+            raise bazaar.exc.AssociationError(
+                'referenced object cannot be null',
                 self.association, self.obj, value)
 
         if not isinstance(value, self.association.col.vcls):
-            raise bazaar.exc.AssociationError('referenced object\'s class mismatch', self.association, self.obj, value)
+            raise bazaar.exc.AssociationError(
+                'referenced object\'s class mismatch',
+                self.association, self.obj, value)
 
         if self.association.contains(self.obj, value):
-            raise bazaar.exc.AssociationError('object is referenced', self.association, self.obj, value)
+            raise bazaar.exc.AssociationError('object is referenced',
+                self.association, self.obj, value)
 
         self.association.append(self.obj, value)
 
@@ -206,14 +210,19 @@ class ObjectIterator(object):
         @param value: Referenced object.
         """
         if value is None:
-            raise bazaar.exc.AssociationError('referenced object cannot be null', \
+            raise bazaar.exc.AssociationError(
+                'referenced object cannot be null',
                 self.association, self.obj, value)
 
         if not isinstance(value, self.association.col.vcls):
-            raise bazaar.exc.AssociationError('referenced object\'s class mismatch', self.association, self.obj, value)
+            raise bazaar.exc.AssociationError(
+                'referenced object\'s class mismatch',
+                self.association, self.obj, value)
 
         if not self.association.contains(self.obj, value):
-            raise bazaar.exc.AssociationError('object is not referenced', self.association, self.obj, value)
+            raise bazaar.exc.AssociationError(
+                'object is not referenced',
+                self.association, self.obj, value)
 
         self.association.remove(self.obj, value)
 
@@ -236,10 +245,7 @@ class ObjectIterator(object):
 
         @return: True if object is referenced.
         """
-        if value is None:
-            return False
-        else:
-            return self.association.contains(self.obj, value)
+        return value is None or self.association.contains(self.obj, value)
 
 
 
@@ -353,13 +359,13 @@ class OneToOne(AssociationReferenceProxy):
 
         @return: Referenced object when C{obj} is not null, otherwise descriptor object.
         """
+        referenced = self # return descriptor itself is obj is None
         if obj:
             if obj in self.ref_buf:
-                return self.ref_buf[obj]
+                referenced = self.ref_buf[obj]
             else:
-                return self.vbroker.get(getattr(obj, self.col.col))
-        else:
-            return self
+                referenced = self.vbroker.get(getattr(obj, self.col.col))
+        return referenced
 
 
     def saveForeignKey(self, obj, vkey):
@@ -388,7 +394,8 @@ class OneToOne(AssociationReferenceProxy):
         assert obj is not None
 
         if not (value is None or isinstance(value, self.col.vcls)):
-            raise bazaar.exc.AssociationError('referenced object\'s class mismatch', obj, value)
+            raise bazaar.exc.AssociationError(
+                'referenced object\'s class mismatch', obj, value)
 
         if value is None:
             self.saveForeignKey(obj, None)
@@ -533,15 +540,17 @@ class List(AssociationReferenceProxy):
         @param obj: Application object.
         @param cls: Application class.
 
-        @return: Iterator of referenced objects, when C{obj} is not null,
-            otherwise descriptor object.
+        @return: If C{obj} is not null, then iterator of referenced objects
+            is returned. Descriptor object is returned otherwise.
 
         @see: L{bazaar.assoc.ObjectIterator}
         """
+        obj_iter = self
+
         if obj:
-            return ObjectIterator(obj, self)   
-        else:
-            return self
+            obj_iter = ObjectIterator(obj, self)   
+
+        return obj_iter
 
 
     def __set__(self, obj, value):
@@ -631,25 +640,26 @@ class List(AssociationReferenceProxy):
 
         @return: Iterator of all referenced objects.
         """
-        # return all objects with defined primary key values
-        def getObjects():
+        # return all objects with defined primary key value
+        def get_objects():
             keys = self.cache[obj]
             if keys:
                 for vkey in keys.copy():
                     yield self.vbroker.get(vkey)
         
 
-        assert None not in getObjects(), \
-                '%s.%s -> %s.%s (obj: %s, key: %s)\niterated objects: %s\ncache: %s' % \
-            (self.broker.cls, self.col.attr, self.col.vcls, self.col.col, \
-                obj, obj.__key__, list(getObjects()), self.cache[obj])
+        assert None not in get_objects(), \
+                '%s.%s -> %s.%s (obj: %s, key: %s)\n' \
+                'iterated objects: %s\ncache: %s' \
+            % (self.broker.cls, self.col.attr, self.col.vcls, self.col.col,
+                obj, obj.__key__, list(get_objects()), self.cache[obj])
 
-        if obj in self.ref_buf:
-            # return all objects
-            return itertools.chain(getObjects(), self.ref_buf[obj])
-        else:
-            # no objects with undefined primary key value
-            return getObjects()
+        objects = get_objects() # get objects with defined primary key value
+
+        if obj in self.ref_buf: # get objects _without_ primary key value
+            objects = itertools.chain(objects, self.ref_buf[obj])
+
+        return objects
 
 
     def delAscData(self, pairs):
@@ -695,14 +705,14 @@ class List(AssociationReferenceProxy):
             L{bazaar.assoc.OneToMany.addReferencedObjects}
             L{bazaar.assoc.OneToMany.delReferencedObjects}
         """
-        def getAscData(set):
-            if obj in set:
-                for value in set[obj]:
+        def get_asc_data(obj_set):
+            if obj in obj_set:
+                for value in obj_set[obj]:
                     yield self.updateableAscData(obj, value)
-                set[obj].clear()
+                obj_set[obj].clear()
 
-        self.delAscData(getAscData(self.removed))
-        self.addAscData(getAscData(self.appended))
+        self.delAscData(get_asc_data(self.removed))
+        self.addAscData(get_asc_data(self.appended))
 
 
     def append(self, obj, value):
@@ -749,8 +759,10 @@ class List(AssociationReferenceProxy):
         size = 0
         keys = self.cache[obj]
         if keys is not None:
-            size += len(self.cache[obj])  # amount of objects with defined primary key value
-        if obj in self.ref_buf:       # amount of objects with undefined primary key value
+            # amount of objects with defined primary key value
+            size += len(self.cache[obj])
+        if obj in self.ref_buf:
+            # amount of objects with undefined primary key value
             size += len(self.ref_buf[obj])
         return size
 
@@ -771,13 +783,9 @@ class List(AssociationReferenceProxy):
         # object
         # fixme: overload Cache.__contains__ and: if obj not in self.cache?
         keys = self.cache[obj]
-        if keys is not None:
-            if value.__key__ in keys:
-                return True
-            else:
-                return (obj, value) in self.ref_buf
-        else:
-            return False
+
+        return keys is not None \
+            and (value.__key__ in keys or (obj, value) in self.ref_buf)
 
 
 
@@ -794,7 +802,8 @@ class BiDirList(List):
         @param obj: Application object.
         @param value: Referenced object.
         """
-        assert value is not None and isinstance(self.association, AssociationReferenceProxy)
+        assert value is not None \
+            and isinstance(self.association, AssociationReferenceProxy)
         super(BiDirList, self).append(obj, value)
         self.association.integrateSave(value, obj)
 
@@ -907,7 +916,8 @@ class OneToMany(BiDirList):
         @param obj: Application object.
         @param value: Referenced object.
         """
-        assert value is not None and isinstance(self.association, AssociationReferenceProxy)
+        assert value is not None \
+            and isinstance(self.association, AssociationReferenceProxy)
         old_obj = getattr(value, self.col.vattr)
         if old_obj is not None:
             self.justRemove(old_obj, value)
