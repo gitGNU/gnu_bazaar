@@ -1,4 +1,4 @@
-# $Id: pylintrc,v 1.1 2005/05/11 15:50:28 wrobell Exp $
+# $Id: pylintrc,v 1.2 2005/05/11 17:11:05 wrobell Exp $
 #
 # lint Python modules using external checkers.                            
 #                                                                                
@@ -283,7 +283,7 @@ enable-miscellaneous=yes
 
 # List of note tags to take in consideration, separated by a comma. Default to
 # FIXME, XXX, TODO
-notes=FIXME,XXX,TODO
+notes=FIXME,XXX,TODO,fixme,todo
 
 
 
@@ -301,10 +301,8 @@ enable-format=yes
 max-line-length=80
 
 # Maximum number of lines in a module
-max-module-lines=1000
+max-module-lines=1500
 
 # String used as indentation unit. This is usually " " (4 spaces) or "\t" (1 tab).
 indent-string='    '
-
-
 
