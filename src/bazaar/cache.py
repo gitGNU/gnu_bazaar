@@ -1,4 +1,4 @@
-# $Id: cache.py,v 1.19 2005/05/08 16:30:43 wrobell Exp $
+# $Id: cache.py,v 1.20 2005/05/11 17:10:39 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -48,7 +48,6 @@ L{bazaar.config} module documentation.
 """
 
 import weakref
-from UserDict import UserDict # weakref inherits from UserDict :-\
 
 import bazaar
 
@@ -77,10 +76,10 @@ class ReferenceBuffer(weakref.WeakKeyDictionary):
         @return: Returns true if application object is in reference buffer.
         """
         if isinstance(item, tuple):
-            return weakref.WeakKeyDictionary.__contains__(self, item[0])
+            in_ref_buf = weakref.WeakKeyDictionary.__contains__(self, item[0])
         else:
-            return weakref.WeakKeyDictionary.__contains__(self, item)
-
+            in_ref_buf = weakref.WeakKeyDictionary.__contains__(self, item)
+        return in_ref_buf
 
 
     def __delitem__(self, (obj, value)):
@@ -120,11 +119,14 @@ class ListReferenceBuffer(ReferenceBuffer):
         if isinstance(item, tuple):
             obj, value = item
             if value is None:
-                return weakref.WeakKeyDictionary.__contains__(self, obj)
+                in_ref_buf = weakref.WeakKeyDictionary.__contains__(self, obj)
             else:
-                return weakref.WeakKeyDictionary.__contains__(self, obj) and value in self[obj]
+                in_ref_buf = weakref.WeakKeyDictionary.__contains__(self, obj) \
+                    and value in self[obj]
         else:
-            return weakref.WeakKeyDictionary.__contains__(self, item)
+            in_ref_buf = weakref.WeakKeyDictionary.__contains__(self, item)
+
+        return in_ref_buf 
 
 
     def __setitem__(self, obj, value):
@@ -140,7 +142,7 @@ class ListReferenceBuffer(ReferenceBuffer):
         assert obj is not None and value is not None
 
         if obj not in self:
-            ref_buf = ReferenceBuffer.__setitem__(self, obj, set())
+            ReferenceBuffer.__setitem__(self, obj, set())
         key_set = self[obj]
 
         assert isinstance(key_set, set)
@@ -296,7 +298,8 @@ class LazyObject(Lazy, weakref.WeakValueDictionary):
         """
         Lazy.__init__(self, owner)
         weakref.WeakValueDictionary.__init__(self)
-        self.dicttype = weakref.WeakValueDictionary # to know weak dictionary superclass
+        # to know weak dictionary superclass, fixme: super should be used?
+        self.dicttype = weakref.WeakValueDictionary
 
 
     def load(self, key):
@@ -318,10 +321,12 @@ class LazyObject(Lazy, weakref.WeakValueDictionary):
         """
         for obj in self.owner.convertor.getObjects():
             if obj.__key__ in self:
-                yield self[obj.__key__]
+                obj = self[obj.__key__] # get existing instance
             else:
+                # there is no object instance, so add it to cache
                 self[obj.__key__] = obj
-                yield obj
+
+            yield obj
 
 
 
@@ -337,7 +342,8 @@ class LazyAssociation(Lazy, weakref.WeakKeyDictionary):
         """
         Lazy.__init__(self, owner)
         weakref.WeakKeyDictionary.__init__(self)
-        self.dicttype = weakref.WeakKeyDictionary # to know weak dictionary superclass
+        # to know weak dictionary superclass, fixme: super should be used?
+        self.dicttype = weakref.WeakKeyDictionary
 
 
     def load(self, obj):
