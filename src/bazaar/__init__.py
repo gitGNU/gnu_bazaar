@@ -1,4 +1,4 @@
-# $Id: __init__.py,v 1.17 2005/05/08 21:08:45 wrobell Exp $
+# $Id: __init__.py,v 1.18 2005/05/11 15:48:24 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -47,13 +47,13 @@ Features:
         - full - load all rows at once from relation
         - lazy - load one row from relation
 
-    - configurable - connection string, DB API module, class relations, object and
-      association data cache types, etc.
+    - configurable - connection string, DB API module, class relations, object
+      and association data cache types, etc.
 
 Requirements:
     - Python 2.4
-    - Python DB API 2.0 module with ``format'' and ``pyformat'' parameter
-      style support (tested with U{psycopg 2.0<http://initd.org/software/psycopg>})
+    - Python DB API 2.0 module with ``format'' and ``pyformat'' parameter style
+      support (tested with U{psycopg 2.0<http://initd.org/software/psycopg>})
     - RDBMS (tested with U{PostgreSQL 8.0<http://www.postgresql.org>})
 
 This is free software distributed under U{GNU Lesser General Public
@@ -64,8 +64,8 @@ on U{Savannah<http://savannah.nongnu.org>}.
 Bazaar ORM is easy to use, but is designed for people who know both
 object-oriented and relational technologies, their advantages,
 disadvantages and differences between them (U{``The Object-Relational
-Impedance Mismatch''<http://www.agiledata.org/essays/impedancemismatch.html>} reading
-is recommended).
+Impedance Mismatch''<http://www.agiledata.org/essays/impedancemismatch.html>}
+reading is recommended).
 
 Using the layer
 ===============
@@ -120,7 +120,8 @@ found in L{bazaar.conf} module documentation) should be like::
     # referenced object's class: OrderItem
     # referenced relation column name: order_fkey
     # referenced object's class attribute name: order
-    Order.addColumn('items', vcls = OrderItem, vcol = 'order_fkey', vattr = 'order')
+    Order.addColumn('items', vcls = OrderItem, vcol = 'order_fkey',
+            vattr = 'order')
 
     # define uni-directional association between OrderItem and Article classes
     # 
@@ -304,14 +305,19 @@ class Log(object):
         import sys
         log = logging.getLogger(self.logger)
         # find modules and utility instance names
-        for modname, mod in sys.modules.items():
+        for mod in sys.modules.itervalues():
             if mod is not None:
-                 vars = [name for name, var in mod.__dict__.items() if var is self]
-                 if vars:
-                     break
+                # get module variable names, which refer to the instance of
+                # current Log class instance, so they can be replaced by
+                # real logger
+                modvars = [name for name, var in mod.__dict__.items()
+                            if var is self]
+
+                if modvars:
+                    break
 
         # replace utility instances
-        for name in vars:
+        for name in modvars:
             setattr(mod, name, log)
 
         # return requested logger's method/attribute
