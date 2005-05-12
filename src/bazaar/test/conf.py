@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.5 2005/05/12 18:29:58 wrobell Exp $
+# $Id: conf.py,v 1.6 2005/05/12 21:28:31 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -116,6 +116,48 @@ class ConfTestCase(unittest.TestCase):
         d_cols = D.getColumns().keys()
         d_cols.sort()
         self.assertEqual(d_cols, ['a1', 'a2', 'b1', 'b2', 'c1', 'c2', 'd1', 'd2'])
+
+
+    def testDefaultValues(self):
+        """Test default value setting"""
+
+        A = bazaar.conf.Persistence('A')
+        A.addColumn('a1')
+        A.addColumn('a2')
+        self.assertEqual(A.defaults, {'a1': None, 'a2': None})
+
+        B = bazaar.conf.Persistence('B', bases = (A,))
+        B.addColumn('b1')
+        B.addColumn('b2')
+        self.assertEqual(B.defaults, {'a1': None, 'a2': None, 'b1': None, 'b2': None})
+
+        data = {}
+        data['defaults'] = {'a1': 1}
+        A = bazaar.conf.Persistence('A', data = data)
+        A.addColumn('a1')
+        A.addColumn('a2')
+        self.assertEqual(A.defaults, {'a1': 1, 'a2': None})
+
+        a = A()
+        self.assertEqual(a.a1, 1)
+        self.assertEqual(a.a2, None)
+
+        a = A(a1 = 2) # override default value
+        self.assertEqual(a.a1, 2)
+
+        B = bazaar.conf.Persistence('B', bases = (A,))
+        B.addColumn('b1')
+        B.addColumn('b2', default = 4)
+        self.assertEqual(B.defaults, {'a1': 1, 'a2': None, 'b1': None, 'b2': 4})
+
+        b = B()
+        self.assertEqual(b.a1, 1)
+        self.assertEqual(b.a2, None)
+        self.assertEqual(b.b1, None)
+        self.assertEqual(b.b2, 4)
+
+        b = B(a1 = 3) # override default value
+        self.assertEqual(b.a1, 3)
 
 
 class AssociationTestCase(unittest.TestCase):

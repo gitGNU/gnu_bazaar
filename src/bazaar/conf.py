@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.35 2005/05/12 18:29:58 wrobell Exp $
+# $Id: conf.py,v 1.36 2005/05/12 21:28:31 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -356,6 +356,7 @@ class Persistence(type):
 
         if __debug__:
             log.debug('new class "%s" for relation "%s"' % (c.__name__, data['relation']))
+            log.debug('class "%s" initial defaults: %s' % (c.__name__, data['defaults']))
 
         if not c.relation:
             raise bazaar.exc.RelationMappingError('wrong relation name', c)
@@ -365,7 +366,9 @@ class Persistence(type):
         return c
 
 
-    def addColumn(self, attr, col = None, vcls = None, link = None, vcol = None, vattr = None, update = True):
+    def addColumn(self, attr, col = None,
+            vcls = None, link = None, vcol = None, vattr = None, update = True,
+            default = None):
         """
         Add attribute description to persistent application class.
 
@@ -381,6 +384,7 @@ class Persistence(type):
         @param update: Used with 1-n associations. If true, then update
             referenced objects on relationship update, otherwise add appended
             objects and delete removed objects.
+        @param default: Default value.
 
         @see: L{bazaar.conf.Column}
         """
@@ -393,12 +397,14 @@ class Persistence(type):
 
         col.cache = None
 
-        self.defaults[attr] = None
+        # set default value
+        if attr not in self.defaults:
+            self.defaults[attr] = default
         if col.is_one_to_one and col.attr != col.col:
-            self.defaults[col.col] = None
+            self.defaults[col.col] = default
             
 
-        # set default association buffer
+        # set default association cache
         if col.is_many:
             col.cache = bazaar.cache.FullAssociation
 
