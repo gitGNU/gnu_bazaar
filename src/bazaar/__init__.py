@@ -1,4 +1,4 @@
-# $Id: __init__.py,v 1.19 2005/05/12 18:29:58 wrobell Exp $
+# $Id: __init__.py,v 1.20 2005/05/12 22:52:20 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -86,25 +86,25 @@ Class definition (more about class and relationships defining can be
 found in L{bazaar.conf} module documentation) should be like::
 
     # import bazaar module used to create classes
-    import bazaar.conf
+    >>> import bazaar.conf
 
     # create class for articles
-    # class name is specified, relation equals to class name
-    Article = bazaar.conf.Persistence('Article')
+    >>> Article = bazaar.conf.Persistence('Article', relation = 'article')
 
     # add class attributes and relation columns
     # class attribute name is the same as relation column name
-    Article.addColumn('name')
-    Article.addColumn('price')
+    >>> Article.addColumn('name')
+    >>> Article.addColumn('price')
 
     # create order and order items classes
     # class names are different than database relation names
-    Order = bazaar.conf.Persistence('Order', relation = 'order')
-    OrderItem = bazaar.conf.Persistence('OrderItem', relation = 'order_item')
+    >>> Order = bazaar.conf.Persistence('Order', relation = 'order')
+    >>> OrderItem = bazaar.conf.Persistence('OrderItem', relation = 'order_item')
 
-    Order.addColumn('no')           # order number
-    OrderItem.addColumn('pos')      # order item position
-    OrderItem.addColumn('quantity') # article quantity
+    >>> Order.addColumn('no')                          # order number
+    >>> Order.addColumn('finished', default = False)   # is order completed
+    >>> OrderItem.addColumn('pos')                     # order item position
+    >>> OrderItem.addColumn('quantity')                # article quantity
 
     # define bi-directional association between Order and OrderItem classes
     #
@@ -113,22 +113,22 @@ found in L{bazaar.conf} module documentation) should be like::
     # relation column name: order_fkey
     # referenced object's class: Order
     # referenced object's class attribute name: items
-    OrderItem.addColumn('order', 'order_fkey', Order, vattr = 'items')
+    >>> OrderItem.addColumn('order', 'order_fkey', Order, vattr = 'items')
 
     # from Order perspective
     # attribute name: items
     # referenced object's class: OrderItem
     # referenced relation column name: order_fkey
     # referenced object's class attribute name: order
-    Order.addColumn('items', vcls = OrderItem, vcol = 'order_fkey',
-            vattr = 'order')
+    >>> Order.addColumn('items', vcls = OrderItem, vcol = 'order_fkey',
+    ...     vattr = 'order')
 
     # define uni-directional association between OrderItem and Article classes
     # 
     # attribute name: article
     # relation column name: article_fkey
     # referenced object's class: Article
-    OrderItem.addColumn('article', 'article_fkey', Article)
+    >>> OrderItem.addColumn('article', 'article_fkey', Article)
 
 Now, SQL schema can be created::
 
@@ -173,22 +173,23 @@ Application code
 
 Application must import Bazaar ORM core module::
 
-    import bazaar.core
-    import psycopg
+    >>> import bazaar.core
+    >>> import psycopg
 
 DB API module is imported, too. However, it is not obligatory because it can
 be specified in config file, see L{bazaar.config} module documentation for
 details.
 
 Create Bazaar ORM layer instance. There are several parameters
-(L{bazaar.core.Bazaar}), but now in this example only list of application
-classes and DB API module are specified::
+(L{bazaar.core.Bazaar}), but for this example the list of application
+classes, DB API module are specified:: #fimxe
 
-    bzr = bazaar.core.Bazaar((Article, Order, OrderItem), dbmod = psycopg)
+    >>> bzr = bazaar.core.Bazaar((Article, Order, OrderItem), \
+            dbmod = psycopg, seqpattern = "select nextval('%s')")
 
 Connect to database::
 
-    bzr.connectDB('dbname = ord')
+    >>> bzr.connectDB('dbname = bazaar')
 
 Connection string is standard database source name (dsn) described in DB
 API 2.0 specification. Connection can be established with
@@ -196,84 +197,107 @@ L{bazaar.core.Bazaar} class constructor, too.
 
 Create application object::
 
-    apple = Article()
-    apple.name = 'apple'
-    apple.price = 2.33
+    >>> apple = Article()
+    >>> apple.name = 'apple'
+    >>> apple.price = 2.33
+    >>> print apple.price
+    2.33
 
     
 Object constructor can initialize object attributes::
 
-    oi1 = OrderItem(pos = 1, quantity = 10)
-    oi1.article = apple
+    >>> oi1 = OrderItem(pos = 1, quantity = 10)
+    >>> oi1.article = apple
+    >>> print oi1.article.name, oi1.pos, oi1.quantity
+    apple 1 10
 
-    peach = Article()
-    peach.name = 'peach'
-    peach.price = 2.34
+    >>> peach = Article()
+    >>> peach.name = 'peach'
+    >>> peach.price = 2.34
 
-    oi2 = OrderItem(article = peach)
-    oi2.pos = 2
-    oi2.quantity = 40
+    >>> oi2 = OrderItem(article = peach)
+    >>> oi2.pos = 2
+    >>> oi2.quantity = 40
+    >>> print oi2.article.name, oi2.pos, oi2.quantity
+    peach 2 40
 
 Create new order::
 
-    ord = Order(no = 1)
+    >>> ord = Order(no = 10000)
 
 
 Append order items to order. It can be made in two ways
 (it is bi-directional relationship)::
 
-    ord.items.append(oi1)
-    oi2.order = ord
+    >>> ord.items.append(oi1)     # append item to order
+    >>> oi2.order = ord           # set order of an item
+    >>> print [item.article.name for item in ord.items]
+    ['apple', 'peach']
 
-Finally, add created objects data into database::
 
-    bzr.add(apple)
-    bzr.add(peach)
-    bzr.add(oi1)
-    bzr.add(oi2)
-    bzr.add(ord)
+Finally, add created objects data into database and update association
+between order and its items::
+
+    >>> bzr.add(apple)
+    >>> bzr.add(peach)
+    >>> bzr.add(oi1)
+    >>> bzr.add(oi2)
+    >>> bzr.add(ord)
+
+    >>> ord.items.update()
 
 Objects can be updated and deleted, too (L{bazaar.core.Bazaar}).
 
 
-Now, let's play with some objects. Remove second order item from order no 1::
+Now, let's play with some objects. Remove second order item from order
+number 10000::
 
-    del ord.items[oi2]
+    >>> del ord.items[oi2]
+    >>> print oi2 in ord.items
+    False
+    >>> print [item.article.name for item in ord.items]
+    ['apple']
 
 And update association::
 
-    ord.items.update()
+    >>> ord.items.update()
 
 Add second order item again::
 
-    ord.items.append(oi2)
-    ord.items.update()
+    >>> ord.items.append(oi2)
+    >>> print oi2 in ord.items
+    True
+    >>> ord.items.update()
 
 Change apple price::
 
-    apple.price = 2.00
+    >>> apple.price = 2.00
 
 And update database data::
 
-    bzr.update(apple)
+    >>> bzr.update(apple)
 
 Print all orders::
 
-    for ord in bzr.getObjects(Order):
-        print ord
+    >>> print [ord.no for ord in bzr.getObjects(Order)]    # doctest: +ELLIPSIS
+    [...]
 
 
 Find order number 1::
 
-    bzr.find(Order, {'no': 1})
+    >>> ord = bzr.find(Order, {'no': 1}).next()
+    >>> print ord.no
+    1
 
 Find order items for article "apple"::
 
-    bzr.find(OrderItem,  {'article': apple})
+    >>> oi = bzr.find(OrderItem,  {'article': apple}).next()
+    >>> print oi.article.name, oi.article.price, oi.quantity
+    apple 2.0 10
 
-Finally, commit transaction::
+Finally, commit or rollback transaction::
 
-    bzr.commit()
+    >>> bzr.rollback()
 """
 # @todo:
 # Bazaar supports GUI development with set of powerful widgets designed
@@ -284,7 +308,8 @@ class Log(object):
     """
     Utility class to deffer creation of loggers (of logging package).
 
-    Usage:
+    Usage::
+
         log = Log('bazaar.core') # log is Log instance
         log.debug()              # log is logging.Logger instance
 
