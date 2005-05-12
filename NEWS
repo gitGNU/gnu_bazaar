@@ -1,5 +1,6 @@
 0.99.7
 - fixed bugs related to default values of application object
+- fixed association bugs
 
 0.99.6
 - tested with Python 2.4.1 and psycopg 2.0 beta1

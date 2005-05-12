@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.54 2005/05/12 18:29:58 wrobell Exp $
+# $Id: assoc.py,v 1.55 2005/05/12 22:28:33 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -785,7 +785,7 @@ class List(AssociationReferenceProxy):
         keys = self.cache[obj]
 
         return keys is not None \
-            and (value.__key__ in keys or (obj, value) in self.ref_buf)
+            and value.__key__ in keys or (obj, value) in self.ref_buf
 
 
 

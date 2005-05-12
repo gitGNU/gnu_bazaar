@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.4 2005/05/12 18:29:58 wrobell Exp $
+# $Id: assoc.py,v 1.5 2005/05/12 22:28:33 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -322,6 +322,17 @@ class OneToManyAssociationTestCase(bazaar.test.bzr.TestCase):
         self.assertRaises(bazaar.exc.AssociationError, ord.items.append, None)
         self.assertRaises(bazaar.exc.AssociationError, ord.items.append, object())
         self.assertRaises(bazaar.exc.AssociationError, ord.items.append, oi1)
+
+        # let's play with new order
+        ord = bazaar.test.app.Order(no = 10000)
+        oi4 = bazaar.test.app.OrderItem()
+        oi4.pos = 1005
+        oi4.quantity = 10.4
+        oi4.article = art
+        oi4.order = ord
+        self.assert_(oi4 in ord.items, \
+            'appended referenced object not found in association %s -> %s' % \
+            (ord, oi4))
 
 
     def testRemoving(self):
