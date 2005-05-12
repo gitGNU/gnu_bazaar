@@ -1,9 +1,9 @@
-# $Id: core.py,v 1.4 2004/12/20 07:39:52 wrobell Exp $
+# $Id: core.py,v 1.5 2005/05/12 18:29:58 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
 #
-# Copyright (C) 2000-2004 by Artur Wroblewski <wrobell@pld-linux.org>
+# Copyright (C) 2000-2005 by Artur Wroblewski <wrobell@pld-linux.org>
 # 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
