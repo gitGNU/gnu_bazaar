@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.6 2005/05/13 00:35:31 wrobell Exp $
+# $Id: assoc.py,v 1.7 2005/05/13 17:35:10 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -25,6 +25,10 @@ import bazaar.test.bzr
 
 import bazaar.exc
 
+"""
+Test associations.
+"""
+
 class OneToOneAssociationTestCase(bazaar.test.bzr.TestCase):
     """
     Test one-to-one associations.
@@ -33,13 +37,15 @@ class OneToOneAssociationTestCase(bazaar.test.bzr.TestCase):
     def testLoading(self):
         """Test one-to-one association loading"""
         for boss in self.bazaar.getObjects(bazaar.test.app.Boss):
-            self.assertEqual(boss.dep_fkey, boss.department.__key__, 'one-to-one association data mismatch')
+            self.assertEqual(boss.dep_fkey, boss.department.__key__,
+                'one-to-one association data mismatch')
             self.assertEqual(boss.department, \
                 self.getCache(bazaar.test.app.Department)[boss.dep_fkey], \
                 'one-to-one association data mismatch')
 
         for dep in self.bazaar.getObjects(bazaar.test.app.Department):
-            self.assertEqual(dep.boss_fkey, dep.boss.__key__, 'one-to-one association data mismatch')
+            self.assertEqual(dep.boss_fkey, dep.boss.__key__,
+                'one-to-one association data mismatch')
             self.assertEqual(dep.boss, \
                 self.getCache(bazaar.test.app.Boss)[dep.boss_fkey], \
                 'one-to-one association data mismatch')
@@ -53,28 +59,44 @@ class OneToOneAssociationTestCase(bazaar.test.bzr.TestCase):
         b2 = self.getCache(bazaar.test.app.Boss)[1002]
         d1 = self.getCache(bazaar.test.app.Department)[1001]
         d2 = self.getCache(bazaar.test.app.Department)[1002]
-        self.assertEqual(b1.department, d1, 'one-to-one associations data mismatch')
-        self.assertEqual(d1.boss, b1, 'one-to-one associations data mismatch')
-        self.assertEqual(b2.department, d2, 'one-to-one associations data mismatch')
-        self.assertEqual(d2.boss, b2, 'one-to-one associations data mismatch')
+        self.assertEqual(b1.department, d1,
+            'one-to-one associations data mismatch')
+        self.assertEqual(d1.boss, b1,
+            'one-to-one associations data mismatch')
+        self.assertEqual(b2.department, d2,
+            'one-to-one associations data mismatch')
+        self.assertEqual(d2.boss, b2,
+            'one-to-one associations data mismatch')
 
         b1.department = d2
-        self.assertEqual(b1.department, d2, 'one-to-one associations data mismatch')
-        self.assertEqual(d2.boss, b1, 'one-to-one associations data mismatch')
-        self.assertEqual(d2.boss_fkey, b1.__key__, 'one-to-one association data mismatch')
-        self.assertEqual(b1.dep_fkey, d2.__key__, 'one-to-one association data mismatch')
+        self.assertEqual(b1.department, d2,
+            'one-to-one associations data mismatch')
+        self.assertEqual(d2.boss, b1,
+            'one-to-one associations data mismatch')
+        self.assertEqual(d2.boss_fkey, b1.__key__,
+            'one-to-one association data mismatch')
+        self.assertEqual(b1.dep_fkey, d2.__key__,
+            'one-to-one association data mismatch')
 
         d1.boss = b2
-        self.assertEqual(b2.department, d1, 'one-to-one associations data mismatch')
-        self.assertEqual(d1.boss, b2, 'one-to-one associations data mismatch')
-        self.assertEqual(d1.boss_fkey, b2.__key__, 'one-to-one association data mismatch')
-        self.assertEqual(b2.dep_fkey, d1.__key__, 'one-to-one association data mismatch')
+        self.assertEqual(b2.department, d1,
+            'one-to-one associations data mismatch')
+        self.assertEqual(d1.boss, b2,
+            'one-to-one associations data mismatch')
+        self.assertEqual(d1.boss_fkey, b2.__key__,
+            'one-to-one association data mismatch')
+        self.assertEqual(b2.dep_fkey, d1.__key__,
+            'one-to-one association data mismatch')
 
         d1.boss = None
-        self.assertEqual(d1.boss, None, 'one-to-one associations data mismatch')
-        self.assertEqual(d1.boss_fkey, None, 'one-to-one associations data mismatch')
-        self.assertEqual(b2.department, None, 'one-to-one associations data mismatch')
-        self.assertEqual(b2.dep_fkey, None, 'one-to-one associations data mismatch')
+        self.assertEqual(d1.boss, None,
+            'one-to-one associations data mismatch')
+        self.assertEqual(d1.boss_fkey, None,
+            'one-to-one associations data mismatch')
+        self.assertEqual(b2.department, None,
+            'one-to-one associations data mismatch')
+        self.assertEqual(b2.dep_fkey, None,
+            'one-to-one associations data mismatch')
 
 
 
@@ -145,7 +167,8 @@ class ManyToManyAssociationTestCase(bazaar.test.bzr.TestCase):
         self.bazaar.rollback()
 
         self.assertRaises(bazaar.exc.AssociationError, emp.orders.append, None)
-        self.assertRaises(bazaar.exc.AssociationError, emp.orders.append, object())
+        self.assertRaises(bazaar.exc.AssociationError, emp.orders.append,
+            object())
         self.assertRaises(bazaar.exc.AssociationError, emp.orders.append, ord1)
 
 
@@ -166,7 +189,8 @@ class ManyToManyAssociationTestCase(bazaar.test.bzr.TestCase):
         emp.orders.update()
         self.checkEmpAsc()
         self.assertRaises(bazaar.exc.AssociationError, emp.orders.remove, None)
-        self.assertRaises(bazaar.exc.AssociationError, emp.orders.remove, object())
+        self.assertRaises(bazaar.exc.AssociationError, emp.orders.remove,
+            object())
         self.assertRaises(bazaar.exc.AssociationError, emp.orders.remove, ord)
 
 
@@ -306,7 +330,8 @@ class OneToManyAssociationTestCase(bazaar.test.bzr.TestCase):
         self.checkOrdAsc()
 
         self.assertRaises(bazaar.exc.AssociationError, ord.items.append, None)
-        self.assertRaises(bazaar.exc.AssociationError, ord.items.append, object())
+        self.assertRaises(bazaar.exc.AssociationError, ord.items.append,
+            object())
         self.assertRaises(bazaar.exc.AssociationError, ord.items.append, oi1)
 
         # let's play with new order
@@ -350,7 +375,8 @@ class OneToManyAssociationTestCase(bazaar.test.bzr.TestCase):
         del ord.items[oi]
 
         self.assertRaises(bazaar.exc.AssociationError, ord.items.remove, None)
-        self.assertRaises(bazaar.exc.AssociationError, ord.items.remove, object())
+        self.assertRaises(bazaar.exc.AssociationError, ord.items.remove,
+            object())
         self.assertRaises(bazaar.exc.AssociationError, ord.items.remove, oi)
 
 
