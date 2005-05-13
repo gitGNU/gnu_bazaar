@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.5 2005/05/12 22:28:33 wrobell Exp $
+# $Id: assoc.py,v 1.6 2005/05/13 00:35:31 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -286,24 +286,11 @@ class OneToManyAssociationTestCase(bazaar.test.bzr.TestCase):
         oi1.quantity = 10.3
         oi1.article = art
 
-        oi2 = bazaar.test.app.OrderItem()
-        oi2.pos = 1001
-        oi2.quantity = 10.4
-        oi2.article = art
-
-        # append object with _defined_ primary key value
-        self.bazaar.add(oi1)
         ord.items.append(oi1)
-
-        # append object with _undefined_ primary key value
-        ord.items.append(oi2)
-        self.bazaar.add(oi2)
         self.assert_(oi1 in ord.items, \
             'appended referenced object not found in association %s -> %s' % \
             (ord, oi1))
-        self.assert_(oi2 in ord.items, \
-            'appended referenced object not found in association %s -> %s' % \
-            (ord, oi2))
+
         ord.items.update()
         self.checkOrdAsc()
 
@@ -315,7 +302,6 @@ class OneToManyAssociationTestCase(bazaar.test.bzr.TestCase):
         self.assert_(oi3 in ord.items, \
             'appended referenced object not found in association %s -> %s' % \
             (ord, oi3))
-        self.bazaar.add(oi3)
         ord.items.update()
         self.checkOrdAsc()
 
@@ -395,8 +381,6 @@ class OneToManyAssociationTestCase(bazaar.test.bzr.TestCase):
         items = list(ord.items)
         oi = items[0]
 
-        # append object with _defined_ primary key value
-        self.bazaar.add(oi1)
         ord.items.append(oi1)
 
         # fixme: improve test code, so assertion below is not required
@@ -404,9 +388,7 @@ class OneToManyAssociationTestCase(bazaar.test.bzr.TestCase):
 
         del ord.items[oi]
 
-        # append object with _undefined_ primary key value
         ord.items.append(oi2)
-        self.bazaar.add(oi2)
 
         self.assert_(oi not in ord.items, \
             'removed referenced object found in association')
