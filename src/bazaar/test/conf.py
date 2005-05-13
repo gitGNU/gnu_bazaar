@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.6 2005/05/12 21:28:31 wrobell Exp $
+# $Id: conf.py,v 1.7 2005/05/13 17:15:58 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -40,9 +40,11 @@ class ConfTestCase(unittest.TestCase):
         """Test application class to database relation mapping"""
 
         relation = 'person'
-        Person = bazaar.conf.Persistence('Person', relation = 'person')
+        Person = bazaar.conf.Persistence('Person', 'person', globals())
         self.assertEqual(relation, Person.relation,
             'class relation mismatch: %s != %s ' % (relation, Person.relation))
+        self.assertEqual(Person.__module__, __name__,
+            'class module mismatch: %s != %s ' % (Person.__module__, __name__))
 
         relation = 'address'
         class Address:
@@ -51,6 +53,17 @@ class ConfTestCase(unittest.TestCase):
 
         self.assertEqual(relation, Address.relation,
             'class relation mismatch: %s != %s ' % (relation, Address.relation))
+        self.assertEqual(Address.__module__, __name__,
+            'class module mismatch: %s != %s ' % (Address.__module__, __name__))
+
+        Person = bazaar.conf.Persistence('Person',
+            (bazaar.core.PersistentObject,), globals())
+        self.assertEqual('Person', Person.relation,
+            'class relation mismatch: %s != %s ' % ('Person', Person.relation))
+        self.assertEqual(Person.__bases__, (bazaar.core.PersistentObject,))
+
+        self.assertRaises(bazaar.exc.RelationMappingError,
+                bazaar.conf.Persistence, 'name', ['relation'], globals())
 
 
     def testColumnDef(self):
@@ -58,7 +71,7 @@ class ConfTestCase(unittest.TestCase):
 
         cols = ('name', 'surname', 'birthdate')
 
-        Person = bazaar.conf.Persistence('Person', relation = 'person')
+        Person = bazaar.conf.Persistence('Person', 'person', globals())
         Person.addColumn('name')
         self.assertRaises(bazaar.exc.ColumnMappingError, Person.addColumn, 'name')
         Person.addColumn('surname')
@@ -70,20 +83,20 @@ class ConfTestCase(unittest.TestCase):
 
     def testInheritance(self):
         """Test class inheritance"""
-        A = bazaar.conf.Persistence('A')
+        A = bazaar.conf.Persistence('A', 'a', globals())
         A.addColumn('a1')
         A.addColumn('a2')
 
-        B = bazaar.conf.Persistence('B', bases = (A,))
+        B = bazaar.conf.Persistence('B', 'b', globals(), bases = (A,))
         B.addColumn('b1')
         B.addColumn('b2')
         self.assertEqual(B.defaults, {'a1': None, 'a2': None, 'b1': None, 'b2': None})
 
-        C = bazaar.conf.Persistence('C')
+        C = bazaar.conf.Persistence('C', 'c', globals())
         C.addColumn('c1')
         C.addColumn('c2')
 
-        D = bazaar.conf.Persistence('D', bases = (B, C))
+        D = bazaar.conf.Persistence('D', 'd', globals(), bases = (B, C))
         D.addColumn('d1')
         D.addColumn('d2')
         self.assertEqual(D.defaults, \
@@ -121,19 +134,19 @@ class ConfTestCase(unittest.TestCase):
     def testDefaultValues(self):
         """Test default value setting"""
 
-        A = bazaar.conf.Persistence('A')
+        A = bazaar.conf.Persistence('A', 'a', globals())
         A.addColumn('a1')
         A.addColumn('a2')
         self.assertEqual(A.defaults, {'a1': None, 'a2': None})
 
-        B = bazaar.conf.Persistence('B', bases = (A,))
+        B = bazaar.conf.Persistence('B', 'b', globals(), bases = (A,))
         B.addColumn('b1')
         B.addColumn('b2')
         self.assertEqual(B.defaults, {'a1': None, 'a2': None, 'b1': None, 'b2': None})
 
-        data = {}
+        data = globals().copy()
         data['defaults'] = {'a1': 1}
-        A = bazaar.conf.Persistence('A', data = data)
+        A = bazaar.conf.Persistence('A', 'a', data)
         A.addColumn('a1')
         A.addColumn('a2')
         self.assertEqual(A.defaults, {'a1': 1, 'a2': None})
@@ -145,7 +158,7 @@ class ConfTestCase(unittest.TestCase):
         a = A(a1 = 2) # override default value
         self.assertEqual(a.a1, 2)
 
-        B = bazaar.conf.Persistence('B', bases = (A,))
+        B = bazaar.conf.Persistence('B', 'b', globals(), bases = (A,))
         B.addColumn('b1')
         B.addColumn('b2', default = 4)
         self.assertEqual(B.defaults, {'a1': 1, 'a2': None, 'b1': None, 'b2': 4})

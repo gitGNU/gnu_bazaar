@@ -1,6 +1,7 @@
 0.99.7
 - fixed bugs related to default values of application object
 - fixed association bugs
+- improved application class defining
 - documentation fixes
 
 0.99.6

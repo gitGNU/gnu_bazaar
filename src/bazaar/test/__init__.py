@@ -1,4 +1,4 @@
-# $Id: __init__.py,v 1.8 2005/05/12 18:29:58 wrobell Exp $
+# $Id: __init__.py,v 1.9 2005/05/13 17:15:58 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -27,50 +27,52 @@ Let's suppose, that C{lib} library is going to be tested and there are
 created two modules C{lib.test.a} and C{lib.test.b} with unit tests for the
 library.
 
-To run unit tests, which use Bazaar ORM library, application classes should
-be specified. To specify application classes set C{bazaar.test.TestCase.cls_list} attribute,
-i.e.::
+To run unit tests, which use Bazaar ORM library, application classes should be
+specified. To specify application classes set C{bazaar.test.TestCase.cls_list}
+attribute, i.e.::
 
-    bazaar.test.TestCase.cls_list = (lib.Class1, lib.Class2)
+    >>> bazaar.test.TestCase.cls_list = (lib.Class1, lib.Class2)
 
-To run all unit tests C{lib.test.all} module can be created, C{lib/test/all.py}::
+To run all unit tests C{lib.test.all} module can be created,
+C{lib/test/all.py}::
 
-    import bazaar.test
+    >>> import bazaar.test
 
-    bazaar.test.TestCase.cls_list = (lib.Class1, lib.Class2) # set application classes
+    >>> # set application classes
+    >>> bazaar.test.TestCase.cls_list = (lib.Class1, lib.Class2)
 
-    if __name__ = '__main__'
-        
-        # import all library test cases into lib.test.all module namespace,
-        # so the all tests will be run
-        from bazaar.test.a import *
-        from bazaar.test.b import *
-        
-        # run all tests
-        bazaar.test.main()
+    >>> if __name__ == '__main__':
+    ...     
+    ...     # import all library test cases into lib.test.all module namespace,
+    ...     # so the all tests will be run
+    ...     from bazaar.test.a import *
+    ...     from bazaar.test.b import *
+    ...     
+    ...     # run all tests
+    ...     bazaar.test.main()
 
 
 Module C{lib.test.a} source code example::
 
-    import bazaar.test
-    import lib.test.all # this import sets application classes
+    >>> import bazaar.test
+    >>> import lib.test.all # this import sets application classes
 
-    class ATestCase(bazaar.test.DBTestCase):
-        pass
+    >>> class ATestCase(bazaar.test.DBTestCase):
+    ...     pass
 
-    if __name__ == '__main__':
-        bazaar.test.main()
+    >>> if __name__ == '__main__':
+    ...     bazaar.test.main()
 
 Module C{lib.test.b} source code example::
 
-    import bazaar.test
-    import lib.test.all # this import sets application classes
+    >>> import bazaar.test
+    >>> import lib.test.all # this import sets application classes
 
-    class BTestCase(bazaar.test.DBTestCase):
-        pass
+    >>> class BTestCase(bazaar.test.DBTestCase):
+    ...     pass
 
-    if __name__ == '__main__':
-        bazaar.test.main()
+    >>> if __name__ == '__main__':
+    ...     bazaar.test.main()
 
 
 To run all tests::
@@ -107,7 +109,8 @@ class TestCase(unittest.TestCase):
         import bazaar.config
         self.config = ConfigParser()
         self.config.read(cfg_file)
-        self.bazaar = bazaar.core.Bazaar(self.cls_list, bazaar.config.CPConfig(self.config))
+        self.bazaar = bazaar.core.Bazaar(self.cls_list,
+            bazaar.config.CPConfig(self.config))
 
 
 

@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.37 2005/05/13 00:40:59 wrobell Exp $
+# $Id: conf.py,v 1.38 2005/05/13 17:15:58 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -39,7 +39,7 @@ Application class can be defined by standard Python class definition::
 
 It is possible to create application class by class instantiation::
 
-    >>> Order = bazaar.conf.Persistence('Order', relation = 'order')
+    >>> Order = bazaar.conf.Persistence('Order', 'order', globals())
     >>> Order.addColumn('no')
     >>> Order.addColumn('finished')
     >>> Order.addColumn('birthdate')
@@ -66,8 +66,9 @@ specify the application class attribute, relation column and referenced
 class. For example, to associate department class with its boss
 (uni-directional relationship)::
 
-    >>> Department = bazaar.conf.Persistence('Department')
-    >>> Boss = bazaar.conf.Persistence('Boss')
+    >>> Department = bazaar.conf.Persistence('Department', 'department',
+    ...     globals())
+    >>> Boss = bazaar.conf.Persistence('Boss', 'boss', globals())
 
     >>> Department.addColumn('boss', 'boss_fkey', Boss)
 
@@ -120,7 +121,7 @@ programmer should specify following parameters:
 For example, uni-directional many-to-many association between C{Employee}
 and C{Order} classes::
 
-    >>> Employee = bazaar.conf.Persistence('Employee')
+    >>> Employee = bazaar.conf.Persistence('Employee', 'employee', globals())
     >>> Employee.addColumn('orders', 'employee', Order,
     ...     'employee_orders', 'order')
 
@@ -156,8 +157,9 @@ SQL schema::
 To define bi-directional association attribute of opposite class, as in
 case of bi-directional one-to-one association, code should be written::
 
-    >>> Employee = bazaar.conf.Persistence('Employee')
-    >>> Order = bazaar.conf.Persistence('Order', relation = 'order')
+    >>> Employee = bazaar.conf.Persistence('Employee', 'employee',
+    ...     globals())
+    >>> Order = bazaar.conf.Persistence('Order', 'order', globals())
 
     >>> Employee.addColumn('orders', 'employee', Order,
     ...     'employee_orders', 'order', 'employees')
@@ -196,9 +198,9 @@ C{OrderItem} classes' relations - many order items can be created for one
 article. The relationship should be defined on "many" side with similar
 code as in case of uni-directional one-to-one association::
     
-    >>> Article = bazaar.conf.Persistence('Article', relation = 'article')
-    >>> OrderItem = bazaar.conf.Persistence('OrderItem',
-    ...     relation = 'order_item')
+    >>> Article = bazaar.conf.Persistence('Article', 'article', globals())
+    >>> OrderItem = bazaar.conf.Persistence('OrderItem', 'order_item',
+    ...     globals())
     >>> OrderItem.addColumn('article', 'article_fkey', Article)
 
 There is second relationship. Bi-directional association between C{Order}
@@ -216,8 +218,8 @@ Inheritance
 There are two classes defined above. C{Boss} class is very similar to
 C{Employee} class. The last one can be reused with inheritance::
 
-    >>> Boss = bazaar.conf.Persistence('Boss', bases = (Employee,),
-    ...     relation = 'boss')
+    >>> Boss = bazaar.conf.Persistence('Boss', 'boss', globals(),
+    ...     bases = (Employee,))
 
 C{Boss} class derives all attributes and associations from C{Employee}
 class.
@@ -333,21 +335,32 @@ class Persistence(type):
     @ivar defaults: Default values for class attributes.
     """
 
-    def __new__(self, name, bases = (bazaar.core.PersistentObject, ),
-            data = None, relation = None, sequencer = None,
-            modname = __name__):
+    def __new__(self, name, relation, data, sequencer = None,
+            bases = (bazaar.core.PersistentObject, )):
         """
         Create application class.
 
+        @param name: Name of class.
         @param relation: Database relation name.
+        @param data: Application class module globals.
         @param sequencer: Name of primary key values generator sequencer.
-        @param modname: Module of the application class, i.e.  C{app.business}.
+        @param bases: Application class base classes.
         """
+        # check method parameters to detect if it was called via class
+        # declaration
+        if isinstance(relation, tuple):
+            bases = relation
+            relation = None
+        elif not isinstance(relation, basestring):
+            raise bazaar.exc.RelationMappingError('wrong relation type', name)
+
         if data is None:
             data = {}
+        else:
+            data = data.copy()
 
-        if modname != __name__:
-            data['__module__'] = modname
+        if '__module__' not in data:
+            data['__module__'] = data['__name__']
 
         if relation is None:
             relation = name

@@ -1,4 +1,4 @@
-# $Id: app.py,v 1.3 2005/05/12 18:29:58 wrobell Exp $
+# $Id: app.py,v 1.4 2005/05/13 17:15:58 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -53,17 +53,20 @@ import bazaar.conf
 #   addColumn('orders', 'employee', Order, 'employee_orders', 'order')
 #
 #   # m-n bi-dir; de facto vattr = 'employees'
-#   addColumn('orders', 'employee' Order, 'employee_orders', 'order', 'employees')
-#   addColumn('employees', 'order', Employee, 'employee_orders', 'employee', 'orders')
+#   addColumn('orders', 'employee' Order, 'employee_orders', 'order',
+#       'employees')
+#   addColumn('employees', 'order', Employee, 'employee_orders', 'employee',
+#       'orders')
 #
 # define test application classes
-Article = bazaar.conf.Persistence('Article', relation = 'article', modname = 'bazaar.test.app')
+
+Article = bazaar.conf.Persistence('Article', 'article', globals())
 Article.addColumn('name')
 Article.addColumn('price')
 
-Order = bazaar.conf.Persistence('Order', relation = 'order', modname = 'bazaar.test.app')
-OrderItem = bazaar.conf.Persistence('OrderItem', relation = 'order_item', modname = 'bazaar.test.app')
-Employee = bazaar.conf.Persistence('Employee', relation = 'employee', modname = 'bazaar.test.app')
+Order = bazaar.conf.Persistence('Order', 'order', globals())
+OrderItem = bazaar.conf.Persistence('OrderItem', 'order_item', globals())
+Employee = bazaar.conf.Persistence('Employee', 'employee', globals())
 
 OrderItem.addColumn('pos')
 OrderItem.addColumn('quantity')
@@ -72,7 +75,8 @@ OrderItem.addColumn('order', 'order_fkey', Order, vattr = 'items')
 
 Order.addColumn('no')
 Order.addColumn('finished')
-Order.addColumn('items', vcls = OrderItem, vcol = 'order_fkey', vattr = 'order', update = False)
+Order.addColumn('items', vcls = OrderItem, vcol = 'order_fkey', vattr = 'order',
+    update = False)
 Order.addColumn('employees', 'order', Employee, 'employee_orders', 'employee')
 
 Employee.addColumn('name')
@@ -80,8 +84,8 @@ Employee.addColumn('surname')
 Employee.addColumn('phone')
 Employee.addColumn('orders', 'employee', Order, 'employee_orders', 'order')
 
-Department = bazaar.conf.Persistence('Department', relation = 'department', modname = 'bazaar.test.app')
-Boss = bazaar.conf.Persistence('Boss', relation = 'boss', modname = 'bazaar.test.app')
+Department = bazaar.conf.Persistence('Department', 'department', globals())
+Boss = bazaar.conf.Persistence('Boss', 'boss', globals())
 
 Boss.addColumn('department', 'dep_fkey', Department, vattr = 'boss')
 Department.addColumn('boss', 'boss_fkey', Boss, vattr = 'department')

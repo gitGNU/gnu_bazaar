@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.35 2005/05/12 18:29:58 wrobell Exp $
+# $Id: motor.py,v 1.36 2005/05/13 17:15:58 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -54,13 +54,16 @@ class Convertor(object):
         self.motor = mtr
 
         cls_columns = self.cls.getColumns().values()
-        self.columns = [col.col for col in cls_columns if col.association is None]
+
+        self.columns = \
+            [col.col for col in cls_columns if col.association is None]
 
         self.oto_ascs = [col for col in cls_columns if col.is_one_to_one]
         for col in self.oto_ascs:
             self.columns.append(col.col)
 
-        if __debug__: log.debug('class %s columns: %s' % (self.cls, self.columns))
+        if __debug__:
+            log.debug('class %s columns: %s' % (self.cls, self.columns))
 
         self.masc = [col for col in cls_columns if col.is_many]
 
@@ -77,30 +80,44 @@ class Convertor(object):
             self.queries[self.getKey])
 
         self.queries[self.getObjects] = 'select %s from "%s"' \
-            % (', '.join(['"%s"' % col for col in self.load_cols]), self.cls.relation)
-        if __debug__: log.debug('get objects query: "%s"' % self.queries[self.getObjects])
+            % (', '.join(['"%s"' % col for col in self.load_cols]),
+                self.cls.relation)
+
+        if __debug__:
+            log.debug('get objects query: "%s"' % self.queries[self.getObjects])
 
         self.queries[self.get] = self.queries[self.getObjects] \
             + ' where __key__ = %s'
-        if __debug__: log.debug('get single object query: "%s"' % self.queries[self.get])
 
-        self.queries[self.add] = 'insert into "%s" (__key__, %s) values (%%(__key__)s, %s)' \
+        if __debug__:
+            log.debug('get single object query: "%s"' % self.queries[self.get])
+
+        self.queries[self.add] = \
+            'insert into "%s" (__key__, %s) values (%%(__key__)s, %s)' \
             % (self.cls.relation,
                ', '.join(['"%s"' % col for col in self.columns]),
                ', '.join(['%%(%s)s' % col for col in self.columns])
               )
-        if __debug__: log.debug('add object query: "%s"' % self.queries[self.add])
+
+        if __debug__:
+            log.debug('add object query: "%s"' % self.queries[self.add])
 
         self.queries[self.update] = 'update "%s" set %s where __key__ = %%s' \
-            % (self.cls.relation, ', '.join(['"%s" = %%s' % col for col in self.columns]))
-        if __debug__: log.debug('update object query: "%s"' % self.queries[self.update])
+            % (self.cls.relation,
+            ', '.join(['"%s" = %%s' % col for col in self.columns]))
 
-        self.queries[self.delete] = 'delete from "%s" where __key__ = %%s' % self.cls.relation
-        if __debug__: log.debug('delete object query: "%s"' % self.queries[self.delete])
+        if __debug__:
+            log.debug('update object query: "%s"' % self.queries[self.update])
+
+        self.queries[self.delete] = \
+            'delete from "%s" where __key__ = %%s' % self.cls.relation
+
+        if __debug__:
+            log.debug('delete object query: "%s"' % self.queries[self.delete])
 
         self.asc_cols = {}
-        for col in self.masc:
 
+        for col in self.masc:
             assert col.association.col.vcls == col.vcls
 
             asc = col.association
@@ -114,6 +131,7 @@ class Convertor(object):
                     'select "%s" from "%s" where "%s" = %%(key)s' % \
                     (self.asc_cols[asc][1], relation, \
                     self.asc_cols[asc][0])
+
             elif col.is_one_to_many:
                 self.asc_cols[asc] = ('__key__', col.vcol)
                 relation = col.vcls.relation
@@ -125,35 +143,41 @@ class Convertor(object):
             else:
                 assert False
 
-            self.queries[asc][self.addAscData] = 'insert into "%s" (%s) values(%s)' % \
-                (relation,
-                 ', '.join(['"%s"' % c for c in self.asc_cols[asc]]),
-                 ', '.join(('%s', ) * len(self.asc_cols[asc]))
-                )
-            self.queries[asc][self.delAscData] = 'delete from "%s" where %s' % \
-                (relation, ' and '.join(['"%s" = %%s' % c for c in self.asc_cols[asc]]))
+            self.queries[asc][self.addAscData] = \
+                'insert into "%s" (%s) values(%s)' \
+                % (relation,
+                ', '.join(['"%s"' % c for c in self.asc_cols[asc]]),
+                ', '.join(('%s', ) * len(self.asc_cols[asc])))
 
-            self.queries[asc][self.getAllAscData] = 'select %s from "%s"' % \
-                (', '.join(['"%s"' % c for c in self.asc_cols[asc]]), relation)
+            self.queries[asc][self.delAscData] = 'delete from "%s" where %s' \
+                % (relation,
+                ' and '.join(['"%s" = %%s' % c for c in self.asc_cols[asc]]))
 
-            if __debug__:
-                log.debug('association load query: "%s"' % \
-                        self.queries[asc][self.getAllAscData])
-
-            if __debug__:
-                log.debug('association load query: "%s"' % \
-                        self.queries[asc][self.getAscData])
+            self.queries[asc][self.getAllAscData] = 'select %s from "%s"' \
+                % (', '.join(['"%s"' % c for c in self.asc_cols[asc]]),
+                relation)
 
             if __debug__:
-                log.debug('association insert query: "%s"' % \
-                        self.queries[asc][self.addAscData])
+                log.debug('association load query: "%s"' \
+                    % self.queries[asc][self.getAllAscData])
 
             if __debug__:
-                log.debug('association delete query: "%s"' % \
-                        self.queries[asc][self.delAscData])
+                log.debug('association load query: "%s"' \
+                    % self.queries[asc][self.getAscData])
 
-        self.queries[self.find] = 'select __key__ from "%s" where %%s' % self.cls.relation
-        if __debug__: log.debug('object OO find query: "%s"' % self.queries[self.find])
+            if __debug__:
+                log.debug('association insert query: "%s"' \
+                    % self.queries[asc][self.addAscData])
+
+            if __debug__:
+                log.debug('association delete query: "%s"' \
+                    % self.queries[asc][self.delAscData])
+
+        self.queries[self.find] = \
+            'select __key__ from "%s" where %%s' % self.cls.relation
+
+        if __debug__:
+            log.debug('object OO find query: "%s"' % self.queries[self.find])
 
 
     def getData(self, obj):
@@ -204,7 +228,6 @@ class Convertor(object):
         """
         data = {}
         if param is not None:
-            cols = self.cls.columns
             for attr, value in param.items():
                 # change persistent objects with primary key value
                 if isinstance(value, bazaar.core.PersistentObject):
@@ -227,9 +250,15 @@ class Convertor(object):
         @param pairs: List of association data - pairs of primary and
             foreign key values.
         """
-        if __debug__: log.debug('association %s.%s->%s: adding pairs' % (asc.broker.cls, asc.col.attr, asc.col.vcls))
+        if __debug__:
+            log.debug('association %s.%s->%s: adding pairs' \
+                % (asc.broker.cls, asc.col.attr, asc.col.vcls))
+
         self.motor.executeMany(self.queries[asc][self.addAscData], pairs)
-        if __debug__: log.debug('association %s.%s->%s: pairs added' % (asc.broker.cls, asc.col.attr, asc.col.vcls))
+
+        if __debug__:
+            log.debug('association %s.%s->%s: pairs added' \
+                % (asc.broker.cls, asc.col.attr, asc.col.vcls))
 
 
     def delAscData(self, asc, pairs):
@@ -246,9 +275,15 @@ class Convertor(object):
         @param pairs: List of association data - pairs of primary and
             foreign key values.
         """
-        if __debug__: log.debug('association %s.%s->%s: deleting pairs' % (asc.broker.cls, asc.col.attr, asc.col.vcls))
+        if __debug__:
+            log.debug('association %s.%s->%s: deleting pairs' \
+                % (asc.broker.cls, asc.col.attr, asc.col.vcls))
+
         self.motor.executeMany(self.queries[asc][self.delAscData], pairs)
-        if __debug__: log.debug('association %s.%s->%s: pairs deleted' % (asc.broker.cls, asc.col.attr, asc.col.vcls))
+
+        if __debug__:
+            log.debug('association %s.%s->%s: pairs deleted' \
+                % (asc.broker.cls, asc.col.attr, asc.col.vcls))
 
 
     def getAllAscData(self, asc):
@@ -268,7 +303,8 @@ class Convertor(object):
         @param asc: Association object.
         @param obj: Application object.
         """
-        for data in self.motor.getData(self.queries[asc][self.getAscData], { 'key': obj.__key__ }):
+        for data in self.motor.getData(self.queries[asc][self.getAscData],
+                { 'key': obj.__key__ }):
             yield data[0]
 
 
@@ -372,7 +408,9 @@ class Convertor(object):
         """
         data = self.getData(obj)
         
-        self.motor.update(self.queries[self.update], [data[col] for col in self.columns], obj.__key__)
+        self.motor.update(self.queries[self.update],
+            [data[col] for col in self.columns],
+            obj.__key__)
 
 
     def delete(self, obj):
@@ -417,7 +455,8 @@ class Motor(object):
         self.conn = self.dbmod.connect(dsn)
 # what about password?
 #        if __debug__: log.debug('connected to database with dsn "%s"' % dsn)
-        if __debug__: log.debug('connected to database"')
+        if __debug__:
+            log.debug('connected to database"')
 
 
     def closeDBConn(self):
@@ -428,7 +467,8 @@ class Motor(object):
         """
         self.conn.close()
         self.conn = None
-        if __debug__: log.debug('close database connection')
+        if __debug__:
+            log.debug('close database connection')
 
 
     def getData(self, query, param = None):
@@ -441,21 +481,26 @@ class Motor(object):
 
         @param query: Database SQL query.
         """
-        if __debug__: log.debug('query "%s", params %s: executing' % (query, param))
+        if __debug__:
+            log.debug('query "%s", params %s: executing' % (query, param))
 
-        if param is None: param = {}
+        if param is None:
+            param = {}
 
         dbc = self.conn.cursor()
         dbc.execute(query, param)
 
-        if __debug__: log.debug('query "%s": executed, rows = %d' % (query, dbc.rowcount))
+        if __debug__:
+            log.debug('query "%s": executed, rows = %d' % (query, dbc.rowcount))
 
         row = dbc.fetchone()
         while row:
             yield row
             row = dbc.fetchone()
 
-        if __debug__: log.debug('query "%s": got all data, len = %d' % (query, dbc.rowcount))
+        if __debug__:
+            log.debug('query "%s": got all data, len = %d' \
+                % (query, dbc.rowcount))
 
 
     def add(self, query, data):
@@ -465,10 +510,14 @@ class Motor(object):
         @param query: SQL query.
         @param data: Row data to insert.
         """
-        if __debug__: log.debug('query "%s", data = %s: executing' % (query, data))
+        if __debug__:
+            log.debug('query "%s", data = %s: executing' % (query, data))
+
         dbc = self.conn.cursor()
         dbc.execute(query, data)
-        if __debug__: log.debug('query "%s", data = %s: executed' % (query, data))
+
+        if __debug__:
+            log.debug('query "%s", data = %s: executed' % (query, data))
 
 
     def update(self, query, data, key):
@@ -479,10 +528,16 @@ class Motor(object):
         @param data: Tuple of new values for the row.
         @param key: Key of the row to update.
         """
-        if __debug__: log.debug('query "%s", data = %s, key = %s: executing' % (query, data, key))
+        if __debug__:
+            log.debug('query "%s", data = %s, key = %s: executing' \
+                % (query, data, key))
+
         dbc = self.conn.cursor()
         dbc.execute(query, tuple(data) + (key, ))
-        if __debug__: log.debug('query "%s", data = %s, key = %s: executed' % (query, data, key))
+
+        if __debug__:
+            log.debug('query "%s", data = %s, key = %s: executed' \
+                % (query, data, key))
 
 
     def delete(self, query, key):
@@ -492,10 +547,14 @@ class Motor(object):
         @param query: SQL query.
         @param key: Key of the row to delete.
         """
-        if __debug__: log.debug('query "%s", key = %s: executing' % (query, key))
+        if __debug__:
+            log.debug('query "%s", key = %s: executing' % (query, key))
+
         dbc = self.conn.cursor()
         dbc.execute(query, (key, ))
-        if __debug__: log.debug('query "%s", key = %s: executed' % (query, key))
+
+        if __debug__:
+            log.debug('query "%s", key = %s: executed' % (query, key))
 
 
     def executeMany(self, query, data_list):
@@ -505,10 +564,14 @@ class Motor(object):
         @param query: Query to execute.
         @param data_list: List of query's data.
         """
-        if __debug__: log.debug('query "%s": executing' % query)
+        if __debug__:
+            log.debug('query "%s": executing' % query)
+
         dbc = self.conn.cursor()
         dbc.executemany(query, data_list)
-        if __debug__: log.debug('query "%s": executed' % query)
+
+        if __debug__:
+            log.debug('query "%s": executed' % query)
 
 
     def commit(self):

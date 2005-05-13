@@ -1,4 +1,4 @@
-# $Id: __init__.py,v 1.20 2005/05/12 22:52:20 wrobell Exp $
+# $Id: __init__.py,v 1.21 2005/05/13 17:15:58 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -89,7 +89,7 @@ found in L{bazaar.conf} module documentation) should be like::
     >>> import bazaar.conf
 
     # create class for articles
-    >>> Article = bazaar.conf.Persistence('Article', relation = 'article')
+    >>> Article = bazaar.conf.Persistence('Article', 'article', globals())
 
     # add class attributes and relation columns
     # class attribute name is the same as relation column name
@@ -98,8 +98,9 @@ found in L{bazaar.conf} module documentation) should be like::
 
     # create order and order items classes
     # class names are different than database relation names
-    >>> Order = bazaar.conf.Persistence('Order', relation = 'order')
-    >>> OrderItem = bazaar.conf.Persistence('OrderItem', relation = 'order_item')
+    >>> Order = bazaar.conf.Persistence('Order', 'order', globals())
+    >>> OrderItem = bazaar.conf.Persistence('OrderItem', 'order_item',
+    ...     globals())
 
     >>> Order.addColumn('no')                          # order number
     >>> Order.addColumn('finished', default = False)   # is order completed

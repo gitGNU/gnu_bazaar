@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.41 2005/05/12 18:29:58 wrobell Exp $
+# $Id: core.py,v 1.42 2005/05/13 17:15:58 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -57,7 +57,8 @@ class PersistentObject(object):
                 # set object attributes
                 setattr(self, attr, data[attr])
 
-#        if __debug__: log.debug('object created (key = "%s"): %s' % (self.key, data))
+#        if __debug__:
+#            log.debug('object created (key = "%s"): %s' % (self.key, data))
 
 
 
@@ -124,11 +125,12 @@ class Broker(object):
         @see: L{bazaar.core.Broker.loadObjects} L{bazaar.core.Broker.reloadObjects}
         """
         if self.reload:
-            for obj in self.loadObjects():
-                yield obj
+            objects = self.loadObjects()
         else:
-            for obj in self.cache.values():
-                yield obj
+            objects = self.cache.values()
+
+        for obj in objects:
+            yield obj
 
 
     def reloadObjects(self, now = False):
@@ -228,7 +230,8 @@ class Bazaar(object):
     @see: L{Broker} L{bazaar.motor.Motor}
     """
 
-    def __init__(self, cls_list, config = None, dsn = '', dbmod = None, seqpattern = None):
+    def __init__(self, cls_list, config = None, dsn = '', dbmod = None,
+            seqpattern = None):
         """
         Start the Bazaar ORM layer.
 
@@ -248,6 +251,8 @@ class Bazaar(object):
         self.dsn = dsn
         self.dbmod = dbmod
         self.seqpattern = 'select next value for \'%s\''
+        self.motor = None
+        self.brokers = None
 
         if config is not None:
             self.parseConfig(config)
@@ -278,9 +283,11 @@ class Bazaar(object):
         # create association objects
         for c in self.cls_list:
             for col in c.getColumns().values():
-                if col.vcls is None: continue
+                if col.vcls is None:
+                    continue
 
-                if col.association is not None: continue
+                if col.association is not None:
+                    continue
 
                 if col.is_one_to_one:
                     asc_cls = bazaar.assoc.OneToOne
@@ -291,17 +298,18 @@ class Bazaar(object):
                 else:
                     assert False
 
-                assert issubclass(asc_cls, bazaar.assoc.AssociationReferenceProxy)
+                assert \
+                    issubclass(asc_cls, bazaar.assoc.AssociationReferenceProxy)
 
-                def setAssociation(cls, col, asc_cls):
+                def set_association(cls, col, asc_cls):
                     col.association = asc_cls(col)
                     setattr(cls, col.attr, col.association)
 
                 # bi-directional association
                 if col.is_bidir:
                     if col.vattr not in col.vcls.getColumns():
-                        raise ColumnMappingError('column of referenced class is not defined', \
-                            c, col)
+                        raise bazaar.exc.ColumnMappingError(
+                            'column of referenced class is not defined', c, col)
 
                     vcol = col.vcls.getColumns()[col.vattr]
                     
@@ -318,30 +326,36 @@ class Bazaar(object):
                         elif vcol.is_many_to_many:
                             asc_vcls = bazaar.assoc.BiDirManyToMany
 
-                    assert issubclass(asc_vcls, bazaar.assoc.AssociationReferenceProxy)
+                    assert issubclass(asc_vcls,
+                        bazaar.assoc.AssociationReferenceProxy)
 
                     # create association classes
-                    setAssociation(c, col, asc_cls)
-                    setAssociation(col.vcls, vcol, asc_vcls)
+                    set_association(c, col, asc_cls)
+                    set_association(col.vcls, vcol, asc_vcls)
                     col.association.association = vcol.association
                     vcol.association.association = col.association
 
                     assert col.association is not None
-                    assert col.is_bidir and hasattr(col.association, 'association')
+                    assert col.is_bidir \
+                        and hasattr(col.association, 'association')
                     assert hasattr(col.association, 'col')
-                    assert isinstance(col.association, bazaar.assoc.AssociationReferenceProxy)
-                    assert isinstance(vcol.association, bazaar.assoc.AssociationReferenceProxy)
+                    assert isinstance(col.association, 
+                        bazaar.assoc.AssociationReferenceProxy)
+                    assert isinstance(vcol.association,
+                        bazaar.assoc.AssociationReferenceProxy)
 
-                    if __debug__: log.info('bi-directional association %s.%s <-> %s.%s' \
-                                % (c, col.attr, col.vcls, col.vattr))
+                    if __debug__:
+                        log.info('bi-directional association %s.%s <-> %s.%s' \
+                            % (c, col.attr, col.vcls, col.vattr))
                 else:
                     # uni-directional associations
                     # create association classes
-                    setAssociation(c, col, asc_cls)
+                    set_association(c, col, asc_cls)
                     col.association.association = None
 
-                    if __debug__: log.debug('uni-directional (%s) association %s.%s -> %s' \
-                                    % (asc_cls, c, col.attr, col.vcls))
+                    if __debug__:
+                        log.debug('uni-directional (%s) association' \
+                            '%s.%s -> %s' % (asc_cls, c, col.attr, col.vcls))
 
         for c in self.cls_list:
             self.brokers[c] = Broker(c, self.motor, self.seqpattern)
@@ -377,7 +391,7 @@ class Bazaar(object):
             self.seqpattern = seqpattern
             log.info('sequencer pattern: "%s"' % self.seqpattern)
 
-        def getClass(path): # get class
+        def get_class(path): # get class
             items = path.split('.')
             mod = '.'.join(items[:-1])
             cls = items[-1]
@@ -403,7 +417,7 @@ class Bazaar(object):
                 log.debug('got class %s cache: %s' % (fname, cache))
 
             if cache:
-                c.cache = getClass(cache)
+                c.cache = get_class(cache)
             else:
                 c.cache = bazaar.cache.FullObject
             log.info('%s cache: %s' % (c, c.cache))
@@ -417,7 +431,7 @@ class Bazaar(object):
                 if __debug__:
                     log.debug('got association %s cache: %s' % (aname, cache))
                 if cache:
-                    col.cache = getClass(cache)
+                    col.cache = get_class(cache)
                 else:
                     col.cache = bazaar.cache.FullAssociation
                 log.info('association "%s" cache: %s' % (aname, c.cache))
@@ -457,7 +471,8 @@ class Bazaar(object):
 
         self.motor.connectDB(self.dsn)
         # fixme: what about password visibility?
-        if __debug__: log.debug('connected to database "%s"' % dsn)
+        if __debug__:
+            log.debug('connected to database "%s"' % dsn)
 
 
     def closeDBConn(self):
@@ -467,7 +482,8 @@ class Bazaar(object):
         @see: L{bazaar.core.Bazaar.connectDB}
         """
         self.motor.closeDBConn()
-        if __debug__: log.debug('database connection is closed')
+        if __debug__:
+            log.debug('database connection is closed')
 
 
     def get(self, cls, key):

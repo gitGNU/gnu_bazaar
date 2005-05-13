@@ -1,4 +1,4 @@
-# $Id: assoc.py,v 1.55 2005/05/12 22:28:33 wrobell Exp $
+# $Id: assoc.py,v 1.56 2005/05/13 17:15:58 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -781,7 +781,8 @@ class List(AssociationReferenceProxy):
 
         # load data from cache, so we can check existence of referenced
         # object
-        # fixme: overload Cache.__contains__ and: if obj not in self.cache?
+        # fixme: overload Cache.__contains__ to load data from database,
+        # fixme: then use "if obj not in self.cache" construct?
         keys = self.cache[obj]
 
         return keys is not None \

@@ -1,4 +1,4 @@
-# $Id: cache.py,v 1.21 2005/05/12 18:29:58 wrobell Exp $
+# $Id: cache.py,v 1.22 2005/05/13 17:15:58 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -225,10 +225,12 @@ class Full(Cache, dict):
         """
         if self.owner.reload:
             self.load(param)
+
+        data = None
         if param in self:
-            return dict.__getitem__(self, param)
-        else:
-            return None
+            data = dict.__getitem__(self, param)
+
+        return data
 
 
 

@@ -1,4 +1,4 @@
-# $Id: config.py,v 1.6 2005/05/12 18:29:58 wrobell Exp $
+# $Id: config.py,v 1.7 2005/05/13 17:15:58 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -71,7 +71,7 @@ Of course, it is possible to implement other configuration classes, i.e.
 for U{GConf<http://www.gnome.org/projects/gconf/>} configuration system.
 """
 
-from ConfigParser import ConfigParser, NoSectionError, NoOptionError
+from ConfigParser import NoSectionError, NoOptionError
 
 import bazaar
 log = bazaar.Log('bazaar.config')
@@ -160,11 +160,13 @@ class CPConfig(Config):
         Return Python DB API module.
         """
         try:
-            return self.cfg.get('bazaar', 'module')
+            mod = self.cfg.get('bazaar', 'module')
         except NoOptionError:
-            return None
+            mod = None
         except NoSectionError:
-            return None
+            mod = None
+
+        return mod
 
 
     def getSeqPattern(self):
@@ -174,11 +176,13 @@ class CPConfig(Config):
         C{select nextval('%s')}, where C{%s} means name of sequencer.
         """
         try:
-            return self.cfg.get('bazaar', 'seqpattern')
+            seqpattern = self.cfg.get('bazaar', 'seqpattern')
         except NoOptionError:
-            return None
+            seqpattern = None
         except NoSectionError:
-            return None
+            seqpattern = None
+
+        return seqpattern
 
 
     def getDSN(self):
@@ -186,11 +190,13 @@ class CPConfig(Config):
         Return Python DB API data source name.
         """
         try:
-            return self.cfg.get('bazaar', 'dsn')
+            dsn = self.cfg.get('bazaar', 'dsn')
         except NoOptionError:
-            return None
+            dsn = None
         except NoSectionError:
-            return None
+            dsn = None
+
+        return dsn
     
 
     def getObjectCache(self, cls):
@@ -200,11 +206,13 @@ class CPConfig(Config):
         @param cls: Class name of application objects.
         """
         try:
-            return self.cfg.get('bazaar.cls', '%s.cache' % cls)
+            cache = self.cfg.get('bazaar.cls', '%s.cache' % cls)
         except NoOptionError:
-            return None
+            cache = None
         except NoSectionError:
-            return None
+            cache = None
+
+        return cache
 
 
     def getClassSequencer(self, cls):
@@ -215,11 +223,13 @@ class CPConfig(Config):
         @param cls: Class name of application objects.
         """
         try:
-            return self.cfg.get('bazaar.cls', '%s.sequencer' % cls)
+            sequencer = self.cfg.get('bazaar.cls', '%s.sequencer' % cls)
         except NoOptionError:
-            return None
+            sequencer = None
         except NoSectionError:
-            return None
+            sequencer = None
+
+        return sequencer
 
 
     def getClassRelation(self, cls):
@@ -229,11 +239,13 @@ class CPConfig(Config):
         @param cls: Class name.
         """
         try:
-            return self.cfg.get('bazaar.cls', '%s.relation' % cls)
+            relation = self.cfg.get('bazaar.cls', '%s.relation' % cls)
         except NoOptionError:
-            return None
+            relation = None
         except NoSectionError:
-            return None
+            relation = None
+
+        return relation
     
 
     def getAssociationCache(self, attr):
@@ -243,8 +255,10 @@ class CPConfig(Config):
         @param attr: Association attribute name, i.e. C{Order.items}.
         """
         try:
-            return self.cfg.get('bazaar.asc', '%s.cache' % attr)
+            cache = self.cfg.get('bazaar.asc', '%s.cache' % attr)
         except NoOptionError:
-            return None
+            cache = None
         except NoSectionError:
-            return None
+            cache = None
+
+        return cache
