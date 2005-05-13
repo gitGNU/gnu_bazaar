@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# $Id: exdocex.py,v 1.6 2005/05/12 22:52:20 wrobell Exp $
+# $Id: exdocex.py,v 1.7 2005/05/13 00:40:06 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -23,7 +23,6 @@
 
 import unittest
 import doctest
-import bazaar
 
 import logging.config
 
@@ -31,9 +30,12 @@ logging.config.fileConfig('log.ini')
 
 suite = unittest.TestSuite()
 
-for mod in (bazaar, ):
+mods = ('bazaar', 'bazaar.conf', 'bazaar.assoc', 'bazaar.cache',
+        'bazaar.config', 'bazaar.core', 'bazaar.exc', 'bazaar.motor')
+
+for modname in mods:
+    mod = __import__(modname, globals(), locals(), [''])
     suite.addTest(doctest.DocTestSuite(mod))
 
 runner = unittest.TextTestRunner()
 runner.run(suite)
-
