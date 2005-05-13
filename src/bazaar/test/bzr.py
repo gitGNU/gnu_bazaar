@@ -1,4 +1,4 @@
-# $Id: bzr.py,v 1.5 2005/05/12 18:29:58 wrobell Exp $
+# $Id: bzr.py,v 1.6 2005/05/13 20:54:02 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -20,7 +20,9 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
-import unittest
+"""
+Run all Bazaar ORM tests.
+"""
 
 import bazaar.core
 
@@ -30,15 +32,23 @@ import bazaar.test.app
 bazaar.test.TestCase.cls_list = bazaar.test.app.cls_list
 
 class TestCase(bazaar.test.DBTestCase):
+    """
+    Basic test case for Bazaar ORM library tests.
+    """
     def setUp(self):
+        """
+        Set up test.
+        """
         super(TestCase, self).setUp()
 
         # bazaar.test.cache tests for lazy cache!
         assert not self.config.has_section('bazaar.cls')
         assert not self.config.has_section('bazaar.asc')
         assert bazaar.test.app.Article.cache == bazaar.cache.FullObject
-        assert bazaar.test.app.Order.getColumns()['items'].cache == bazaar.cache.FullAssociation
-        assert bazaar.test.app.Employee.getColumns()['orders'].cache == bazaar.cache.FullAssociation
+        assert bazaar.test.app.Order.getColumns()['items'].cache \
+            == bazaar.cache.FullAssociation
+        assert bazaar.test.app.Employee.getColumns()['orders'].cache \
+            == bazaar.cache.FullAssociation
 
 
     def checkObjects(self, cls, amount = None, key = None):
@@ -83,7 +93,8 @@ class TestCase(bazaar.test.DBTestCase):
         dbc = self.bazaar.motor.conn.cursor()
 
         query = 'select "__key__", %s from "%s"' \
-                % (', '.join(['"%s"' % col for col in params[cls]['cols']]), params[cls]['relation'])
+                % (', '.join(['"%s"' % col for col in params[cls]['cols']]),
+                params[cls]['relation'])
 
         if key is not None:
             query += 'where __key__ = %d' % key
@@ -96,7 +107,9 @@ class TestCase(bazaar.test.DBTestCase):
 
         row = dbc.fetchone()
         while row:
-            self.assert_(params[cls]['test'](row[0], row[1:]), 'data integrity test failed: %s' % str(row))
+            self.assert_(params[cls]['test'](row[0], row[1:]),
+                'data integrity test failed: %s' % str(row))
+
             row = dbc.fetchone()
 
 
@@ -113,7 +126,8 @@ class TestCase(bazaar.test.DBTestCase):
         Employee class data integrity test function.
         """
         emp = self.bazaar.brokers[bazaar.test.app.Employee].cache[key]
-        return emp.name == row[0] and emp.surname == row[1] and emp.phone == row[2]
+        return emp.name == row[0] and emp.surname == row[1] \
+            and emp.phone == row[2]
 
 
     def checkArticle(self, key, row):
@@ -128,8 +142,9 @@ class TestCase(bazaar.test.DBTestCase):
         """
         OrderItem class data integrity test function.
         """
-        oi = self.bazaar.brokers[bazaar.test.app.OrderItem].cache[key]
-        return oi.order_fkey == row[0] and oi.pos == row[1] and oi.quantity == row[2]
+        order_item = self.bazaar.brokers[bazaar.test.app.OrderItem].cache[key]
+        return order_item.order_fkey == row[0] and order_item.pos == row[1] \
+            and order_item.quantity == row[2]
 
 
     def checkBoss(self, key, row):
@@ -149,15 +164,27 @@ class TestCase(bazaar.test.DBTestCase):
 
 
     def getCache(self, cls):
+        """
+        Utility function to get cache of application class.
+
+        @param cls: Application class.
+
+        @return: Application class cache.
+        """
         return self.bazaar.brokers[cls].cache
 
 
     def checkListAsc(self, cls, attr, query):
+        """
+        Check association data with data stored in database.
+        """
         mem_data = []
         for obj in self.bazaar.getObjects(cls):
             for val in getattr(obj, attr):
-                self.assert_(val is not None, \
-                    'referenced object cannot be None (application object key: %d)' % obj.__key__)
+                self.assert_(val is not None,
+                    'referenced object cannot be None' \
+                    ' (application object key: %d)' % obj.__key__)
+
                 mem_data.append((obj.__key__, val.__key__))
         mem_data.sort()
 
@@ -165,34 +192,36 @@ class TestCase(bazaar.test.DBTestCase):
         dbc.execute(query)
         db_data = dbc.fetchall()
         db_data.sort()
-        if db_data != mem_data:
-            print 'db', db_data
-            print 'mem', mem_data
-            print set(db_data) - set(mem_data)
-            print set(mem_data) - set(db_data)
-            print bazaar.test.app.Employee.orders.cache
-        self.assertEqual(db_data, mem_data, 'database data are different than memory data')
+        self.assertEqual(db_data, mem_data,
+            """database data are different than memory data
+            database data : %s
+            memory data   : %s
+            difference    : %s
+            """ % (db_data, mem_data, set(db_data) ^ set(mem_data)))
 
 
     def checkOrdAsc(self):
+        """
+        Check association data between Order and OrderItem classes
+        with data stored in database.
+        """
         self.checkListAsc(bazaar.test.app.Order, 'items', \
-            'select order_fkey, __key__  from order_item where order_fkey is not null order by order_fkey, __key__')
+            'select order_fkey, __key__  from order_item' \
+            ' where order_fkey is not null order by order_fkey, __key__')
 
 
     def checkEmpAsc(self):
+        """
+        Check association data between Order and Employee classes
+        with data stored in database.
+        """
         self.checkListAsc(bazaar.test.app.Employee, 'orders', \
-            'select employee, "order" from employee_orders order by employee, "order"')
+            'select employee, "order" from employee_orders' \
+            ' order by employee, "order"')
 
 
 
 if __name__ == '__main__':
-    from bazaar.test.assoc import *
-    from bazaar.test.cache import *
-    from bazaar.test.conf import *
-    from bazaar.test.config import *
-    from bazaar.test.connection import *
-    from bazaar.test.core import *
-    from bazaar.test.find import *
-    from bazaar.test.init import *
-
-    bazaar.test.main()
+    bazaar.test.main(('bazaar.test.assoc', 'bazaar.test.cache',
+        'bazaar.test.conf', 'bazaar.test.config', 'bazaar.test.connection',
+        'bazaar.test.core', 'bazaar.test.find', 'bazaar.test.init'))

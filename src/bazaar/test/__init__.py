@@ -1,4 +1,4 @@
-# $Id: __init__.py,v 1.9 2005/05/13 17:15:58 wrobell Exp $
+# $Id: __init__.py,v 1.10 2005/05/13 20:54:02 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -134,7 +134,7 @@ class DBTestCase(TestCase):
 
 
 
-def main():
+def main(modules = ('__main__', )):
     """
     Set Bazaar ORM library configuration file and run all unit tests.
     """
@@ -142,13 +142,16 @@ def main():
     import logging.config
 
     import optparse
-    parser = optparse.OptionParser('usage: bzr.py [options] <bazaar.ini>'
-        ' [-- [unit test options] [tests]]')
-    parser.add_option("-l", "--logfile-conf", dest="logfile_conf",
-                      help="logging configuration")
+    parser = optparse.OptionParser('usage: %s [options] <bazaar.ini>' \
+        ' [tests...]' % sys.argv[0])
+    parser.add_option('-l', '--logfile-conf', dest='logfile_conf',
+                      help='logging configuration')
+    parser.add_option('-v', '--verbose', action = 'store_true', dest='verbose',
+                      help='verbose output')
+    parser.add_option('-q', '--quiet', action = 'store_true', dest='quiet',
+                      help='quiet output')
 
     (options, sys.argv) = parser.parse_args(sys.argv)
-    logfile_conf = options.logfile_conf
 
     if len(sys.argv) < 2:
         parser.error('incorrect number of arguments')
@@ -156,8 +159,8 @@ def main():
     conf = sys.argv[1]
     del sys.argv[1]
 
-    if logfile_conf:
-        logging.config.fileConfig(logfile_conf)
+    if options.logfile_conf:
+        logging.config.fileConfig(options.logfile_conf)
     else:
         logging.basicConfig()
 
@@ -167,7 +170,39 @@ def main():
 
     globals()['cfg_file'] = conf # set configuration filename
 
-    unittest.main()
+    # load all tests from specified modules
+    suite = unittest.TestSuite()
+    del sys.argv[0]
+
+    test_found = False
+
+    for modname in modules:
+        mod = __import__(modname, globals(), locals(), [''])
+        if len(sys.argv) > 0:
+            try:
+                suite.addTest(unittest.defaultTestLoader.loadTestsFromNames(
+                    sys.argv, mod))
+                test_found = True
+            except AttributeError, ex:
+                pass
+        else:
+            suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(mod))
+            test_found = True
+
+    if not test_found:
+        print >> sys.stderr, 'Test(s) "%s" not found!' % ', '.join(sys.argv)
+        sys.exit(1)
+
+    # set verbosity
+    verbosity = 1
+    if options.verbose:
+        verbosity = 2
+    if options.quiet:
+        verbosity = 0
+
+    # run tests
+    runner = unittest.TextTestRunner(verbosity = verbosity)
+    runner.run(suite)
 
 
 if __name__ == '__main__':
