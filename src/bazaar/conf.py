@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.36 2005/05/12 21:28:31 wrobell Exp $
+# $Id: conf.py,v 1.37 2005/05/13 00:40:59 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -25,31 +25,33 @@ Provides classes for mapping application classes to database relations.
 
 Application class can be defined by standard Python class definition::
 
-    import bazaar.conf
+    >>> import bazaar.conf
+    >>> import bazaar.core
 
-    class Order(bazaar.core.PersistentObject):
-        __metaclass__ = bazaar.conf.Persistence
-        relation      = 'order'
-        columns       = {
-            'no'        : bazaar.conf.Column('no'),
-            'finished'  : bazaar.conf.Column('finished'),
-            'birthdate' : bazaar.conf.Column('birthdate'),
-        }
+    >>> class Order(bazaar.core.PersistentObject):
+    ...     __metaclass__ = bazaar.conf.Persistence
+    ...     relation      = 'order'
+    ...     columns       = {
+    ...         'no'        : bazaar.conf.Column('no'),
+    ...         'finished'  : bazaar.conf.Column('finished'),
+    ...         'birthdate' : bazaar.conf.Column('birthdate'),
+    ...     }
 
 It is possible to create application class by class instantiation::
 
-    Order = bazaar.conf.Persistence('order')
-    Order.addColumn('no')
-    Order.addColumn('finished')
+    >>> Order = bazaar.conf.Persistence('Order', relation = 'order')
+    >>> Order.addColumn('no')
+    >>> Order.addColumn('finished')
+    >>> Order.addColumn('birthdate')
 
 Of course, both ideas can be mixed::
 
-    class Order(bazaar.core.PersistentObject):
-        __metaclass__ = bazaar.conf.Persistence
-        relation      = 'order'
+    >>> class Order(bazaar.core.PersistentObject):
+    ...     __metaclass__ = bazaar.conf.Persistence
+    ...     relation      = 'order'
 
-    Order.addColumn('no')
-    Order.addColumn('finished')
+    >>> Order.addColumn('no')
+    >>> Order.addColumn('finished')
 
 Associations
 ============
@@ -64,7 +66,10 @@ specify the application class attribute, relation column and referenced
 class. For example, to associate department class with its boss
 (uni-directional relationship)::
 
-    Department.addColumn('boss', 'boss_fkey', Boss)
+    >>> Department = bazaar.conf.Persistence('Department')
+    >>> Boss = bazaar.conf.Persistence('Boss')
+
+    >>> Department.addColumn('boss', 'boss_fkey', Boss)
 
 In case of bi-directional association (where boss is aware of department
 and vice versa)::
@@ -86,7 +91,8 @@ SQL schema of C{Department} and C{Boss} classes would look like::
         unique (name, surname),
         primary key (__key__)
         --  see below
-        --    foreign key (dep_fkey) references department(__key__) initially deferred
+        --  foreign key (dep_fkey) references department(__key__) 
+        --      initially deferred
     );
      
      
@@ -98,7 +104,8 @@ SQL schema of C{Department} and C{Boss} classes would look like::
         foreign key (boss_fkey) references boss(__key__) initially deferred
     );
 
-    alter table boss add foreign key (dep_fkey) references department(__key__) initially deferred;
+    alter table boss add foreign key (dep_fkey) references department(__key__)
+        initially deferred;
 
 
 Many-to-many association
@@ -113,7 +120,9 @@ programmer should specify following parameters:
 For example, uni-directional many-to-many association between C{Employee}
 and C{Order} classes::
 
-    Employee.addColumn('orders', 'employee', Order, 'employee_orders', 'order')
+    >>> Employee = bazaar.conf.Persistence('Employee')
+    >>> Employee.addColumn('orders', 'employee', Order,
+    ...     'employee_orders', 'order')
 
 SQL schema::
 
@@ -147,8 +156,13 @@ SQL schema::
 To define bi-directional association attribute of opposite class, as in
 case of bi-directional one-to-one association, code should be written::
 
-    Employee.addColumn('orders', 'employee' Order, 'employee_orders', 'order', 'employees')
-    Order.addColumn('employees', 'order', Employee, 'employee_orders', 'employee', 'orders')
+    >>> Employee = bazaar.conf.Persistence('Employee')
+    >>> Order = bazaar.conf.Persistence('Order', relation = 'order')
+
+    >>> Employee.addColumn('orders', 'employee', Order,
+    ...     'employee_orders', 'order', 'employees')
+    >>> Order.addColumn('employees', 'order', Employee,
+    ...     'employee_orders', 'employee', 'orders')
 
 
 One-to-many association
@@ -182,7 +196,10 @@ C{OrderItem} classes' relations - many order items can be created for one
 article. The relationship should be defined on "many" side with similar
 code as in case of uni-directional one-to-one association::
     
-    OrderItem.addColumn('article', 'article_fkey', Article)
+    >>> Article = bazaar.conf.Persistence('Article', relation = 'article')
+    >>> OrderItem = bazaar.conf.Persistence('OrderItem',
+    ...     relation = 'order_item')
+    >>> OrderItem.addColumn('article', 'article_fkey', Article)
 
 There is second relationship. Bi-directional association between C{Order}
 and C{OrderItem} classes. The nature of this association due its
@@ -190,15 +207,17 @@ realization excludes uni-directionality. It is because of C{order_fkey}
 column of C{order_item} relation. Definition of such association considers
 its bi-directionality::
 
-    Order.addColumn('items', vcls = OrderItem, vcol = 'order_fkey', vattr = 'order')
-    OrderItem.addColumn('order', 'order_fkey', Order, vattr = 'items')
+    >>> Order.addColumn('items', vcls = OrderItem,
+    ...     vcol = 'order_fkey', vattr = 'order')
+    >>> OrderItem.addColumn('order', 'order_fkey', Order, vattr = 'items')
 
 Inheritance
 ===========
 There are two classes defined above. C{Boss} class is very similar to
 C{Employee} class. The last one can be reused with inheritance::
 
-    Boss = bazaar.conf.Persistence('Boss', bases = (Employee,), relation = 'boss')
+    >>> Boss = bazaar.conf.Persistence('Boss', bases = (Employee,),
+    ...     relation = 'boss')
 
 C{Boss} class derives all attributes and associations from C{Employee}
 class.
@@ -293,7 +312,8 @@ class Column:
             and self.link is not None \
             and self.vcol is not None \
     )
-    is_bidir =  property(lambda self: self.vcls is not None and self.vattr is not None)
+    is_bidir =  property(lambda self:
+            self.vcls is not None and self.vattr is not None)
     is_many = property(lambda self: self.is_one_to_many or self.is_many_to_many)
 
 
@@ -313,7 +333,9 @@ class Persistence(type):
     @ivar defaults: Default values for class attributes.
     """
 
-    def __new__(self, name, bases = (bazaar.core.PersistentObject, ), data = None, relation = None, sequencer = None, modname = __name__):
+    def __new__(self, name, bases = (bazaar.core.PersistentObject, ),
+            data = None, relation = None, sequencer = None,
+            modname = __name__):
         """
         Create application class.
 
@@ -348,22 +370,24 @@ class Persistence(type):
         if 'defaults' not in data:
             data['defaults'] = {}
 
-        for c in bases:
-            if hasattr(c, 'defaults'):
-                data['defaults'].update(c.defaults)
+        for cls in bases:
+            if hasattr(cls, 'defaults'):
+                data['defaults'].update(cls.defaults)
 
-        c = type.__new__(self, name, bases, data)
+        cls = type.__new__(self, name, bases, data)
 
         if __debug__:
-            log.debug('new class "%s" for relation "%s"' % (c.__name__, data['relation']))
-            log.debug('class "%s" initial defaults: %s' % (c.__name__, data['defaults']))
+            log.debug('new class "%s" for relation "%s"' \
+                % (cls.__name__, data['relation']))
+            log.debug('class "%s" initial defaults: %s' \
+                % (cls.__name__, data['defaults']))
 
-        if not c.relation:
-            raise bazaar.exc.RelationMappingError('wrong relation name', c)
+        if not cls.relation:
+            raise bazaar.exc.RelationMappingError('wrong relation name', cls)
 
-        setattr(c, '__key__', None)
+        setattr(cls, '__key__', None)
 
-        return c
+        return cls
 
 
     def addColumn(self, attr, col = None,
@@ -393,7 +417,7 @@ class Persistence(type):
         col.link = link
         col.vcol = vcol
         col.vattr = vattr
-        self.update = update
+        col.update = update
 
         col.cache = None
 
@@ -409,14 +433,16 @@ class Persistence(type):
             col.cache = bazaar.cache.FullAssociation
 
         if not attr:
-            raise ColumnMappingError('wrong column name', self, col)
+            raise bazaar.exc.ColumnMappingError('wrong column name', self, col)
 
         if attr in self.columns:
             raise bazaar.exc.ColumnMappingError('column is defined', self, col)
 
         self.columns[col.attr] = col
 
-        if __debug__: log.debug('column "%s" is added to class "%s"' % (attr, self.__name__))
+        if __debug__:
+            log.debug('column "%s" is added to class "%s"' \
+                % (attr, self.__name__))
 
 
     def getColumns(self):
