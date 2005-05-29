@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.5 2005/05/12 18:29:58 wrobell Exp $
+# $Id: core.py,v 1.6 2005/05/29 18:41:11 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -43,6 +43,10 @@ class ObjectLoadTestCase(bazaar.test.bzr.TestCase):
         for cls in self.cls_list:
             self.checkObjects(cls, len(list(self.bazaar.getObjects(cls))))
 
+        for obj in self.bazaar.getObjects(bazaar.test.app.EmployeeAlt):
+            self.assertEqual(obj.status, 2)
+            self.assertEqual(obj.phone, None) # phone is write only
+
 
     def testObjectReload(self):
         """Test application objects reloading"""
@@ -82,6 +86,7 @@ class ObjectLoadTestCase(bazaar.test.bzr.TestCase):
         dbc.execute('update order_item set quantity = quantity * 2')
         dbc.execute('update "order" set finished = true')
         dbc.execute('update employee set phone = \'000\'')
+        dbc.execute('update employee_alt set phone = \'0001\'')
 
         # reload objects immediately
         objects = {} # save objects in memory in case of Lazy cache
@@ -202,6 +207,15 @@ class ModifyObjectTestCase(bazaar.test.bzr.TestCase):
             'cache object mismatch')
         self.checkObjects(bazaar.test.app.Employee, key = emp.__key__)
 
+        emp = bazaar.test.app.EmployeeAlt()
+        self.assertEqual(emp.status, 2)
+        emp.name = 'nameee'
+        emp.surname = 'surnameee'
+        emp.phone = '01236789'
+        self.bazaar.add(emp)
+        self.checkObjects(bazaar.test.app.EmployeeAlt, key = emp.__key__)
+
+
 
     def testObjectUpdating(self):
         """Test updating objects in database"""
@@ -225,6 +239,12 @@ class ModifyObjectTestCase(bazaar.test.bzr.TestCase):
         emp.phone = '00000'
         self.bazaar.update(emp)
         self.checkObjects(bazaar.test.app.Employee, key = emp.__key__)
+
+        emp = list(self.bazaar.getObjects(bazaar.test.app.EmployeeAlt))[0]
+        emp.phone = '00000'
+        emp.status = '3'
+        self.bazaar.update(emp)
+        self.checkObjects(bazaar.test.app.EmployeeAlt, key = emp.__key__)
         
 
     def testObjectDeleting(self):

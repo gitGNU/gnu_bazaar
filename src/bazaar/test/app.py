@@ -1,4 +1,4 @@
-# $Id: app.py,v 1.4 2005/05/13 17:15:58 wrobell Exp $
+# $Id: app.py,v 1.5 2005/05/29 18:41:11 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -90,6 +90,10 @@ Boss = bazaar.conf.Persistence('Boss', 'boss', globals())
 Boss.addColumn('department', 'dep_fkey', Department, vattr = 'boss')
 Department.addColumn('boss', 'boss_fkey', Boss, vattr = 'department')
 
+EmployeeAlt = Employee.cut('EmployeeAlt', 'employee_alt', globals(),
+        cols = ['name', 'surname'],
+        wr_only_cols = ['phone'])
+# status is read only
+EmployeeAlt.addColumn('status', writable = False, default = 2)
 
-
-cls_list = (Order, Employee, Article, OrderItem, Boss, Department)
+cls_list = (Order, Employee, EmployeeAlt, Article, OrderItem, Boss, Department)

@@ -1,3 +1,10 @@
+0.99.8
+- support for writable and readable application class columns
+- support for cutting class (to view for example) with Persistence.cut
+  method
+- Bazaar.reload method introduced to reload an object in database
+- minor bugfixes
+
 0.99.7
 - fixed bugs related to default values of application object
 - fixed association bugs

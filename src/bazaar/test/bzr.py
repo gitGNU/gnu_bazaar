@@ -1,4 +1,4 @@
-# $Id: bzr.py,v 1.6 2005/05/13 20:54:02 wrobell Exp $
+# $Id: bzr.py,v 1.7 2005/05/29 18:41:11 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -78,6 +78,11 @@ class TestCase(bazaar.test.DBTestCase):
                 'cols'    : ('name', 'surname', 'phone'),
                 'test'    : self.checkEmployee
             },
+            bazaar.test.app.EmployeeAlt: {
+                'relation': 'employee_alt',
+                'cols'    : ('name', 'surname', 'phone', 'status'),
+                'test'    : self.checkEmployeeAlt
+            },
             bazaar.test.app.Boss: {
                 'relation': 'boss',
                 'cols'    : ('dep_fkey',),
@@ -128,6 +133,20 @@ class TestCase(bazaar.test.DBTestCase):
         emp = self.bazaar.brokers[bazaar.test.app.Employee].cache[key]
         return emp.name == row[0] and emp.surname == row[1] \
             and emp.phone == row[2]
+
+
+    def checkEmployeeAlt(self, key, row):
+        """
+        Employee class data integrity test function.
+        """
+        emp = self.bazaar.brokers[bazaar.test.app.EmployeeAlt].cache[key]
+
+        # status should be equal 2 as it is read only column
+        #
+        # phone can be None (not fetched from db) or set to value before
+        # writing it
+        return emp.name == row[0] and emp.surname == row[1] \
+            and (emp.phone == None or emp.phone == row[2]) and row[3] == 2
 
 
     def checkArticle(self, key, row):

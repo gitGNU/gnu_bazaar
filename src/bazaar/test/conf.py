@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.7 2005/05/13 17:15:58 wrobell Exp $
+# $Id: conf.py,v 1.8 2005/05/29 18:41:11 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -171,6 +171,40 @@ class ConfTestCase(unittest.TestCase):
 
         b = B(a1 = 3) # override default value
         self.assertEqual(b.a1, 3)
+
+
+    def testCutting(self):
+        """Test class application cutting"""
+
+        A = bazaar.conf.Persistence('A', 'a', globals())
+        A.addColumn('a1')
+        A.addColumn('a2')
+
+        B = bazaar.conf.Persistence('B', 'b', globals())
+        B.addColumn('b1')
+        B.addColumn('b2')
+
+        C = A.cut('C', 'c', globals(), bases = (B, ), cols = ('a1',))
+
+        c_cols = C.getColumns().keys()
+        c_cols.sort()
+
+        self.assertEqual(c_cols, ['a1', 'b1', 'b2'])
+
+        C = A.cut('C', 'c', globals(), cols = ('a1',), rd_only_cols = ('a2', ))
+        col = C.getColumns()['a1']
+        self.assert_(col.readable and col.writable)
+
+        col = C.getColumns()['a2']
+        self.assert_(col.readable and not col.writable)
+
+        C = A.cut('C', 'c', globals(), cols = ('a1',), wr_only_cols = ('a2', ))
+        col = C.getColumns()['a1']
+        self.assert_(col.readable and col.writable)
+
+        col = C.getColumns()['a2']
+        self.assert_(not col.readable and col.writable)
+
 
 
 class AssociationTestCase(unittest.TestCase):

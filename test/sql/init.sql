@@ -1,4 +1,4 @@
--- $Id: init.sql,v 1.11 2004/01/22 18:29:05 wrobell Exp $
+-- $Id: init.sql,v 1.12 2005/05/29 18:41:11 wrobell Exp $
 
 create sequence order_seq;
 create table "order" (
@@ -67,3 +67,18 @@ create table department (
 );
 
 alter table boss add foreign key (dep_fkey) references department(__key__) initially deferred;
+
+-- this class is used to test read/write property of application class
+-- column:
+-- phone is write only
+-- status is read only
+create sequence employee_alt_seq;
+create table employee_alt (
+    __key__      integer,
+    name         varchar(10) not null,
+    surname      varchar(20) not null,
+    phone        varchar(12) not null,
+    status       integer not null default 2,
+    unique (name, surname),
+    primary key (__key__)
+);

@@ -1,4 +1,4 @@
-# $Id: conf.py,v 1.38 2005/05/13 17:15:58 wrobell Exp $
+# $Id: conf.py,v 1.39 2005/05/29 18:41:11 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -296,6 +296,11 @@ class Column:
         self.association = None
         self.update = True
 
+        self.default = None
+
+        self.readable = True
+        self.writable = True
+
 
     is_one_to_one = property(lambda self: \
             self.vcls is not None \
@@ -405,7 +410,7 @@ class Persistence(type):
 
     def addColumn(self, attr, col = None,
             vcls = None, link = None, vcol = None, vattr = None, update = True,
-            default = None):
+            default = None, readable = True, writable = True):
         """
         Add attribute description to persistent application class.
 
@@ -422,6 +427,8 @@ class Persistence(type):
             referenced objects on relationship update, otherwise add appended
             objects and delete removed objects.
         @param default: Default value.
+        @param readable: If true then column is readable.
+        @param writable: If true then column is writable.
 
         @see: L{bazaar.conf.Column}
         """
@@ -431,6 +438,9 @@ class Persistence(type):
         col.vcol = vcol
         col.vattr = vattr
         col.update = update
+        col.default = default
+        col.readable = readable
+        col.writable = writable
 
         col.cache = None
 
@@ -470,3 +480,118 @@ class Persistence(type):
         cols.update(self.columns)
 
         return cols
+
+
+    def cut(self, name, relation, data,
+            bases = (bazaar.core.PersistentObject, ),
+            cols = None, rd_only_cols = None, wr_only_cols = None):
+        """
+        Create new application class based on this application class.
+
+        If constraint::
+
+            cols and rd_cols and wr_cols == set()
+
+        is not met, then C@{RelationMappingError} exception is raised.
+
+        Example of usage::
+            >>> class Order(bazaar.core.PersistentObject):
+            ...     __metaclass__ = bazaar.conf.Persistence
+            ...     relation      = 'order'
+            ...     columns       = {
+            ...         'no'        : bazaar.conf.Column('no'),
+            ...         'finished'  : bazaar.conf.Column('finished'),
+            ...         'birthdate' : bazaar.conf.Column('birthdate'),
+            ...     }
+
+            >>> OrderView = Order.cut('OrderView', 'order_view', globals(),
+            ...     cols = ('no', ), rd_only_cols = ('finished', ),
+            ...     wr_only_cols = ('birthdate', ))
+
+            >>> print OrderView.relation
+            order_view
+
+            >>> print OrderView.getColumns()['no'].readable
+            True
+
+            >>> print OrderView.getColumns()['finished'].writable
+            False
+
+            >>> print OrderView.getColumns()['birthdate'].readable
+            False
+
+        @param name: Name of new application class.
+        @param relation: Name of relation of new application class.
+        @param data: Application class module globals.
+        @param bases: Base classes.
+        @param cols: Names of columns to be copied from this
+            application class.
+        @param rd_only_cols: Names of read only columns to be copied from
+            this application class.
+        @param wr_only_cols: Names of write only columns to be copied from
+            this application class.
+
+        @return: New application class.
+        """
+        if cols is None:
+            cols = set()
+        else:
+            cols = set(cols)
+
+        if rd_only_cols is None:
+            rd_only_cols = set()
+        else:
+            rd_only_cols = set(rd_only_cols)
+
+        if wr_only_cols is None:
+            wr_only_cols = set()
+        else:
+            wr_only_cols = set(wr_only_cols)
+
+        if __debug__:
+            log.debug('columns to copy: %s' % cols)
+            log.debug('rd only columns to copy: %s' % rd_only_cols)
+            log.debug('wr only columns to copy: %s' % wr_only_cols)
+
+        cls = Persistence(name, relation, data, bases = bases)
+
+        s = cols & rd_only_cols & wr_only_cols
+        if s != set():
+            raise bazaar.exc.RelationMappingError(
+                'Unable to determine how to copy columns: %s' % ', '.join(s),
+                cls)
+
+        old_cols = self.getColumns()
+
+        def cp(col, mode = 'both'):
+            assert mode == 'both' or mode == 'rd_only' or mode == 'wr_only'
+            col = old_cols[col]
+            attrs = {
+                'attr': col.attr,
+                'col': col.col,
+                'vcls': col.vcls,
+                'link': col.link,
+                'vcol': col.vcol,
+                'vattr': col.vattr,
+                'update': col.update,
+                'default': col.default,
+                'readable': True,
+                'writable': True,
+            }
+            if mode == 'rd_only':
+                attrs['writable'] = False
+            elif mode == 'wr_only':
+                attrs['readable'] = False
+
+            cls.addColumn(**attrs)
+
+        for col in cols:
+            cp(col)
+
+        for col in rd_only_cols:
+            cp(col, 'rd_only')
+
+        for col in wr_only_cols:
+            cp(col, 'wr_only')
+
+        return cls

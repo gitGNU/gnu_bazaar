@@ -1,4 +1,4 @@
-# $Id: motor.py,v 1.36 2005/05/13 17:15:58 wrobell Exp $
+# $Id: motor.py,v 1.37 2005/05/29 18:41:11 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -56,18 +56,21 @@ class Convertor(object):
         cls_columns = self.cls.getColumns().values()
 
         self.columns = \
-            [col.col for col in cls_columns if col.association is None]
+            [col for col in cls_columns if col.association is None]
 
         self.oto_ascs = [col for col in cls_columns if col.is_one_to_one]
         for col in self.oto_ascs:
-            self.columns.append(col.col)
+            self.columns.append(col)
 
         if __debug__:
-            log.debug('class %s columns: %s' % (self.cls, self.columns))
+            log.debug('class %s columns: %s' \
+                % (self.cls, [col.col for col in self.columns]))
 
         self.masc = [col for col in cls_columns if col.is_many]
 
-        self.load_cols = ['__key__'] + self.columns
+        self.load_cols = ['__key__'] \
+            + [col.col for col in self.columns if col.readable]
+        self.save_cols = [col.col for col in self.columns if col.writable]
 
         # used to get values of object's loaded data
         self.itercols = range(len(self.load_cols))
@@ -95,8 +98,8 @@ class Convertor(object):
         self.queries[self.add] = \
             'insert into "%s" (__key__, %s) values (%%(__key__)s, %s)' \
             % (self.cls.relation,
-               ', '.join(['"%s"' % col for col in self.columns]),
-               ', '.join(['%%(%s)s' % col for col in self.columns])
+               ', '.join(['"%s"' % col for col in self.save_cols]),
+               ', '.join(['%%(%s)s' % col for col in self.save_cols])
               )
 
         if __debug__:
@@ -104,7 +107,7 @@ class Convertor(object):
 
         self.queries[self.update] = 'update "%s" set %s where __key__ = %%s' \
             % (self.cls.relation,
-            ', '.join(['"%s" = %%s' % col for col in self.columns]))
+            ', '.join(['"%s" = %%s' % col for col in self.save_cols]))
 
         if __debug__:
             log.debug('update object query: "%s"' % self.queries[self.update])
@@ -372,10 +375,16 @@ class Convertor(object):
         """
         Load object from database.
 
+        If there is no object, then C{None} is returned.
+
         @param key: Primary key value of object to load.
         """
-        return self.createObject( \
-            self.motor.getData(self.queries[self.get], (key, )).next())
+        try:
+            obj = self.createObject( \
+                self.motor.getData(self.queries[self.get], (key, )).next())
+        except StopIteration:
+            obj = None
+        return obj
 
 
     def getKey(self):
@@ -409,7 +418,7 @@ class Convertor(object):
         data = self.getData(obj)
         
         self.motor.update(self.queries[self.update],
-            [data[col] for col in self.columns],
+            [data[col] for col in self.save_cols],
             obj.__key__)
 
 

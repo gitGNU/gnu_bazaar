@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# $Id: fill.py,v 1.15 2005/05/12 18:29:58 wrobell Exp $
+# $Id: fill.py,v 1.16 2005/05/29 18:41:11 wrobell Exp $
 #
 # Bazaar - an easy to use and powerful abstraction layer between relational
 # database and object oriented application.
@@ -88,6 +88,13 @@ employees = [ \
 ]
 
 
+employees_alt = [ \
+    ObjectRow('employee_alt', {'name': 'p%02d' % i, 'surname': 's%02d' % i, 'phone': '%10d' % i}) \
+        for i in xrange(AMOUNT_EMPLOYEE) \
+]
+
+
+
 articles = [ \
     ObjectRow('article', {'name': 'art %02d' % i, 'price': random.uniform(0, 10)}) \
         for i in xrange(AMOUNT_ARTICLE) \
@@ -131,6 +138,9 @@ def gen_orders(amount):
 
 
 for row in employees:
+    insert(db, row)
+
+for row in employees_alt:
     insert(db, row)
 
 for row in articles:
