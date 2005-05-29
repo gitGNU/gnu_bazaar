@@ -1,4 +1,4 @@
-# $Id: core.py,v 1.42 2005/05/13 17:15:58 wrobell Exp $
+# $Id: core.py,v 1.43 2005/05/29 18:37:03 wrobell Exp $
 #
 # Bazaar ORM - an easy to use and powerful abstraction layer between
 # relational database and object oriented application.
@@ -181,6 +181,27 @@ class Broker(object):
         @see: L{bazaar.cache}
         """
         return self.cache[key]
+
+
+    def reload(self, key):
+        """
+        Reload application object of given key from database.
+
+        If application object does not exist in database, then it will be
+        removed from cache.
+
+        If reloaded object exists in database and in cache, then application
+        object will be replaced with new instance in cache.
+        """
+        obj = self.convertor.get(key)
+        if obj is None:
+            # object is no more in database, remove it from cache
+            if key in self.cache:
+                del self.cache[key]
+        else:
+            self.cache[key] = obj
+
+        # fixme: what about associations?
 
 
     def add(self, obj):
