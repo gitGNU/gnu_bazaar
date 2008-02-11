@@ -24,12 +24,14 @@ Data convertor and database access classes.
 """
 
 import uuid
+import re
 
 import bazaar.core   # it is required to check if objects are
                      # PersistentObject class' instances
 
 
 log = bazaar.Log('bazaar.motor')
+
 
 class Convertor(object):
     """
@@ -180,6 +182,15 @@ class Convertor(object):
 
         if __debug__:
             log.debug('object OO find query: "%s"' % self.queries[self.find])
+
+
+        if mtr.dbmod.paramstyle == 'pyformat':
+            # convert all queries from named parameters to pyformat if
+            # necessary
+            cps_re = re.compile(r':([^ ,)]+)')
+            for k, q in self.queries.items():
+                if isinstance(q, basestring):
+                    self.queries[k] = cps_re.sub(r'%(\1)s', q)
 
 
     def getData(self, obj):
