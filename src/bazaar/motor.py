@@ -23,8 +23,11 @@
 Data convertor and database access classes.
 """
 
+import uuid
+
 import bazaar.core   # it is required to check if objects are
                      # PersistentObject class' instances
+
 
 log = bazaar.Log('bazaar.motor')
 
@@ -42,7 +45,7 @@ class Convertor(object):
     @ivar motor: Database access object.
     @ivar columns: List of columns used with database queries.
     """
-    def __init__(self, cls, mtr, seqpattern = None):
+    def __init__(self, cls, mtr):
         """
         Create data convertor object.
 
@@ -68,7 +71,7 @@ class Convertor(object):
 
         self.masc = [col for col in cls_columns if col.is_many]
 
-        self.load_cols = ['__key__'] \
+        self.load_cols = ['uuid'] \
             + [col.col for col in self.columns if col.readable]
         self.save_cols = [col.col for col in self.columns if col.writable]
 
@@ -78,10 +81,6 @@ class Convertor(object):
         #
         # prepare queries
         #
-        self.queries[self.getKey] = seqpattern % self.cls.sequencer
-        if __debug__: log.debug('get next value of sequencer query: "%s"' % \
-            self.queries[self.getKey])
-
         self.queries[self.getObjects] = 'select %s from "%s"' \
             % (', '.join(['"%s"' % col for col in self.load_cols]),
                 self.cls.relation)
@@ -90,30 +89,30 @@ class Convertor(object):
             log.debug('get objects query: "%s"' % self.queries[self.getObjects])
 
         self.queries[self.get] = self.queries[self.getObjects] \
-            + ' where __key__ = %s'
+            + ' where uuid = %s'
 
         if __debug__:
             log.debug('get single object query: "%s"' % self.queries[self.get])
 
         self.queries[self.add] = \
-            'insert into "%s" (__key__, %s) values (%%(__key__)s, %s)' \
+            'insert into "%s" (uuid, %s) values (:uuid, %s)' \
             % (self.cls.relation,
                ', '.join(['"%s"' % col for col in self.save_cols]),
-               ', '.join(['%%(%s)s' % col for col in self.save_cols])
+               ', '.join([':%s' % col for col in self.save_cols])
               )
 
         if __debug__:
             log.debug('add object query: "%s"' % self.queries[self.add])
 
-        self.queries[self.update] = 'update "%s" set %s where __key__ = %%s' \
+        self.queries[self.update] = 'update "%s" set %s where uuid = %%s' \
             % (self.cls.relation,
-            ', '.join(['"%s" = %%s' % col for col in self.save_cols]))
+            ', '.join(['"%s" = :%s' % col for col in self.save_cols]))
 
         if __debug__:
             log.debug('update object query: "%s"' % self.queries[self.update])
 
         self.queries[self.delete] = \
-            'delete from "%s" where __key__ = %%s' % self.cls.relation
+            'delete from "%s" where uuid = %%s' % self.cls.relation
 
         if __debug__:
             log.debug('delete object query: "%s"' % self.queries[self.delete])
@@ -136,7 +135,7 @@ class Convertor(object):
                     self.asc_cols[asc][0])
 
             elif col.is_one_to_many:
-                self.asc_cols[asc] = ('__key__', col.vcol)
+                self.asc_cols[asc] = ('uuid', col.vcol)
                 relation = col.vcls.relation
 
                 self.queries[asc][self.getAscData] = \
@@ -177,7 +176,7 @@ class Convertor(object):
                     % self.queries[asc][self.delAscData])
 
         self.queries[self.find] = \
-            'select __key__ from "%s" where %%s' % self.cls.relation
+            'select uuid from "%s" where %%s' % self.cls.relation
 
         if __debug__:
             log.debug('object OO find query: "%s"' % self.queries[self.find])
@@ -200,7 +199,7 @@ class Convertor(object):
             if value is None:
                 data[col.col] = None
             else:
-                data[col.col] = value.__key__
+                data[col.col] = value.uuid
         return data
 
 
@@ -234,7 +233,7 @@ class Convertor(object):
             for attr, value in param.items():
                 # change persistent objects with primary key value
                 if isinstance(value, bazaar.core.PersistentObject):
-                    value = value.__key__
+                    value = value.uuid
 
                 data[attr] = value
 
@@ -307,7 +306,7 @@ class Convertor(object):
         @param obj: Application object.
         """
         for data in self.motor.getData(self.queries[asc][self.getAscData],
-                { 'key': obj.__key__ }):
+                { 'key': obj.uuid }):
             yield data[0]
 
 
@@ -387,13 +386,13 @@ class Convertor(object):
         return obj
 
 
-    def getKey(self):
+    def getId(self):
         """
-        Create new primary key value with sequencer.
+        Create new object identifier value using UUID.
 
-        @return: New primary key value.
+        See http://en.wikipedia.org/wiki/UUID for details.
         """
-        return self.motor.getData(self.queries[self.getKey]).next()[0]
+        return uuid.uuid5()
 
 
     def add(self, obj):
@@ -403,10 +402,10 @@ class Convertor(object):
         @param obj: Object to add.
         """
         data = self.getData(obj)
-        key = self.getKey()       # create primary key value
-        data['__key__'] = key
+        id = self.getId()       # create new id for a new object
+        data['uuid'] = id
         self.motor.add(self.queries[self.add], data)
-        obj.__key__ = key         # set primary key value
+        obj.uuid = id           # assign uuid
  
 
     def update(self, obj):
@@ -419,7 +418,7 @@ class Convertor(object):
         
         self.motor.update(self.queries[self.update],
             [data[col] for col in self.save_cols],
-            obj.__key__)
+            obj.uuid)
 
 
     def delete(self, obj):
@@ -428,7 +427,7 @@ class Convertor(object):
 
         @param obj: Object to delete.
         """
-        self.motor.delete(self.queries[self.delete], obj.__key__)
+        self.motor.delete(self.queries[self.delete], obj.uuid)
 
 
 

@@ -318,7 +318,7 @@ class AssociationReferenceProxy(object):
         """
         assert obj is not None and value is not None
 
-        if value.__key__ is None:
+        if value.uuid is None:
             # refernced object's primary key is not defined,
             # store object in reference buffer
             self.ref_buf[obj] = value
@@ -326,7 +326,7 @@ class AssociationReferenceProxy(object):
             # remove entry from reference buffer if it exists
             if (obj, value) in self.ref_buf:
                 del self.ref_buf[obj, value]
-        self.saveForeignKey(obj, value.__key__)
+        self.saveForeignKey(obj, value.uuid)
 
 
     def saveForeignKey(self, obj, vkey):
@@ -652,7 +652,7 @@ class List(AssociationReferenceProxy):
                 '%s.%s -> %s.%s (obj: %s, key: %s)\n' \
                 'iterated objects: %s\ncache: %s' \
             % (self.broker.cls, self.col.attr, self.col.vcls, self.col.col,
-                obj, obj.__key__, list(get_objects()), self.cache[obj])
+                obj, obj.uuid, list(get_objects()), self.cache[obj])
 
         objects = get_objects() # get objects with defined primary key value
 
@@ -691,7 +691,7 @@ class List(AssociationReferenceProxy):
 
         @see: L{update}
         """
-        return obj.__key__, value.__key__
+        return obj.uuid, value.uuid
 
 
     def update(self, obj):
@@ -736,7 +736,7 @@ class List(AssociationReferenceProxy):
         if (obj, value) in self.ref_buf:
             del self.ref_buf[(obj, value)]
         else:
-            self.cache[obj].discard(value.__key__)
+            self.cache[obj].discard(value.uuid)
 
 
     def remove(self, obj, value):
@@ -786,7 +786,7 @@ class List(AssociationReferenceProxy):
         keys = self.cache[obj]
 
         return keys is not None \
-            and value.__key__ in keys or (obj, value) in self.ref_buf
+            and value.uuid in keys or (obj, value) in self.ref_buf
 
 
 
@@ -933,7 +933,7 @@ class OneToMany(BiDirList):
         Referenced object is taken from referenced class broker.
         """
         for value in self.vbroker.getObjects():
-            yield getattr(value, self.col.vcol), value.__key__
+            yield getattr(value, self.col.vcol), value.uuid
 
 
     def reloadData(self, now = False):

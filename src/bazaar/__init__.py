@@ -136,37 +136,37 @@ Now, SQL schema can be created::
     # primary key values generator
     create sequence order_seq;
     create table "order" (
-        # every application object is identified with __key__ attribute
-        __key__      integer,
+        # every application object is identified with uuid attribute
+        uuid      integer,
         no           integer not null unique,
         finished     boolean not null,
-        primary key (__key__)
+        primary key (uuid)
     );
 
     create sequence article_seq;
     create table article (
-        __key__      integer,
+        uuid      integer,
         name         varchar(20) not null,
         price        numeric(10,2) not null,
         unique (name),
-        primary key (__key__)
+        primary key (uuid)
     );
 
     create sequence order_item_seq;
     create table order_item (
-        __key__      integer,
+        uuid      integer,
         order_fkey   integer,
         pos          integer not null,
         article_fkey integer not null,
         quantity     numeric(10,3) not null,
-        primary key (__key__),
+        primary key (uuid),
         unique (order_fkey, pos),
 
         # association between Order and OrderItem
-        foreign key (order_fkey) references "order"(__key__),
+        foreign key (order_fkey) references "order"(uuid),
 
         # association between OrderItem and Article
-        foreign key (article_fkey) references article(__key__)
+        foreign key (article_fkey) references article(uuid)
     );
 
 Application code

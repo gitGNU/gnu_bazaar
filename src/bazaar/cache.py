@@ -322,11 +322,11 @@ class LazyObject(Lazy, weakref.WeakValueDictionary):
         instead of object from database.
         """
         for obj in self.owner.convertor.getObjects():
-            if obj.__key__ in self:
-                obj = self[obj.__key__] # get existing instance
+            if obj.uuid in self:
+                obj = self[obj.uuid] # get existing instance
             else:
                 # there is no object instance, so add it to cache
-                self[obj.__key__] = obj
+                self[obj.uuid] = obj
 
             yield obj
 

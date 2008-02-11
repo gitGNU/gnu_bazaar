@@ -84,28 +84,28 @@ C{vattr} parameter) of opposite class which glues the whole association.
 SQL schema of C{Department} and C{Boss} classes would look like::
 
     create table boss (
-        __key__      integer,
+        uuid      integer,
         name         varchar(10) not null,
         surname      varchar(20) not null,
         phone        varchar(12) not null,
         dep_fkey     integer unique,
         unique (name, surname),
-        primary key (__key__)
+        primary key (uuid)
         --  see below
-        --  foreign key (dep_fkey) references department(__key__) 
+        --  foreign key (dep_fkey) references department(uuid) 
         --      initially deferred
     );
      
      
     create sequence department_seq;
     create table department (
-        __key__      integer,
+        uuid      integer,
         boss_fkey    integer unique,
-        primary key (__key__),
-        foreign key (boss_fkey) references boss(__key__) initially deferred
+        primary key (uuid),
+        foreign key (boss_fkey) references boss(uuid) initially deferred
     );
 
-    alter table boss add foreign key (dep_fkey) references department(__key__)
+    alter table boss add foreign key (dep_fkey) references department(uuid)
         initially deferred;
 
 
@@ -129,28 +129,28 @@ SQL schema::
 
     create sequence order_seq;
     create table "order" (
-        __key__      integer,
+        uuid      integer,
         no           integer not null unique,
         finished     boolean not null,
-        primary key (__key__)
+        primary key (uuid)
     );
 
     create sequence employee_seq;
     create table employee (
-        __key__      integer,
+        uuid      integer,
         name         varchar(10) not null,
         surname      varchar(20) not null,
         phone        varchar(12) not null,
         unique (name, surname),
-        primary key (__key__)
+        primary key (uuid)
     );
 
     create table employee_orders (
         employee         integer,
         "order"          integer,
         primary key (employee, "order"),
-        foreign key (employee) references employee(__key__),
-        foreign key ("order") references "order"(__key__)
+        foreign key (employee) references employee(uuid),
+        foreign key ("order") references "order"(uuid)
     );
 
 
@@ -173,24 +173,24 @@ Following SQL schema describes two one-to-many associations::
 
     create sequence article_seq;
     create table article (
-        __key__      integer,
+        uuid      integer,
         name         varchar(20) not null,
         price        numeric(10,2) not null,
         unique (name),
-        primary key (__key__)
+        primary key (uuid)
     );
      
     create sequence order_item_seq;
     create table order_item (
-        __key__      integer,
+        uuid      integer,
         order_fkey   integer,
         pos          integer not null,
         article_fkey integer not null,
         quantity     numeric(10,3) not null,
-        primary key (__key__),
+        primary key (uuid),
         unique (order_fkey, pos),
-        foreign key (order_fkey) references "order"(__key__),
-        foreign key (article_fkey) references article(__key__)
+        foreign key (order_fkey) references "order"(uuid),
+        foreign key (article_fkey) references article(uuid)
     );
 
 First one is uni-directional relationship between C{Article} and
@@ -228,7 +228,7 @@ SQL schema for C{Boss} class relation can look like::
 
     create table boss (
         dep_fkey     integer,
-        foreign key (dep_fkey) references department(__key__) initially deferred
+        foreign key (dep_fkey) references department(uuid) initially deferred
     ) inherits(employee);
 
 """
@@ -403,7 +403,7 @@ class Persistence(type):
         if not cls.relation:
             raise bazaar.exc.RelationMappingError('wrong relation name', cls)
 
-        setattr(cls, '__key__', None)
+        setattr(cls, 'uuid', None)
 
         return cls
 

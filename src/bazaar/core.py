@@ -42,7 +42,7 @@ class PersistentObject(object):
     """
     Parent class of an application class.
 
-    @ivar __key__: Object's key.
+    @ivar uuid: Object's key.
     """
     def __init__(self, **data):
         """
@@ -109,7 +109,7 @@ class Broker(object):
         @see: L{bazaar.core.Broker.getObjects} L{bazaar.core.Broker.reloadObjects}
         """
         for obj in self.convertor.getObjects():
-            self.cache[obj.__key__] = obj
+            self.cache[obj.uuid] = obj
 
         self.reload = False
         return self.cache.itervalues()
@@ -211,7 +211,7 @@ class Broker(object):
         @param obj: Object to add.
         """
         self.convertor.add(obj)
-        self.cache[obj.__key__] = obj
+        self.cache[obj.uuid] = obj
 
 
     def update(self, obj):
@@ -232,8 +232,8 @@ class Broker(object):
         @param obj: Object to delete.
         """
         self.convertor.delete(obj)
-        del self.cache[obj.__key__]
-        obj.__key__ = None
+        del self.cache[obj.uuid]
+        obj.uuid = None
 
 
 
@@ -569,10 +569,10 @@ class Bazaar(object):
 
             # find orders with the query
             query = \"""
-                select O.__key__ from "order" O
-                left outer join order_item OI on O.__key__ = OI.order_fkey
-                left outer join article A on OI.article_fkey = A.__key__
-                group by O.__key__ having sum(A.price) > 50
+                select O.uuid from "order" O
+                left outer join order_item OI on O.uuid = OI.order_fkey
+                left outer join article A on OI.article_fkey = A.uuid
+                group by O.uuid having sum(A.price) > 50
             \"""
 
             for ord in  bzr.find(Order, query):
