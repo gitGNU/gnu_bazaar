@@ -392,7 +392,7 @@ class Convertor(object):
 
         See http://en.wikipedia.org/wiki/UUID for details.
         """
-        return uuid.uuid4()
+        return str(uuid.uuid4())
 
 
     def add(self, obj):
