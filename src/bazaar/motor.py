@@ -106,7 +106,7 @@ class Convertor(object):
 
         self.queries[self.update] = 'update "%s" set %s where uuid = %%s' \
             % (self.cls.relation,
-            ', '.join(['"%s" = :%s' % col for col in self.save_cols]))
+            ', '.join(['"%s" = :s' % col for col in self.save_cols]))
 
         if __debug__:
             log.debug('update object query: "%s"' % self.queries[self.update])
@@ -392,7 +392,7 @@ class Convertor(object):
 
         See http://en.wikipedia.org/wiki/UUID for details.
         """
-        return uuid.uuid5()
+        return uuid.uuid4()
 
 
     def add(self, obj):

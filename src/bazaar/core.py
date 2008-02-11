@@ -97,7 +97,7 @@ class Broker(object):
             % (self.cls, self.cls.cache))
         self.cache = self.cls.cache(self)
 
-        self.convertor = bazaar.motor.Convertor(cls, mtr, seqpattern)
+        self.convertor = bazaar.motor.Convertor(cls, mtr)
 
         log.info('class "%s" broker initialized' % cls)
 
