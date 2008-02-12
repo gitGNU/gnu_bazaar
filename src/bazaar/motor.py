@@ -114,7 +114,7 @@ class Convertor(object):
             log.debug('update object query: "%s"' % self.queries[self.update])
 
         self.queries[self.delete] = \
-            'delete from "%s" where uuid = %%s' % self.cls.relation
+            'delete from "%s" where uuid = ?' % self.cls.relation
 
         if __debug__:
             log.debug('delete object query: "%s"' % self.queries[self.delete])
