@@ -1,3 +1,6 @@
+0.99.9
+- support for both named and pyformat parameter styles
+
 0.99.8
 - support for writable and readable application class columns
 - support for cutting class (to view for example) with Persistence.cut
