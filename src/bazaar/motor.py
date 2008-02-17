@@ -91,13 +91,13 @@ class Convertor(object):
             log.debug('get objects query: "%s"' % self.queries[self.getObjects])
 
         self.queries[self.get] = self.queries[self.getObjects] \
-            + ' where uuid = ?'
+            + ' where "uuid" = :uuid'
 
         if __debug__:
             log.debug('get single object query: "%s"' % self.queries[self.get])
 
         self.queries[self.add] = \
-            'insert into "%s" (uuid, %s) values (:uuid, %s)' \
+            'insert into "%s" ("uuid", %s) values (:uuid, %s)' \
             % (self.cls.relation,
                ', '.join(['"%s"' % col for col in self.save_cols]),
                ', '.join([':%s' % col for col in self.save_cols])
@@ -106,15 +106,15 @@ class Convertor(object):
         if __debug__:
             log.debug('add object query: "%s"' % self.queries[self.add])
 
-        self.queries[self.update] = 'update "%s" set %s where uuid = ?' \
+        self.queries[self.update] = 'update "%s" set %s where "uuid" = :uuid' \
             % (self.cls.relation,
-            ', '.join(['"%s" = ?' % col for col in self.save_cols]))
+                ', '.join(['"%s" = :%s' % (col, col) for col in self.save_cols]))
 
         if __debug__:
             log.debug('update object query: "%s"' % self.queries[self.update])
 
         self.queries[self.delete] = \
-            'delete from "%s" where uuid = ?' % self.cls.relation
+            'delete from "%s" where "uuid" = :uuid' % self.cls.relation
 
         if __debug__:
             log.debug('delete object query: "%s"' % self.queries[self.delete])
@@ -427,9 +427,9 @@ class Convertor(object):
         """
         data = self.getData(obj)
         
-        self.motor.update(self.queries[self.update],
-            [data[col] for col in self.save_cols],
-            obj.uuid)
+        self.motor.update(self.queries[self.update], data, obj.uuid)
+        #    [data[col] for col in self.save_cols],
+        #    obj.uuid)
 
 
     def delete(self, obj):
@@ -552,7 +552,7 @@ class Motor(object):
                 % (query, data, key))
 
         dbc = self.conn.cursor()
-        dbc.execute(query, tuple(data) + (key, ))
+        dbc.execute(query, data)
 
         if __debug__:
             log.debug('query "%s", data = %s, key = %s: executed' \
@@ -570,7 +570,7 @@ class Motor(object):
             log.debug('query "%s", key = %s: executing' % (query, key))
 
         dbc = self.conn.cursor()
-        dbc.execute(query, (key, ))
+        dbc.execute(query, {'uuid': key})
 
         if __debug__:
             log.debug('query "%s", key = %s: executed' % (query, key))
