@@ -225,11 +225,7 @@ class Convertor(object):
         cols = self.cls.getColumns()
         cond = []
         
-        if self.motor.dbmod.paramstyle == 'pyformat':
-            pattern = '"%s" = %%(%s)s'
-        else:
-            pattern = '"%s" = :%s'
-
+        pattern = '"%s" = :%s'
         for attr in param:
             if attr in cols:
                 col = cols[attr].col
@@ -359,6 +355,17 @@ class Convertor(object):
         if __debug__:
             log.debug('find objects with query: \'%s\', params %s, field %d' \
                 % (query, param, field))
+
+        if self.motor.dbmod.paramstyle == 'pyformat':
+            # fixme: code duplication
+            # convert all queries from named parameters to pyformat if
+            # necessary
+            cps_re = re.compile(r':([^ ,)]+)')
+            query = cps_re.sub(r'%(\1)s', query)
+        else:
+            # from pyformat to named parameters
+            cps_re = re.compile(r'%\(([^)]+)\)[sdf]')
+            query = cps_re.sub(r':\1', query)
 
         # get primary key values which denote objects
         for data in self.motor.getData(query, param):
