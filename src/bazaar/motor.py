@@ -224,12 +224,18 @@ class Convertor(object):
         """
         cols = self.cls.getColumns()
         cond = []
+        
+        if self.motor.dbmod.paramstyle == 'pyformat':
+            pattern = '"%s" = %%(%s)s'
+        else:
+            pattern = '"%s" = :%s'
+
         for attr in param:
             if attr in cols:
                 col = cols[attr].col
             else:
                 col = attr
-            cond.append('"%s" = %%(%s)s' % (col, attr))
+            cond.append(pattern % (col, attr))
         return ' and '.join(cond)
 
 
